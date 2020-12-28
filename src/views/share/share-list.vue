@@ -1,5 +1,5 @@
 <template>
-  <h2>列表页</h2>
+  <h2>这里是我的分享列表(需要登陆)</h2>
 </template>
 
 <script>
