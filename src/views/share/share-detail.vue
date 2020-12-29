@@ -160,16 +160,48 @@
         <p>{{item.fileFolder ? '-' : storageUnitConversion(item.fileSize)}}</p>
       </div>
 
+      <div>
+
+        <!-- 显示图片 -->
+        <el-image-viewer
+          v-show="file.imageUrl !== ''"
+          :on-close="closeViewer"
+          :url-list="[file.imageUrl]"
+        />
+
+      </div>
+
     </div>
+
+    <!-- 播放视频 -->
+    <el-dialog
+      :center="true"
+      :roundButton="true"
+      :before-close="beforeClose"
+      :visible.sync="file.dialogVideo"
+    >
+      <div
+        slot="footer"
+        id="dplayer"
+        ref="dplayer"
+      ></div>
+    </el-dialog>
 
   </div>
 </template>
 
 <script>
 import { shareDetail } from '@/api/share'
+import { search, download } from '@/api/file'
+import { storageUnitConversion } from '@/utils/utils'
+import DPlayer from 'dplayer'
+import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
 
 export default {
   name: 'share-detail',
+  components: {
+    ElImageViewer
+  },
   data () {
     // 验证码长度校验
     const validateSecurityCode = (rule, value, callback) => {
@@ -210,13 +242,26 @@ export default {
           fileName: '/',
           fileId: 0
         }],
+        // 是否显示播放视频的 dialog
+        dialogVideo: false,
         // 图片地址
-        imageUrl: ''
+        imageUrl: '',
+        // 视频插件对象
+        player: null
       }
     }
   },
   // 钩子函数：页面加载完成后执行
   mounted: function () {
+    this.file.player = new DPlayer({
+      container: document.getElementById('dplayer'),
+      volume: 1,
+      playbackSpeed: [0.5, 1, 1.25, 1.5, 2, 2.5, 3, 4],
+      contextmenu: [],
+      video: {
+        url: ''
+      }
+    })
     this.detail()
   },
   watch: {
@@ -243,14 +288,252 @@ export default {
       })
     },
     /**
+     * 点击执行单选事件
+     */
+    click: function (event) {
+      for (let item of document.getElementsByClassName('item')) {
+        if (item !== event.currentTarget) {
+          item.dataset.selected = 'false'
+        }
+      }
+      if (event.currentTarget.dataset.selected === 'false') {
+        this.$emit('getOperation', true)
+        this.$emit('getMultiSelect', true)
+        event.currentTarget.dataset.selected = 'true'
+      } else {
+        this.$emit('getOperation', false)
+        this.$emit('getMultiSelect', false)
+        event.currentTarget.dataset.selected = 'false'
+      }
+    },
+    /**
+     * ctrl 执行多选事件
+     */
+    ctrl: function (event) {
+      // 如果点击的同时 按下了 ctrl
+      if (!event.ctrlKey) {
+        for (let item of document.getElementsByClassName('item')) {
+          if (item !== event.currentTarget) {
+            item.dataset.selected = 'false'
+          }
+        }
+      }
+      if (event.currentTarget.dataset.selected === 'false') {
+        event.currentTarget.dataset.selected = 'true'
+      } else {
+        event.currentTarget.dataset.selected = 'false'
+      }
+
+      // 获取所有已经点击的值
+      let size = 0
+      for (let item of document.getElementsByClassName('item')) {
+        if (item.dataset.selected === 'true') {
+          size++
+        }
+      }
+      this.$emit('getMultiSelect', size === 1)
+      this.$emit('getOperation', size > 0)
+    },
+    /**
+     * shift 执行多选事件
+     */
+    shift: function (event) {
+      // 获取所有已经点击的值
+      let size = 0
+      let arr = []
+      for (let item of document.getElementsByClassName('item')) {
+        arr.push(item)
+        if (item.dataset.selected === 'true') {
+          size++
+        }
+      }
+      if (size > 1) {
+        this.click(event)
+        return
+      }
+      // 起始值
+      let startIdx = 0
+      // 结束值
+      let endIdx = 0
+      arr.forEach((item, index) => {
+        if (item.dataset.selected === 'true') {
+          startIdx = index
+        }
+        if (item === event.currentTarget) {
+          endIdx = index
+        }
+      })
+      // 用户可能反向选取，所以要取绝对值
+      const sum = Math.abs(startIdx - endIdx) + 1
+      // 获取起点和终点较小的值
+      const min = Math.min(startIdx, endIdx)
+      this.$emit('getMultiSelect', sum === 1)
+      let i = 0
+      while (i < sum) {
+        const index = min + i
+        document.getElementsByClassName('item')[index].dataset.selected = 'true'
+        i++
+      }
+    },
+    /**
+     * 点击选中事件
+     */
+    choose: function (event) {
+      if (event.ctrlKey) {
+        this.ctrl(event)
+        return
+      }
+
+      if (event.shiftKey) {
+        this.shift(event)
+        return
+      }
+
+      this.click(event)
+    },
+    /**
      * 存储单元转换
      */
     storageUnitConversion: function (bytes) {
-      if (bytes === 0) return '0 B'
-      let k = 1024
-      let sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-      let i = Math.floor(Math.log(bytes) / Math.log(k))
-      return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i]
+      return storageUnitConversion(bytes)
+    },
+    /**
+     * 上一级
+     */
+    previous: function (item, idx) {
+      this.page = 1
+      // 文件夹拥有下一级
+      search({
+        page: this.page,
+        fileParentId: item.fileId
+      }).then((response) => {
+        this.diskFile = response.data.diskFile
+        let breadcrumbs = []
+        this.breadcrumbs.forEach(function (item, index) {
+          if (index <= idx) {
+            breadcrumbs.push(item)
+          }
+        })
+        this.breadcrumbs = breadcrumbs
+        // 传给父组件的值
+        this.$emit('getBreadcrumbs', breadcrumbs)
+        this.$emit('getCurrentFile', response.data.diskFile)
+        this.$emit('getOperation', false)
+        this.$emit('getMultiSelect', false)
+        this.documentRetrieval = false
+      }).catch((err) => {
+        console.log(err)
+      })
+    },
+    /**
+     * 下一级
+     */
+    nextLevel: function (item) {
+      console.log(item)
+      // 判断当前点击的是否为文件夹
+      if (item.fileFolder === true) {
+        // 设置当前页码为1
+        this.page = 1
+        // 文件夹拥有下一级
+        search({
+          page: this.page,
+          fileParentId: item.fileId
+        }).then((response) => {
+          // 增加面包屑导航数据
+          this.breadcrumbs.push({
+            fileId: item.fileId,
+            fileName: item.fileName
+          })
+          this.diskFile = response.data.diskFile
+          this.documentRetrieval = response.data.diskFile.length <= 0
+          // 传给父组件的值
+          this.$emit('getBreadcrumbs', this.breadcrumbs)
+          this.$emit('getCurrentFile', response.data.diskFile)
+          this.$emit('getOperation', false)
+          this.$emit('getMultiSelect', false)
+        }).catch((err) => {
+          console.log(err)
+        })
+      } else {
+        console.log('当前点击的是文件')
+        console.log(item.fileMimeType)
+        download({
+          key: item.fileKey,
+          time: 3600
+        }).then((res) => {
+          if (item.fileMimeType.indexOf('image') !== -1 && item.fileMimeType !== 'application/x-iso9660-image') {
+            this.file.imageUrl = res.data
+            return
+          }
+          if (item.fileMimeType.indexOf('video') !== -1) {
+            console.log('点击的是视频')
+            this.file.dialogVideo = true
+            this.file.player.switchVideo({
+              url: res.data
+            })
+            this.file.player.play()
+            return
+          }
+          // 如果当前文件的属性是图片
+          this.download(res.data, item.fileName)
+        }).catch((err) => {
+          console.log(err)
+        })
+      }
+    },
+    /**
+     * 大图预览关闭事件回掉
+     */
+    closeViewer: function () {
+      this.file.imageUrl = ''
+    },
+    // 下载文件
+    download (url, name) {
+      let link = document.createElement('a')
+      link.style.display = 'none'
+      link.href = url
+      link.setAttribute('download', name)
+      document.body.appendChild(link)
+      link.click()
+      link.parentNode.removeChild(link)
+    },
+    /**
+     * Dialog 关闭前的回调函数
+     */
+    beforeClose (done) {
+      // 关闭播放器
+      this.file.dialogVideo = false
+      // 暂停视频播放
+      this.file.player.pause()
+    },
+    /**
+     * 页面上拉触底事件的处理函数
+     */
+    onReachBottom () {
+      let that = this
+      let page = that.page + 1
+      if (!that.documentRetrieval) {
+        // 根据下标获取数据
+        let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
+        // 文件检索 获取用户根目录文件
+        search({
+          page: page,
+          fileParentId: breadcrumbs.fileId
+        }).then(data => {
+          // 如果数据不为空
+          if (data.data.diskFile.length > 0) {
+            that.diskFile = that.diskFile.concat(data.data.diskFile)
+            that.page = page
+            that.documentRetrieval = false
+            this.$emit('getCurrentFile', that.diskFile)
+            console.log(data.data)
+          } else {
+            that.documentRetrieval = true
+          }
+        }).catch(e => {
+          console.log(e)
+        })
+      }
     },
     /**
      * 获取分享详情

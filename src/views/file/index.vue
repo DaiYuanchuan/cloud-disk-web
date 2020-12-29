@@ -84,6 +84,7 @@
 
 <script>
 import { search, download } from '@/api/file'
+import { storageUnitConversion } from '@/utils/utils'
 import DPlayer from 'dplayer'
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
 
@@ -269,11 +270,7 @@ export default {
      * 存储单元转换
      */
     storageUnitConversion: function (bytes) {
-      if (bytes === 0) return '0 B'
-      let k = 1024
-      let sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-      let i = Math.floor(Math.log(bytes) / Math.log(k))
-      return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i]
+      return storageUnitConversion(bytes)
     },
     /**
      * 上一级
