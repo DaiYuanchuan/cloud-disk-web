@@ -232,6 +232,8 @@ export default {
       rules: {
         code: [{ required: true, trigger: 'blur', validator: validateSecurityCode }]
       },
+      // 如果页面上拉触底请求下一页的数据时 没有数据了 这里显示true
+      documentRetrieval: false,
       file: {
         // 文件列表是否展示
         isShow: false,
@@ -411,12 +413,12 @@ export default {
       }).then((response) => {
         this.diskFile = response.data.diskFile
         let breadcrumbs = []
-        this.breadcrumbs.forEach(function (item, index) {
+        this.file.breadcrumbs.forEach(function (item, index) {
           if (index <= idx) {
             breadcrumbs.push(item)
           }
         })
-        this.breadcrumbs = breadcrumbs
+        this.file.breadcrumbs = breadcrumbs
         // 传给父组件的值
         this.$emit('getBreadcrumbs', breadcrumbs)
         this.$emit('getCurrentFile', response.data.diskFile)
@@ -444,14 +446,14 @@ export default {
           code: this.form.code
         }).then((response) => {
           // 增加面包屑导航数据
-          this.breadcrumbs.push({
+          this.file.breadcrumbs.push({
             fileId: item.fileId,
             fileName: item.fileName
           })
-          this.diskFile = response.data.diskFile
+          this.file.fileInfo = response.data.diskFile
           this.documentRetrieval = response.data.diskFile.length <= 0
           // 传给父组件的值
-          this.$emit('getBreadcrumbs', this.breadcrumbs)
+          this.$emit('getBreadcrumbs', this.file.breadcrumbs)
           this.$emit('getCurrentFile', response.data.diskFile)
           this.$emit('getOperation', false)
           this.$emit('getMultiSelect', false)
@@ -518,7 +520,7 @@ export default {
       let page = that.page + 1
       if (!that.documentRetrieval) {
         // 根据下标获取数据
-        let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
+        let breadcrumbs = this.file.breadcrumbs[this.file.breadcrumbs.length - 1]
         // 文件检索 获取用户根目录文件
         search({
           page: page,
