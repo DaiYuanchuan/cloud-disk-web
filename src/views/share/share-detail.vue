@@ -191,8 +191,8 @@
 </template>
 
 <script>
-import { shareDetail } from '@/api/share'
-import { search, download } from '@/api/file'
+import { search, shareDetail } from '@/api/share'
+import { download } from '@/api/file'
 import { storageUnitConversion } from '@/utils/utils'
 import DPlayer from 'dplayer'
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
@@ -405,7 +405,9 @@ export default {
       // 文件夹拥有下一级
       search({
         page: this.page,
-        fileParentId: item.fileId
+        fileParentId: item.fileId,
+        shareShort: this.$route.params.short,
+        code: this.form.code
       }).then((response) => {
         this.diskFile = response.data.diskFile
         let breadcrumbs = []
@@ -437,7 +439,9 @@ export default {
         // 文件夹拥有下一级
         search({
           page: this.page,
-          fileParentId: item.fileId
+          fileParentId: item.fileId,
+          shareShort: this.$route.params.short,
+          code: this.form.code
         }).then((response) => {
           // 增加面包屑导航数据
           this.breadcrumbs.push({
@@ -518,7 +522,9 @@ export default {
         // 文件检索 获取用户根目录文件
         search({
           page: page,
-          fileParentId: breadcrumbs.fileId
+          fileParentId: breadcrumbs.fileId,
+          shareShort: that.$route.params.short,
+          code: that.form.code
         }).then(data => {
           // 如果数据不为空
           if (data.data.diskFile.length > 0) {
