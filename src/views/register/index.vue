@@ -35,7 +35,7 @@
       <el-form-item prop="userEmail">
         <el-input
           type="text"
-          placeholder="请输入邮箱号码"
+          placeholder="请输入邮箱地址"
           v-model="form.userEmail"
         />
         <el-button
