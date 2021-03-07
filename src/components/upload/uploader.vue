@@ -8,12 +8,17 @@
       <div class="file-title">
         <p class="file-list-title">文件列表</p>
         <div class="operate">
-          <el-button type="text">
-            <i class="el-icon-caret-bottom"></i>
+          <el-button
+            type="text"
+            @click="operate"
+            :title="unfoldFileList ? '折叠' : '展开' "
+          >
+            <i :class="unfoldFileList ? 'el-icon-caret-bottom' : 'el-icon-caret-top'"></i>
           </el-button>
           <el-button
             type="text"
             class="global-uploader-close-btn"
+            title="关闭"
             @click="$emit('close')"
           >
             <i class="uploader-close-icon">×</i>
@@ -26,7 +31,10 @@
         :file-list="fileList"
         :display-upload-panel="displayUploadPanel"
       >
-        <ul class="file-list">
+        <ul
+          class="file-list"
+          ref="upFileList"
+        >
           <li
             v-for="(item,key) in fileList"
             :key="key"
@@ -114,11 +122,27 @@ export default {
   },
   data () {
     return {
+      // 文件列表(ul - li)的展开、折叠
+      unfoldFileList: true
     }
   },
   computed: {
   },
   methods: {
+    /**
+     * 折叠、展开面板动态切换
+     */
+    operate: function () {
+      if (this.unfoldFileList) {
+        // 折叠
+        this.unfoldFileList = false
+        this.$refs['upFileList'].style.height = '0px'
+      } else {
+        // 展开
+        this.unfoldFileList = true
+        this.$refs['upFileList'].style.height = '240px'
+      }
+    }
   }
 }
 </script>
@@ -177,6 +201,10 @@ export default {
 }
 
 .el-icon-caret-bottom {
+  color: #22b9ff;
+}
+
+.el-icon-caret-top {
   color: #22b9ff;
 }
 
