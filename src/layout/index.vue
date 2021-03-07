@@ -1,25 +1,24 @@
 <template>
   <div class="home">
-    <el-progress
-      v-show="progressShow"
-      :show-text="false"
-      :percentage="progress"
-    ></el-progress>
     <el-header>
       <div class="spanbutt">
         <!-- 上传 -->
         <el-upload
-          class="sc"
+          class="upload"
           title="上传文件"
-          :data="head"
-          :multiple="false"
+          ref="elementUpload"
+          :multiple="true"
           :show-file-list="false"
+          :auto-upload="true"
           :before-upload="beforeUpload"
           :http-request="uploadRequest"
+          :on-progress="progressChange"
+          :on-change="handleChange"
           action="https://upload.qiniup.com"
         >
-          <i class="el-icon-upload" />
-
+          <button class="upload-button">
+            <i class="el-icon-upload material-icons"></i>
+          </button>
         </el-upload>
 
         <div>
@@ -82,6 +81,17 @@
         </el-main>
       </el-container>
     </el-container>
+    <!-- 文件上传列队 -->
+    <uploader
+      ref="uploader"
+      :file-list="fileList"
+      :display-upload-panel="displayUploadPanel"
+      @pause="pause"
+      @resume="resume"
+      @retry="retry"
+      @remove="remove"
+      @close="close"
+    ></uploader>
   </div>
 </template>
 
@@ -91,14 +101,18 @@ import { getToken, upload } from '@/api/qiniu'
 import { search, insertFileFolder, deleteFile, renameFile } from '@/api/file'
 import { resetRouter } from '@/router/index'
 import cookies from 'js-cookie'
+import uploader from '@/components/upload/uploader'
+import { storageUnitConversion } from '@/utils/utils'
 
 export default {
   name: 'home',
   data () {
     return {
-      progressShow: false,
-      progress: 0,
       file: [],
+      // 记录文件上传的列队
+      fileList: [],
+      // 是否显示当前文件上传面板
+      displayUploadPanel: false,
       // 当前目录的文件列表信息
       current: [],
       path: [],
@@ -109,14 +123,137 @@ export default {
       // 是否显示复制粘贴移动
       isOperation: false,
       // 是否显示重命名
-      isMultiSelect: false,
-      head: {
-        token: '',
-        key: ''
-      }
+      isMultiSelect: false
     }
   },
+  components: {
+    uploader
+  },
   methods: {
+    /**
+     * 上传暂停事件
+     */
+    pause (file) {
+      file.status = 'paused'
+      file.state = this.fileStatusText('paused')
+      file.subscription.unsubscribe()
+    },
+    /**
+    * 上传开始事件
+    */
+    resume (file) {
+      file.status = 'uploading'
+      file.state = this.fileStatusText('uploading')
+      // 构建七牛云上传
+      file.subscription = file.observable.subscribe(
+        next => this.nextUpload(next, file.uid),
+        error => this.errorUpload(error, file.uid),
+        complete => this.completeUpload(complete, file.uid))
+    },
+    /**
+     * 上传删除事件
+     */
+    remove (file) {
+      // 删除之前先暂停当前上传
+      this.pause(file)
+      // 删除 element 上传组件维护的上传列队
+      let uploadFiles = this.$refs.elementUpload.uploadFiles
+      let index = uploadFiles.findIndex(item => item.uid === file.uid)
+      uploadFiles.splice(index, 1)
+
+      // 删除当前上传列队中的文件数据
+      this.fileList.splice(this.fileList.findIndex(item => item.uid === file.uid), 1)
+    },
+    /**
+     * 上传重试事件
+     */
+    retry (file) {
+      this.resume(file)
+    },
+    /**
+     * 关闭当前上传面板
+     */
+    close () {
+      this.displayUploadPanel = false
+    },
+    /**
+     * 文件状态改变时的钩子
+     * 添加文件、上传成功和上传失败时都会被调用
+     */
+    handleChange (file, fileList) {
+      if (file.status === 'ready') {
+        // 显示文件上传面板
+        this.displayUploadPanel = true
+        // 添加文件时
+        this.fileList.push({
+          name: file.name,
+          uid: file.uid,
+          size: storageUnitConversion(file.size),
+          status: 'waiting',
+          state: this.fileStatusText('waiting'),
+          progress: this.progressStyle(0),
+          icon: this.fileCategory(file.name.split('.').pop().toLowerCase(), file.raw.type.split('/')[0])
+        })
+      }
+    },
+    /**
+     * 上传进度条事件触发
+     */
+    progressChange (event, file, fileList) {
+      console.log(event, file, Date.now())
+      this.fileList.forEach(res => {
+        if (res.uid === file.uid) {
+          res.progress = this.progressStyle(event)
+        }
+      })
+    },
+    /**
+     * 进度条
+     */
+    progressStyle (progressBar) {
+      const progress = Math.floor(progressBar)
+      const style = `translateX(${Math.floor(progress - 100)}%)`
+      return {
+        progress: `${progress}%`,
+        webkitTransform: style,
+        mozTransform: style,
+        msTransform: style,
+        transform: style
+      }
+    },
+    /**
+     * 匹配icon
+     */
+    fileCategory (suffix, mime) {
+      let type = 'unknown'
+      const typeMap = {
+        image: ['gif', 'ief', 'jpg', 'jpeg', 'png', 'wbmp', 'ras', 'pnm', 'pbm', 'pgm', 'ppm', 'bmp', 'rgb', 'webp'],
+        video: ['mp4', 'm3u8', 'rmvb', 'avi', 'swf', '3gp', 'mkv', 'flv'],
+        audio: ['mp3', 'wav', 'wma', 'ogg', 'aac', 'flac', 'amr'],
+        document: ['doc', 'txt', 'json', 'docx', 'pages', 'epub', 'pdf', 'vue', 'numbers', 'csv', 'xls', 'xlsx', 'keynote', 'ppt', 'pptx']
+      }
+      Object.keys(typeMap).forEach((_type) => {
+        const extensions = typeMap[_type]
+        if (extensions.indexOf(suffix) > -1) {
+          type = _type
+        } else if (_type === mime) {
+          type = _type
+        }
+      })
+      return type
+    },
+    /**
+     * 状态换算
+     */
+    fileStatusText (status) {
+      return {
+        success: '成功',
+        error: '失败',
+        uploading: '上传中',
+        paused: '暂停',
+        waiting: '等待'
+      }[status]
+    },
     /**
      * 覆盖 element 原有的上传请求
      */
@@ -129,39 +266,100 @@ export default {
       }).then(response => {
         const key = response.data.key
         const token = response.data.token
-        // 显示进度条
-        this.progressShow = true
-        upload(
-          token,
-          key,
-          request,
-          next => {
-            let total = next.total
-            console.log(total)
-            // 设置进度条百分比
-            this.progress = total.percent
-          },
-          error => {
-            console.log(error)
-          },
-          complete => {
-            // 隐藏进度条
-            this.progressShow = false
-            this.progress = 0
-            // 根据下标获取数据
-            let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
-            search({
-              page: 1,
-              fileParentId: breadcrumbs.fileId
-            }).then((response) => {
-              this.file = response.data.diskFile
-            }).catch((err) => {
-              console.log(err)
-            })
-          }
-        )
+        // 构建七牛云上传
+        let qiniup = upload(token, key, request,
+          next => this.nextUpload(next, request.file.uid),
+          error => this.errorUpload(error, request.file.uid),
+          complete => this.completeUpload(complete, request.file.uid))
+        // 重置当前上传文件的状态
+        this.fileListFilter(request.file.uid, res => {
+          res.status = 'uploading'
+          res.state = this.fileStatusText('uploading')
+          res.observable = qiniup.observable
+          res.subscription = qiniup.subscription
+          res.request = request
+          res.header = response.data
+        })
       }).catch(err => {
         console.log(err)
+      })
+    },
+    /**
+     * 用于接收上传过程中返回的上传进度
+     */
+    nextUpload (next, uid) {
+      let total = next.total
+      this.fileListFilter(uid, res => {
+        res.request.onProgress(total.percent)
+        // 当前进度条为100时，认定上传成功
+        if (total.percent === 100) {
+          res.status = 'success'
+          res.state = this.fileStatusText('success')
+        }
+      })
+    },
+    /**
+     * 上传失败触发
+     */
+    errorUpload (error, uid) {
+      this.$message({
+        message: error.message || 'error',
+        showClose: true,
+        type: 'error',
+        duration: 3 * 1000
+      })
+
+      // 重置为上传失败
+      this.fileListFilter(uid, res => {
+        res.status = 'error'
+        res.state = this.fileStatusText('error')
+        res.request.onError(error.message)
+      })
+    },
+    /**
+     * 上传成功时返回
+     */
+    completeUpload (complete, uid) {
+      console.log(complete)
+      // 请求成功时返回统一状态码
+      if (complete.code !== '200') {
+        this.$message({
+          message: complete.message || 'error',
+          showClose: true,
+          type: 'error',
+          duration: 3 * 1000
+        })
+        // 重置为上传失败
+        this.fileListFilter(uid, res => {
+          res.status = 'error'
+          res.state = this.fileStatusText('error')
+        })
+      } else {
+        let uploadComplete = this.fileList.filter(item => item.status === 'uploading')
+        if (uploadComplete.length <= 0) {
+          // 根据下标获取数据
+          let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
+          search({
+            page: 1,
+            fileParentId: breadcrumbs.fileId
+          }).then((response) => {
+            this.file = response.data.diskFile
+          }).catch((err) => {
+            console.log(err)
+          })
+        }
+      }
+    },
+    /**
+     * 文件上传队列过滤
+     * 根据uid查找对应的file对象
+     * 参数:uid
+     */
+    fileListFilter (uid, result) {
+      this.fileList.forEach(res => {
+        if (res.uid === uid) {
+          result(res)
+        }
       })
     },
     /**
@@ -228,8 +426,6 @@ export default {
         page: 1,
         fileParentId: 0
       }).then((response) => {
-        this.progressShow = false
-        this.progress = 0
         this.file = response.data.diskFile
         console.log(response.data.diskFile)
         // 当前目录的文件列表信息
@@ -246,10 +442,6 @@ export default {
         this.isOperation = false
         // 是否显示重命名
         this.isMultiSelect = false
-        this.head = {
-          token: '',
-          key: ''
-        }
       }).catch((err) => {
         console.log(err)
       })
@@ -434,7 +626,7 @@ body > .el-container {
   font-size: 24px;
   letter-spacing: 8px;
 }
-.sc {
+.upload {
   width: 45px;
   text-align: right;
 }
@@ -443,5 +635,49 @@ body > .el-container {
 }
 .el-breadcrumb__separator {
   display: block;
+}
+
+.upload-button {
+  outline: none;
+  display: inline-block;
+  cursor: pointer;
+  -webkit-transition: all 0.2s ease;
+  transition: all 0.2s ease;
+  border: 0;
+  margin: 0;
+  border-radius: 50%;
+  background: transparent;
+  padding: 0;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  vertical-align: middle;
+  text-align: left;
+  position: relative;
+}
+
+.upload-button i {
+  padding: 0.4em;
+  -webkit-transition: all 0.1s ease-in-out;
+  transition: all 0.1s ease-in-out;
+  border-radius: 50%;
+}
+
+.material-icons {
+  font-family: Material Icons;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 24px;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
 }
 </style>

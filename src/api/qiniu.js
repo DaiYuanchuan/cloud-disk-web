@@ -1,6 +1,9 @@
 import request from '@/utils/request'
 import * as qiniu from 'qiniu-js'
 
+/**
+ * 请求后端接口 ，获取上传token
+ */
 export function getToken (params) {
   return request({
     url: '/uploader/token',
@@ -37,8 +40,17 @@ export const upload = (token, key, obj, next, error, complete) => {
     region: qiniu.region.z0
   }
 
+  var subObject = {
+    next: next,
+    error: error,
+    complete: complete
+  }
+
   let observable = qiniu.upload(file, key, token, putExtra, config)
   // 调用sdk上传接口获得相应的observable，控制上传和暂停
-  let subscription = observable.subscribe(next, error, complete)
-  return subscription
+  let subscription = observable.subscribe(subObject)
+  return {
+    observable: observable,
+    subscription: subscription
+  }
 }

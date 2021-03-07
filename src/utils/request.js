@@ -11,8 +11,8 @@ const service = axios.create({
   baseURL: process.env.BASE_API,
   // 在跨域请求时发送cookie
   withCredentials: true,
-  // 请求超时
-  timeout: 5000
+  // 请求超时1分钟(单位:毫秒)
+  timeout: 300000000
 })
 
 // 请求拦截器
