@@ -60,23 +60,19 @@
           <div class="CMxQsC">
             <div class="avatar">
               <div class="photo-frame theme-share-head">
-                <span class="radius-3">
-                  <img
-                    :alt="form.userName"
-                    :src="form.userAvatar"
-                    width="44"
-                  ></span>
+                <img
+                  :alt="form.userName"
+                  :src="form.userAvatar"
+                  width="44"
+                >
               </div>
             </div>
             <div class="verify-property">
               <div class="verify-user theme-share-text">
                 <div class="username theme-share-name">{{form.userName}}</div>
-                给您加密分享了文件
+                <div>&nbsp;给您加密分享了文件</div>
               </div>
             </div>
-            <div class="verify-btn">
-            </div>
-            <div class="cb"></div>
           </div>
         </el-form-item>
 
@@ -322,13 +318,14 @@ dt {
   background: url('https://pan.baidu.com/sns/box-static/disk-share/widget/pageModule/init/image/share_tit_bg_5855301.png?t=1608023046263')
     no-repeat;
   background-size: 100% 100%;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
+  border-radius: 4px;
+  height: 100px;
 }
 
 .avatar {
-  padding: 15px 10px 15px 25px;
+  width: 20%;
   float: left;
+  height: 100px;
 }
 
 .photo-frame,
@@ -337,11 +334,9 @@ dt {
   height: 44px;
   overflow: hidden;
   border-radius: 60px;
-}
-
-.photo-frame {
-  padding: 3px;
-  background: #9adaf2;
+  position: relative;
+  top: 30px;
+  left: 20px;
 }
 
 .photo-frame img {
@@ -350,22 +345,20 @@ dt {
 }
 
 .verify-property {
-  width: 275px;
+  width: 79%;
   color: #fff;
-  margin: 10px 0;
-  overflow: hidden;
-}
-
-.verify-property .verify-user {
-  height: 30px;
-  line-height: 30px;
-  overflow: hidden;
+  line-height: 100px;
+  height: 100px;
+  float: right;
 }
 
 .verify-property .username {
-  display: inline-block;
   font-size: 16px;
   font-family: PingFangSC-Semibold;
+  max-width: 125px; // 文字容器宽度
+  overflow: hidden; // 超出边框外隐藏
+  text-overflow: ellipsis; // 属性规定当文本溢出包含元素时发生的事情。
+  white-space: nowrap; // 规定段落中的文本不进行换行
 }
 
 .verify-user-avatar {
@@ -373,9 +366,7 @@ dt {
   vertical-align: middle;
 }
 
-.verify-property .verify-user {
-  height: 30px;
-  line-height: 30px;
-  overflow: hidden;
+.verify-user div {
+  float: left;
 }
 </style>

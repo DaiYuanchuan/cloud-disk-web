@@ -16,7 +16,7 @@
           :on-change="handleChange"
           action="https://upload.qiniup.com"
         >
-          <button class="upload-button">
+          <button class="upload-cloud">
             <i class="el-icon-upload material-icons"></i>
           </button>
         </el-upload>
@@ -663,7 +663,7 @@ body > .el-container {
   font-family: Material Icons;
   font-weight: 400;
   font-style: normal;
-  font-size: 24px;
+  font-size: 16px;
   display: inline-block;
   line-height: 1;
   text-transform: none;
@@ -682,9 +682,19 @@ body > .el-container {
   background: none;
   border: none;
   outline: medium;
+  padding: 9px 10px;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  margin: -8px;
 }
 
 .spanbutt button:hover {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.upload-cloud {
+  position: relative;
+  left: -10px;
 }
 </style>
