@@ -499,7 +499,6 @@ export default {
                 type: 'success',
                 message: '删除成功!'
               })
-              this.myFile()
               console.log(response)
             }).catch((err) => {
               console.log(err)
