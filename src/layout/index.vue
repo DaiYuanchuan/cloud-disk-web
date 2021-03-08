@@ -486,8 +486,9 @@ export default {
             deleteFile({
               fileId: fileid
             }).then((response) => {
-              // 删除自生元素
-              item.remove()
+              // 删除文件列表中对应的文件数据
+              this.current = this.current.splice(this.current.findIndex(item => item.fileId === parseInt(fileid)), 1)
+              console.log(this.current)
               // 取消操作的显示
               this.isOperation = false
               this.isMultiSelect = false
@@ -497,12 +498,6 @@ export default {
                 message: '删除成功!'
               })
               console.log(response)
-              this.current.map((currentFile, index) => {
-                if (currentFile.fileId === fileid) {
-                  console.log(this.current.splice(index, 1))
-                }
-              })
-              console.log(this.current)
             }).catch((err) => {
               console.log(err)
             })
