@@ -1,6 +1,6 @@
 export var imgReady = (function () {
     var list = [], intervalId = null,
-        // 用来执行队列
+        // 用来执行队列.
         tick = function () {
             var i = 0
             for (; i < list.length; i++) {

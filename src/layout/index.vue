@@ -23,19 +23,21 @@
 
         <div>
           <!-- 删除 -->
-          <span
-            class="el-icon-delete-solid"
-            title="立即刪除"
-            v-show="isOperation"
-            @click="del"
-          ></span>
+          <button v-show="isOperation">
+            <i
+              class="el-icon-delete-solid"
+              title="立即刪除"
+              @click="del"
+            ></i>
+          </button>
           <!-- 编辑 -->
-          <span
-            v-show="isMultiSelect"
-            title="编辑文件"
-            @click="edit"
-            class="el-icon-edit"
-          ></span>
+          <button v-show="isMultiSelect">
+            <i
+              title="编辑文件"
+              @click="edit"
+              class="el-icon-edit"
+            ></i>
+          </button>
         </div>
 
       </div>
@@ -674,5 +676,15 @@ body > .el-container {
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-feature-settings: 'liga';
   font-feature-settings: 'liga';
+}
+
+.spanbutt button {
+  background: none;
+  border: none;
+  outline: medium;
+}
+
+.spanbutt button:hover {
+  background: rgba(0, 0, 0, 0.2);
 }
 </style>
