@@ -527,12 +527,11 @@ export default {
 }
 .home {
   overflow-y: auto;
-  height: 90.7vh;
   -moz-user-height: 90.7vh;
   -webkit-user-height: 90.7vh;
   -ms-user-height: 90.7vh;
   -khtml-user-height: 90.7vh;
-  /* height:calc(88vh - 20px); */
+  height:calc(93vh - 20px);
   overflow-x: hidden;
   -moz-user-select: none; /*火狐*/
   -webkit-user-select: none; /*webkit浏览器*/
