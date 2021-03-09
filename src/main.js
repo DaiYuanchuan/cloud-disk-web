@@ -10,12 +10,14 @@ import VueAxios from 'vue-axios'
 import cookies from 'js-cookie'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
-import { asyncRoutes } from './router/routers'
+import {asyncRoutes} from './router/routers'
+
+import './icons' // icon
 
 Vue.config.productionTip = false
 
 // 进度条配置
-NProgress.configure({ showSpinner: false })
+NProgress.configure({showSpinner: false})
 
 Vue.use(ElementUI)
 Vue.use(VueAxios, axios)
@@ -34,14 +36,14 @@ router.beforeEach((to, from, next) => {
       next()
     } else {
       // 其他没有访问权限的页面被重定向到登录页面。
-      next({ path: '/login' })
+      next({path: '/login'})
       // 完成进度条
       NProgress.done()
     }
   } else {
     // 如果已登录，则重定向到主页
     if (to.path === '/login') {
-      next({ path: '/home' })
+      next({path: '/home'})
       // 完成进度条
       NProgress.done()
     } else {
