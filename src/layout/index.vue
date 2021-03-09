@@ -23,18 +23,22 @@
 
         <div>
           <!-- 删除 -->
-          <button v-show="isOperation">
+          <button
+            v-show="isOperation"
+            @click="del"
+          >
             <i
               class="el-icon-delete-solid"
               title="立即刪除"
-              @click="del"
             ></i>
           </button>
           <!-- 编辑 -->
-          <button v-show="isMultiSelect">
+          <button
+            v-show="isMultiSelect"
+            @click="edit"
+          >
             <i
               title="编辑文件"
-              @click="edit"
               class="el-icon-edit"
             ></i>
           </button>
@@ -44,10 +48,7 @@
 
     </el-header>
     <el-container>
-      <el-aside
-        width="400px;"
-        style="border-right: solid 1px #e6e6e6;"
-      >
+      <el-aside width="400px;">
         <el-menu
           default-active="2"
           class="el-menu-vertical-demo"
@@ -571,9 +572,14 @@ export default {
 .el-icon-upload:active {
   color: #333 !important;
 }
-.el-icon-upload:hover {
-  color: #333 !important;
+.el-menu {
+  background-color: #fafafa;
 }
+
+.el-menu-item {
+  font-size: 1.1em;
+}
+
 .el-header,
 .el-footer {
   background-color: #fff;
@@ -663,7 +669,7 @@ body > .el-container {
   font-family: Material Icons;
   font-weight: 400;
   font-style: normal;
-  font-size: 16px;
+  font-size: 20px;
   display: inline-block;
   line-height: 1;
   text-transform: none;
@@ -678,23 +684,24 @@ body > .el-container {
   font-feature-settings: 'liga';
 }
 
+.spanbutt button i {
+  font-size: 20px;
+}
+
 .spanbutt button {
   background: none;
   border: none;
   outline: medium;
-  padding: 9px 10px;
+  /* padding: 9px 10px; */
   border-radius: 50%;
-  width: 35px;
-  height: 35px;
-  margin: -8px;
+  width: 42px;
+  height: 42px;
+  margin: -5px;
+  color: #546e7a;
 }
 
 .spanbutt button:hover {
   background: rgba(0, 0, 0, 0.1);
-}
-
-.upload-cloud {
-  position: relative;
-  left: -10px;
+  cursor: pointer;
 }
 </style>

@@ -18,7 +18,7 @@
 
     <div class="topsa">
       <p>
-        文件
+        名称
       </p>
       <p>
         时间
@@ -319,6 +319,7 @@ export default {
             fileId: item.fileId,
             fileName: item.fileName
           })
+          this.formatCrumbs()
           this.diskFile = response.data.diskFile
           this.documentRetrieval = response.data.diskFile.length <= 0
           // 传给父组件的值
@@ -409,6 +410,46 @@ export default {
           console.log(e)
         })
       }
+    },
+    /**
+     * 格式化面包屑数组
+     * 返回一个新的数组，数组第一位显示 ...
+     * 入: [1，2，3，4，5，6]
+     * 出: [1，...，4，5，6]
+     */
+    formatCrumbs () {
+      let array = this.breadcrumbs
+      let length = 5
+      // 如果数组的长度 <= 需要格式化的长度
+      if (array.length <= length - 1) {
+        // 不进行格式化 ，返回原数组
+        return array
+      }
+      let newarray = []
+      newarray.push({
+        fileName: array[0].fileName,
+        fileId: array[0].fileId
+      })
+      newarray.push({
+        fileName: '...',
+        fileId: array[array.length - 4].fileId
+      })
+      newarray.push({
+        fileName: array[array.length - 3].fileName,
+        fileId: array[array.length - 3].fileId
+      })
+      newarray.push({
+        fileName: array[array.length - 2].fileName,
+        fileId: array[array.length - 2].fileId
+      })
+      newarray.push({
+        fileName: array[array.length - 1].fileName,
+        fileId: array[array.length - 1].fileId
+      })
+      console.log(newarray)
+
+      console.log(array.slice(-4))
+      return newarray
     }
   }
 }
@@ -437,7 +478,7 @@ export default {
   left: 15px;
 }
 #mbx {
-  width: 100%;
+  width: 99%;
   height: 55px;
   line-height: 10px;
   padding: 0px 0px 0px 10px;
@@ -486,9 +527,19 @@ export default {
 }
 .home {
   overflow-y: auto;
-  height: 88vh;
+  height: 90.7vh;
+  -moz-user-height: 90.7vh;
+  -webkit-user-height: 90.7vh;
+  -ms-user-height: 90.7vh;
+  -khtml-user-height: 90.7vh;
   /* height:calc(88vh - 20px); */
   overflow-x: hidden;
+  -moz-user-select: none; /*火狐*/
+  -webkit-user-select: none; /*webkit浏览器*/
+  -ms-user-select: none; /*IE10*/
+  -khtml-user-select: none; /*早期浏览器*/
+  user-select: none;
+  padding: 0px 20px 10px 0px;
 }
 
 .home::-webkit-scrollbar {
