@@ -40,7 +40,7 @@ export const upload = (token, key, obj, next, error, complete) => {
     region: qiniu.region.z0
   }
 
-  var subObject = {
+  let subObject = {
     next: next,
     error: error,
     complete: complete
