@@ -70,7 +70,7 @@
             <div class="verify-property">
               <div class="verify-user theme-share-text">
                 <div class="username theme-share-name">{{form.userName}}</div>
-                <div>&nbsp;给您加密分享了文件</div>
+                <div style="margin-left: 5px;">给您加密分享了文件</div>
               </div>
             </div>
           </div>
