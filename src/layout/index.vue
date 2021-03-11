@@ -1,93 +1,93 @@
 <template>
-  <div class="home">
-    <el-header>
-      <div class="spanbutt">
-        <!-- 上传 -->
-        <el-upload
-          class="upload"
-          title="上传文件"
-          ref="elementUpload"
-          :multiple="true"
-          :show-file-list="false"
-          :auto-upload="true"
-          :before-upload="beforeUpload"
-          :http-request="uploadRequest"
-          :on-progress="progressChange"
-          :on-change="handleChange"
-          action="https://upload.qiniup.com"
-        >
-          <button class="upload-cloud">
-            <i class="el-icon-upload material-icons"></i>
-          </button>
-        </el-upload>
-
-        <div>
-          <!-- 删除 -->
-          <button
-            v-show="isOperation"
-            @click="del"
-          >
-            <i
-              class="el-icon-delete-solid"
-              title="立即刪除"
-            ></i>
-          </button>
-          <!-- 编辑 -->
-          <button
-            v-show="isMultiSelect"
-            @click="edit"
-          >
-            <i
-              title="编辑文件"
-              class="el-icon-edit"
-            ></i>
-          </button>
-        </div>
-
-      </div>
-
-    </el-header>
+  <div class="layout">
     <el-container>
-      <el-aside width="400px;">
-        <el-menu
-          default-active="2"
-          class="el-menu-vertical-demo"
-          style="border-right: none"
-          router
-        >
-
-          <el-menu-item @click="myFile()">
-            <i class="el-icon-folder"></i>
-            <span slot="title">我的文件</span>
-          </el-menu-item>
-          <el-menu-item @click="insertFileFolder()">
-            <i class="el-icon-folder-add"></i>
-            <span slot="title">新建文件夹</span>
-          </el-menu-item>
-          <el-menu-item @click="logout()">
-            <i class="el-icon-switch-button"></i>
-            <span slot="title">退出登陆</span>
-          </el-menu-item>
-        </el-menu>
-      </el-aside>
+      <!-- 头部 -->
+      <el-header height="65px">
+        <div class="right-logo">
+          <img src="/static/svg/logo.svg" alt="cloud-disk">
+        </div>
+        <div class="left-operate">
+          <div class="operate-btn">
+            <el-button v-for="(item, index) in operateBtn" :key="index" @click="clickCallback(item)"
+                       :title="item.title" :aria-label="item.title" class="action" v-show="item.show">
+              <i :class="item.icon" class="material-icons"></i>
+              <span>{{ item.title }}</span>
+            </el-button>
+          </div>
+          <!-- 上传 -->
+          <el-upload
+            class="upload"
+            title="上传文件"
+            ref="elementUpload"
+            :multiple="true"
+            :show-file-list="false"
+            :auto-upload="true"
+            :before-upload="beforeUpload"
+            :http-request="uploadRequest"
+            :on-progress="progressChange"
+            :on-change="handleChange"
+            action="https://upload.qiniup.com"
+          >
+            <button class="action">
+              <i class="el-icon-upload material-icons"></i>
+            </button>
+          </el-upload>
+          <!-- 详情 -->
+          <el-button title="详情" aria-label="详情" class="action">
+            <i class="el-icon-info material-icons"></i>
+            <span>详情</span>
+          </el-button>
+        </div>
+      </el-header>
       <el-container>
-
+        <!-- 左边菜单栏 -->
+        <el-aside width="16em">
+          <div>
+            <el-button class="action" aria-label="我的文件" title="我的文件" @click="myFile">
+              <i class="material-icons">
+                <svg-icon icon-class="file-folder" color="#546e7a"></svg-icon>
+              </i>
+              <span>我的文件</span>
+            </el-button>
+            <el-button aria-label="新建文件夹" title="新建文件夹" class="action" @click="insertFileFolder">
+              <i class="material-icons">
+                <svg-icon icon-class="file-new-built-folder"></svg-icon>
+              </i>
+              <span>新建文件夹</span>
+            </el-button>
+            <el-button aria-label="我的分享" title="我的分享" class="action" @click="insertFileFolder">
+              <i class="material-icons">
+                <svg-icon icon-class="file-share"></svg-icon>
+              </i>
+              <span>我的分享</span>
+            </el-button>
+          </div>
+          <el-button aria-label="设置" title="设置" class="action" @click="setting">
+            <i class="material-icons">
+              <svg-icon icon-class="setting"></svg-icon>
+            </i>
+            <span>设置</span>
+          </el-button>
+          <el-button aria-label="退出登录" title="退出登录" class="action" @click="logout">
+            <i class="material-icons">
+              <svg-icon icon-class="logout"></svg-icon>
+            </i>
+            <span>登出</span>
+          </el-button>
+        </el-aside>
+        <!-- main -->
         <el-main>
-          <router-view
-            :file="file"
-            :path="path"
-            @getBreadcrumbs="breadcrumb"
-            @getCurrentFile="currentFile"
-            @getOperation="operation"
-            @getMultiSelect="multiSelect"
-          ></router-view>
+          <router-view :breadcrumbs="breadcrumbs" :file-list="fileList"
+                       @nextPage="nextPage" @doubleClick="doubleClick"
+                       @previous="previous"></router-view>
         </el-main>
       </el-container>
     </el-container>
-    <!-- 文件上传列队 -->
+
+    <!-- 文件上传面板 -->
     <uploader
       ref="uploader"
-      :file-list="fileList"
+      :file-list="uploadedFilesList"
       :display-upload-panel="displayUploadPanel"
       @pause="pause"
       @resume="resume"
@@ -99,40 +99,341 @@
 </template>
 
 <script>
-import { logout } from '@/api/login'
-import { getToken, upload } from '@/api/qiniu'
-import { search, insertFileFolder, deleteFile, renameFile } from '@/api/file'
-import { resetRouter } from '@/router/index'
+import {logout} from '@/api/login'
+import {getToken, upload} from '@/api/qiniu'
+import {search, insertFileFolder, deleteFile, renameFile} from '@/api/file'
+import {resetRouter} from '@/router/index'
 import cookies from 'js-cookie'
 import uploader from '@/components/upload/uploader'
-import { storageUnitConversion } from '@/utils/utils'
+import {storageUnitConversion, formatDate} from '@/utils/utils'
 
 export default {
-  name: 'home',
+  name: 'layout',
   data () {
     return {
-      file: [],
-      // 记录文件上传的列队
-      fileList: [],
-      // 是否显示当前文件上传面板
-      displayUploadPanel: false,
-      // 当前目录的文件列表信息
-      current: [],
-      path: [],
+      // 右上角需要进行操作的按钮
+      operateBtn: [{
+        title: '分享',
+        icon: 'el-icon-share',
+        show: false,
+        method: 'fileSharing'
+      }, {
+        title: '重命名',
+        icon: 'el-icon-edit-outline',
+        show: false,
+        method: 'fileRename'
+      }, {
+        title: '复制',
+        icon: 'el-icon-document-copy',
+        show: false,
+        method: 'fileCopy'
+      }, {
+        title: '移动',
+        icon: 'el-icon-document-remove',
+        show: false,
+        method: 'fileMove'
+      }, {
+        title: '删除',
+        icon: 'el-icon-delete-solid',
+        show: false,
+        method: 'fileDeletion'
+      }],
+      // 路径信息的面包屑导航(数组中的第一位元素为主页)
       breadcrumbs: [{
-        fileName: '/',
+        fileName: '主页',
         fileId: 0
       }],
-      // 是否显示复制粘贴移动
-      isOperation: false,
-      // 是否显示重命名
-      isMultiSelect: false
+      // 初始化的分页信息(默认从第一页开始请求页面文件列表数据)
+      page: 1,
+      // 页面上拉触底事件(如果页面上拉触底请求下一页的数据时 没有数据了 这里显示true 表示不请求数据)
+      pageBottomEvent: false,
+      // 当前页面的文件列表信息(记录着当前页面中所有的文件数据)
+      fileList: [],
+      // 上传面板中的文件上传的列队信息(包含着所有状态的文件数据)
+      uploadedFilesList: [],
+      // 是否显示当前文件上传面板
+      displayUploadPanel: false
     }
   },
   components: {
     uploader
   },
+  // 钩子函数: 数据监听
+  watch: {
+    // 监听 fileList 数据的实时变化
+    fileList: {
+      handler: function () {
+        let selectData = this.fileList.filter(res => res.select)
+        if (!selectData.length) {
+          this.operateBtn.forEach(res => {
+            res.show = false
+          })
+        }
+        if (selectData.length === 1) {
+          this.operateBtn.forEach(res => {
+            res.show = true
+          })
+        }
+        if (selectData.length > 1) {
+          this.operateBtn[1].show = false
+        }
+      },
+      // 深度监听
+      deep: true
+    }
+  },
+  // 钩子函数：页面加载完成后执行
+  mounted: function () {
+    this.getFileListInfo()
+  },
   methods: {
+    /**
+     * 点击按钮的回调函数
+     * @param btn 按钮对象
+     */
+    clickCallback: function (btn) {
+      this[btn.method](btn)
+    },
+    // ============================== 页面右上角按钮执行的操作方法
+    /**
+     * 右上角-文件分享 按钮
+     */
+    fileSharing: function () {
+
+    },
+    /**
+     * 右上角-重命名 按钮
+     */
+    fileRename: function () {
+      // 获取当前选中的数据
+      let selectData = this.fileList.filter(res => res.select)
+      if (!selectData.length) {
+        // 如果没有数据选中的 ，则不执行
+        return
+      }
+
+      let character = selectData[0].fileName
+      // 如果这个名字很长 ...
+      if (character.length > 8) {
+        character = character.slice(0, 8) + '...'
+      }
+
+      this.$prompt(`请输入新名称，旧名称为:${character}`, '重命名', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValue: selectData[0].fileName,
+        inputPattern: /^((?![\\/:*?<>|'%]).){1,50}$/,
+        inputErrorMessage: '50个字符以内，不包含特殊字符',
+        closeOnClickModal: false
+      }).then(({value}) => {
+        // 当前新名字 需与 旧名字 不相等 才能更改
+        if (value !== selectData[0].fileName) {
+          renameFile({
+            fileId: selectData[0].fileId,
+            newFileName: value
+          }).then((response) => {
+            selectData[0].fileName = response['data']
+            selectData[0].updateTime = formatDate(new Date(Date.now()), 'yyyy-MM-dd hh:mm:ss')
+            // 成功的提示框
+            this.$message({
+              type: 'success',
+              message: '修改成功!'
+            })
+            console.log(response)
+          }).catch((err) => {
+            console.log(err)
+          })
+        }
+      }).catch(() => {
+      })
+    },
+    /**
+     * 右上角-文件复制 按钮
+     */
+    fileCopy: function () {
+
+    },
+    /**
+     * 右上角-文件移动 按钮
+     */
+    fileMove: function () {
+
+    },
+    /**
+     * 右上角-文件删除 按钮
+     */
+    fileDeletion: function () {
+      this.$confirm('你确定要删除这个文件/文件夹吗?', '提示', {
+        confirmButtonText: '删除',
+        closeOnClickModal: false,
+        cancelButtonText: '取消'
+      }).then(() => {
+        // 获取当前选中的数据
+        let selectData = this.fileList.filter(res => res.select)
+        selectData.forEach(res => {
+          deleteFile({
+            fileId: res.fileId
+          }).then((response) => {
+            console.log(response)
+            // 删除成功的提示框
+            this.$message({
+              type: 'success',
+              message: '删除成功!'
+            })
+            // 删除文件列表中对应的文件数据
+            this.fileList = this.fileList.filter(item => item !== res)
+          }).catch((err) => {
+            console.log(err)
+          })
+        })
+      }).catch(() => {
+      })
+    },
+    // ============================== 页面工具方法
+    /**
+     * 从服务器端获取文件列表信息
+     * @param page 页码
+     * @param fileParentId 文件的上一级id
+     * @param resetData 是否重置文件列表数据
+     * @param callback 回调函数
+     */
+    getFileListInfo: function (page, fileParentId, resetData, callback) {
+      if (page === null || page === undefined) {
+        // 默认第一页
+        page = 1
+      }
+
+      if (fileParentId === null || fileParentId === undefined) {
+        // 默认从 路径信息的面包屑导航 数据中获取最后一位元素
+        fileParentId = this.breadcrumbs[this.breadcrumbs.length - 1].fileId
+      }
+      search({
+        page: page,
+        fileParentId: fileParentId
+      }).then((response) => {
+        // 重置文件列表数据
+        if (resetData !== undefined && resetData) {
+          this.fileList = []
+        }
+        response.data['diskFile'].forEach(res => {
+          res['select'] = false
+          this.fileList.push(res)
+        })
+        // 判断是否进行下一次的分页请求
+        if (response.data['diskFile'].length < 100 || response.data['toTal'] < 100 ||
+          (response.data['diskFile'].length === 100 && response.data['toTal'] === 100)) {
+          // 数组长度小于 pageSize 不进行下一次分页请求
+          this.pageBottomEvent = true
+        } else if (response.data['diskFile'].length === 100 && response.data['toTal'] > 100) {
+          this.pageBottomEvent = false
+        }
+        if (callback !== undefined) {
+          callback(response)
+        }
+      }).catch((err) => {
+        console.log(err)
+      })
+    },
+    /**
+     * 加载下一页
+     */
+    nextPage: function () {
+      if (!this.pageBottomEvent) {
+        // 当前页码+1
+        this.page += 1
+        this.getFileListInfo(this.page, null)
+      }
+    },
+    /**
+     * 页面 面包屑点击事件(加载上一级)
+     */
+    previous: function (item) {
+      this.page = 1
+      this.getFileListInfo(this.page, item.fileId, true, response => {
+        this.breadcrumbs = this.breadcrumbs.slice(0, this.breadcrumbs.findIndex(res => res.fileId === item.fileId) + 1)
+      })
+    },
+    /**
+     * 页面 文件双击事件(只有文件被双击了才会触发)
+     */
+    doubleClick: function (item) {
+      // 设置当前页码为1
+      this.page = 1
+      this.getFileListInfo(this.page, item.fileId, true, res => {
+        // 增加面包屑导航数据
+        this.breadcrumbs.push({
+          fileId: item.fileId,
+          fileName: item.fileName
+        })
+      })
+    },
+    // ============================== 页面左侧菜单栏调用的方法
+    /**
+     * 页面左侧菜单栏-我的文件
+     */
+    myFile: function () {
+      // this.$router.push({name: 'home'})
+    },
+    /**
+     * 页面左侧菜单栏-新建文件夹
+     */
+    insertFileFolder: function () {
+      // 获取当前目录id信息
+      let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
+      // 获取当前路径
+      this.$prompt('请输入新目录的名称。', '新建目录', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPattern: /^((?![\\/:*?<>|'%]).){1,50}$/,
+        inputErrorMessage: '50个字符以内，不包含特殊字符'
+      }).then(({value}) => {
+        // 如果是空的
+        insertFileFolder({
+          fileId: 0,
+          fileName: value,
+          fileParentId: breadcrumbs.fileId
+        }).then((response) => {
+          response.data['select'] = false
+          this.fileList.unshift(response.data)
+          this.$message({
+            type: 'success',
+            message: response.message
+          })
+        }).catch((err) => {
+          console.log(err)
+        })
+      }).catch(() => {
+      })
+    },
+    /**
+     * 页面左侧菜单栏-设置
+     */
+    setting: function () {
+      console.log('用户设置')
+      this.$message({
+        showClose: true,
+        message: '开发中，敬请期待！'
+      })
+    },
+    /**
+     * 页面左侧菜单栏-退出登录
+     */
+    logout: function () {
+      this.$confirm('确认退出吗?', '提示').then(() => {
+        logout().then(res => {
+          // 重置路由
+          resetRouter()
+          cookies.remove('userInfo')
+          this.$router.push({name: 'login'})
+          // 删除保存的用户密钥数据
+          localStorage.removeItem('secretKey')
+        }).catch((err) => {
+          console.log(err)
+        })
+      }).catch(() => {
+      })
+    },
+    // ============================== 文件上传部分方法
     /**
      * 上传暂停事件
      */
@@ -142,8 +443,8 @@ export default {
       file.subscription.unsubscribe()
     },
     /**
-    * 上传开始事件
-    */
+     * 上传开始事件
+     */
     resume (file) {
       file.status = 'uploading'
       file.state = this.fileStatusText('uploading')
@@ -165,7 +466,7 @@ export default {
       uploadFiles.splice(index, 1)
 
       // 删除当前上传列队中的文件数据
-      this.fileList.splice(this.fileList.findIndex(item => item.uid === file.uid), 1)
+      this.uploadedFilesList.splice(this.uploadedFilesList.findIndex(item => item.uid === file.uid), 1)
     },
     /**
      * 上传重试事件
@@ -180,119 +481,12 @@ export default {
       this.displayUploadPanel = false
     },
     /**
-     * 文件状态改变时的钩子
-     * 添加文件、上传成功和上传失败时都会被调用
-     */
-    handleChange (file, fileList) {
-      if (file.status === 'ready') {
-        // 显示文件上传面板
-        this.displayUploadPanel = true
-        // 添加文件时
-        this.fileList.push({
-          name: file.name,
-          uid: file.uid,
-          size: storageUnitConversion(file.size),
-          status: 'waiting',
-          state: this.fileStatusText('waiting'),
-          progress: this.progressStyle(0),
-          icon: this.fileCategory(file.name.split('.').pop().toLowerCase(), file.raw.type.split('/')[0])
-        })
-      }
-    },
-    /**
-     * 上传进度条事件触发
-     */
-    progressChange (event, file, fileList) {
-      console.log(event, file, Date.now())
-      this.fileList.forEach(res => {
-        if (res.uid === file.uid) {
-          res.progress = this.progressStyle(event)
-        }
-      })
-    },
-    /**
-     * 进度条
-     */
-    progressStyle (progressBar) {
-      const progress = Math.floor(progressBar)
-      const style = `translateX(${Math.floor(progress - 100)}%)`
-      return {
-        progress: `${progress}%`,
-        webkitTransform: style,
-        mozTransform: style,
-        msTransform: style,
-        transform: style
-      }
-    },
-    /**
-     * 匹配icon
-     */
-    fileCategory (suffix, mime) {
-      let type = 'unknown'
-      const typeMap = {
-        image: ['gif', 'ief', 'jpg', 'jpeg', 'png', 'wbmp', 'ras', 'pnm', 'pbm', 'pgm', 'ppm', 'bmp', 'rgb', 'webp'],
-        video: ['mp4', 'm3u8', 'rmvb', 'avi', 'swf', '3gp', 'mkv', 'flv'],
-        audio: ['mp3', 'wav', 'wma', 'ogg', 'aac', 'flac', 'amr'],
-        document: ['doc', 'txt', 'json', 'docx', 'pages', 'epub', 'pdf', 'vue', 'numbers', 'csv', 'xls', 'xlsx', 'keynote', 'ppt', 'pptx']
-      }
-      Object.keys(typeMap).forEach((_type) => {
-        const extensions = typeMap[_type]
-        if (extensions.indexOf(suffix) > -1) {
-          type = _type
-        } else if (_type === mime) {
-          type = _type
-        }
-      })
-      return type
-    },
-    /**
-     * 状态换算
-     */
-    fileStatusText (status) {
-      return {
-        success: '成功',
-        error: '失败',
-        uploading: '上传中',
-        paused: '暂停',
-        waiting: '等待'
-      }[status]
-    },
-    /**
-     * 覆盖 element 原有的上传请求
-     */
-    uploadRequest: function (request) {
-      // 根据下标获取数据
-      let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
-      getToken({
-        fileName: request.file.name,
-        fileParentId: breadcrumbs.fileId
-      }).then(response => {
-        const key = response.data.key
-        const token = response.data.token
-        // 构建七牛云上传
-        let qiniup = upload(token, key, request,
-          next => this.nextUpload(next, request.file.uid),
-          error => this.errorUpload(error, request.file.uid),
-          complete => this.completeUpload(complete, request.file.uid))
-        // 重置当前上传文件的状态
-        this.fileListFilter(request.file.uid, res => {
-          res.status = 'uploading'
-          res.state = this.fileStatusText('uploading')
-          res.observable = qiniup.observable
-          res.subscription = qiniup.subscription
-          res.request = request
-          res.header = response.data
-        })
-      }).catch(err => {
-        console.log(err)
-      })
-    },
-    /**
-     * 用于接收上传过程中返回的上传进度
+     * 用于接收七牛云上传过程中返回的上传进度信息
      */
     nextUpload (next, uid) {
       let total = next.total
-      this.fileListFilter(uid, res => {
+      this.uploadedFilesListFilter(uid, res => {
+        // 调用el-upload的上传进度条事件
         res.request.onProgress(total.percent)
         // 当前进度条为100时，认定上传成功
         if (total.percent === 100) {
@@ -313,9 +507,10 @@ export default {
       })
 
       // 重置为上传失败
-      this.fileListFilter(uid, res => {
+      this.uploadedFilesListFilter(uid, res => {
         res.status = 'error'
         res.state = this.fileStatusText('error')
+        // 调用el-upload的上传失败事件
         res.request.onError(error.message)
       })
     },
@@ -323,7 +518,6 @@ export default {
      * 上传成功时返回
      */
     completeUpload (complete, uid) {
-      console.log(complete)
       // 请求成功时返回统一状态码
       if (complete.code !== '200') {
         this.$message({
@@ -332,322 +526,257 @@ export default {
           type: 'error',
           duration: 3 * 1000
         })
-        // 重置为上传失败
-        this.fileListFilter(uid, res => {
+        // 将当前文件状态重置为上传失败
+        this.uploadedFilesListFilter(uid, res => {
           res.status = 'error'
           res.state = this.fileStatusText('error')
         })
       } else {
-        let uploadComplete = this.fileList.filter(item => item.status === 'uploading')
+        let uploadComplete = this.uploadedFilesList.filter(item => item.status === 'uploading')
         if (uploadComplete.length <= 0) {
-          // 根据下标获取数据
-          let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
-          search({
-            page: 1,
-            fileParentId: breadcrumbs.fileId
-          }).then((response) => {
-            this.file = response.data.diskFile
-          }).catch((err) => {
-            console.log(err)
-          })
+          // 重新获取当前页面的数据
+          this.getFileListInfo(null, null, true)
         }
       }
     },
     /**
-     * 文件上传队列过滤
-     * 根据uid查找对应的file对象
-     * 参数:uid
+     * el-upload 上传进度条事件触发
      */
-    fileListFilter (uid, result) {
-      this.fileList.forEach(res => {
-        if (res.uid === uid) {
-          result(res)
+    progressChange: function (event, file) {
+      this.uploadedFilesList.forEach(res => {
+        if (res.uid === file.uid) {
+          res.progress = this.progressStyle(event)
         }
       })
     },
     /**
-     * 文件上传前调用的函数
+     * el-upload 文件状态改变时的钩子
+     * 添加文件、上传成功和上传失败时都会被调用
      */
-    beforeUpload (file) {
-      let regular = /^((?!\\|\/|:|\*|\?|<|>|\||'|%).){1,50}$/
+    handleChange (file) {
+      // 添加文件时
+      if (file.status === 'ready') {
+        // 显示文件上传面板
+        if (!this.displayUploadPanel) {
+          this.displayUploadPanel = true
+        }
+        // 向上传面板中的文件列队添加新的文件数据
+        this.uploadedFilesList.push({
+          name: file.name,
+          uid: file.uid,
+          size: storageUnitConversion(file.size),
+          status: 'waiting',
+          state: this.fileStatusText('waiting'),
+          progress: this.progressStyle(0),
+          icon: this.fileCategory(file.name.split('.').pop().toLowerCase(), file.raw.type.split('/')[0])
+        })
+      }
+    },
+    /**
+     * 根据文件后缀、文件类型匹配上传面板中的icon信息
+     * @param suffix 文件后缀(jpg、gif等)
+     * @param mime 文件类型的前缀(image、video等)
+     * @returns {string}
+     */
+    fileCategory (suffix, mime) {
+      let type = 'unknown'
+      const typeMap = {
+        image: ['gif', 'ief', 'jpg', 'jpeg', 'png', 'wbmp', 'ras', 'pnm', 'pbm', 'pgm', 'ppm', 'bmp', 'rgb', 'webp'],
+        video: ['mp4', 'm3u8', 'rmvb', 'avi', 'swf', '3gp', 'mkv', 'flv'],
+        audio: ['mp3', 'wav', 'wma', 'ogg', 'aac', 'flac', 'amr'],
+        document: ['doc', 'txt', 'json', 'docx', 'pages', 'epub', 'pdf', 'vue', 'numbers', 'csv', 'xls', 'xlsx', 'keynote', 'ppt', 'pptx']
+      }
+      Object.keys(typeMap).forEach((_type) => {
+        const extensions = typeMap[_type]
+        if (extensions.indexOf(suffix) > -1) {
+          type = _type
+        } else if (_type === mime) {
+          type = _type
+        }
+      })
+      return type
+    },
+    /**
+     * el-upload 覆盖 element 原有的上传请求
+     */
+    uploadRequest: function (request) {
+      // 获取当前目录id信息
+      let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
+      getToken({
+        fileName: request.file.name,
+        fileParentId: breadcrumbs.fileId
+      }).then(response => {
+        const key = response.data.key
+        const token = response.data.token
+        // 构建七牛云上传
+        let qiniup = upload(token, key, request,
+          next => this.nextUpload(next, request.file.uid),
+          error => this.errorUpload(error, request.file.uid),
+          complete => this.completeUpload(complete, request.file.uid))
+        // 重置当前上传文件的状态
+        this.uploadedFilesListFilter(request.file.uid, res => {
+          res.status = 'uploading'
+          res.state = this.fileStatusText('uploading')
+          res.observable = qiniup.observable
+          res.subscription = qiniup.subscription
+          res.request = request
+          res.header = response.data
+        })
+      }).catch(err => {
+        console.log(err)
+      })
+    },
+    /**
+     * 上传面板中的进度条动态样式
+     */
+    progressStyle (progressBar) {
+      const progress = Math.floor(progressBar)
+      const style = `translateX(${Math.floor(progress - 100)}%)`
+      return {
+        progress: `${progress}%`,
+        webkitTransform: style,
+        mozTransform: style,
+        msTransform: style,
+        transform: style
+      }
+    },
+    /**
+     * el-upload文件上传前调用的函数
+     * 主要验证文件名是否包含特殊字符，并在50字符以内
+     */
+    beforeUpload: function (file) {
+      let regular = /^((?![\\/:*?<>|'%]).){1,50}$/
       if (!regular.test(file.name)) {
         this.$message.error('文件名50个字符以内，不包含特殊字符')
         return false
       }
       return true
     },
-    logout: function () {
-      this.$confirm('确认退出吗?', '提示').then(() => {
-        logout().then((response) => {
-          console.log(response)
-          // 重置路由
-          resetRouter()
-          cookies.remove('userInfo')
-          this.$router.push({ name: 'login' })
-          // 删除保存的用户密钥数据
-          localStorage.removeItem('secretKey')
-        }).catch((err) => {
-          console.log(err)
-        })
-      }).catch(() => { })
-    },
     /**
-     * 新建文件夹
+     * 文件上传队列过滤
+     * 根据uid查找对应的file对象
+     * 参数:
+     * uid:文件唯一标识
+     * result:回调函数
      */
-    insertFileFolder: function () {
-      // 根据下标获取数据
-      let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
-      // 获取当前路径
-      this.$prompt('请输入新目录的名称。', '新建目录', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        inputPattern: /^((?!\\|\/|:|\*|\?|<|>|\||'|%).){1,50}$/,
-        inputErrorMessage: '50个字符以内，不包含特殊字符'
-      }).then(({ value }) => {
-        insertFileFolder({
-          fileId: 0,
-          fileName: value,
-          fileParentId: breadcrumbs.fileId
-        }).then((response) => {
-          console.log(response.data)
-          this.current.unshift(response.data)
-          console.log(this.current)
-          this.$message({
-            type: 'success',
-            message: response.message
-          })
-        }).catch((err) => {
-          console.log(err)
-        })
-      }).catch(() => { })
-    },
-    /**
-     * 我的文件
-     */
-    myFile: function () {
-      search({
-        page: 1,
-        fileParentId: 0
-      }).then((response) => {
-        this.file = response.data.diskFile
-        console.log(response.data.diskFile)
-        // 当前目录的文件列表信息
-        this.current = response.data.diskFile
-        this.path = [{
-          fileName: '/',
-          fileId: 0
-        }]
-        this.breadcrumbs = [{
-          fileName: '/',
-          fileId: 0
-        }]
-        // 是否显示复制粘贴移动
-        this.isOperation = false
-        // 是否显示重命名
-        this.isMultiSelect = false
-      }).catch((err) => {
-        console.log(err)
+    uploadedFilesListFilter (uid, result) {
+      this.uploadedFilesList.forEach(res => {
+        if (res.uid === uid) {
+          result(res)
+        }
       })
     },
     /**
-     * 面包屑数据同步
+     * 状态换算
      */
-    breadcrumb: function (val) {
-      this.breadcrumbs = val
-    },
-    /**
-     * 当前的文件路径数据同步
-     */
-    currentFile: function (val) {
-      this.current = val
-    },
-    /**
-     * 是否进行操作的数据同步
-     */
-    operation: function (val) {
-      this.isOperation = val
-    },
-    /**
-     * 是否显示重命名的数据同步
-     */
-    multiSelect: function (val) {
-      this.isMultiSelect = val
-    },
-    /**
-     * 文件删除
-     */
-    del: function () {
-      this.$confirm('你确定要删除这个文件/文件夹吗?', '提示', {
-        confirmButtonText: '删除',
-        cancelButtonText: '取消'
-      }).then(() => {
-        // 获取当前选中值
-        for (let item of document.getElementsByClassName('item')) {
-          if (item.dataset.selected === 'true') {
-            // 文件id
-            let fileid = item.getAttribute('fileid')
-            deleteFile({
-              fileId: fileid
-            }).then((response) => {
-              // 删除文件列表中对应的文件数据
-              this.current = this.current.splice(this.current.findIndex(item => item.fileId === parseInt(fileid)), 1)
-              console.log(this.current)
-              // 取消操作的显示
-              this.isOperation = false
-              this.isMultiSelect = false
-              // 删除成功的提示框
-              this.$message({
-                type: 'success',
-                message: '删除成功!'
-              })
-              console.log(response)
-            }).catch((err) => {
-              console.log(err)
-            })
-          }
-        }
-      }).catch(() => { })
-    },
-    /**
-     * 文件/文件夹重命名
-     */
-    edit: function () {
-      let id = 0
-      let name = ''
-      // 获取当前选中值
-      for (let item of document.getElementsByClassName('item')) {
-        if (item.dataset.selected === 'true') {
-          id = item.getAttribute('fileid')
-          name = item.getAttribute('name')
-        }
-      }
-      if (id !== 0) {
-        let omit = ''
-        if (name.length > 8) {
-          omit = name.slice(0, 8) + '...'
-        }
-        this.$prompt(`请输入新名称，旧名称为:${omit}`, '重命名', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          inputValue: name,
-          inputPattern: /^((?!\\|\/|:|\*|\?|<|>|\||'|%).){1,50}$/,
-          inputErrorMessage: '50个字符以内，不包含特殊字符'
-        }).then(({ value }) => {
-          renameFile({
-            fileId: id,
-            newFileName: value
-          }).then((response) => {
-            console.log(this.current)
-            // 替换数据中原有值
-            this.current.forEach((res) => {
-              if (res.fileId === parseInt(id)) {
-                res.fileName = value
-              }
-            })
-            // 替换页面中原有值
-            this.file = this.current
-            // 成功的提示框
-            this.$message({
-              type: 'success',
-              message: '修改成功!'
-            })
-            console.log(response)
-          }).catch((err) => {
-            console.log(err)
-          })
-        }).catch(() => { })
-      }
+    fileStatusText (status) {
+      return {
+        success: '成功',
+        error: '失败',
+        uploading: '上传中',
+        paused: '暂停',
+        waiting: '等待'
+      }[status]
     }
   }
 }
 </script>
 
-<style scoped>
-.el-icon-upload:link {
-  color: #333 !important;
-}
-.el-icon-upload:visited {
-  color: #333 !important;
-}
-.el-icon-upload:active {
-  color: #333 !important;
-}
-.el-menu {
+<style scoped lang="scss">
+.layout {
+  font-family: Roboto, sans-serif;
+  padding-top: 4em;
   background-color: #fafafa;
-}
-
-.el-menu-item {
-  font-size: 1.1em;
-}
-
-.el-header,
-.el-footer {
-  background-color: #fff;
   color: #333;
-  text-align: center;
-  line-height: 60px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.075);
-}
-.el-header {
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-}
-.el-aside {
-  position: fixed;
-  left: 0;
-  top: 60px;
-  width: 220px;
-  height: calc(100% - 60px);
-}
-.el-container {
-  width: calc(100% - 220px);
-  float: right;
-}
-.el-main {
-  color: #333;
-  text-align: center;
-  line-height: 80px;
-  padding: 0px;
-}
-.el-dialog.is-fullscreen {
-  background: rgba(0, 0, 0, 0.9);
-}
-body > .el-container {
-  margin-bottom: 40px;
-}
-
-.el-container:nth-child(5) .el-aside,
-.el-container:nth-child(6) .el-aside {
-  line-height: 260px;
-}
-
-.el-container:nth-child(7) .el-aside {
-  line-height: 320px;
-}
-
-.spanbutt {
-  float: right;
-  font-size: 24px;
-  letter-spacing: 8px;
-}
-.upload {
-  width: 45px;
-  text-align: right;
-}
-.spanbutt > div {
-  float: right;
-}
-.el-breadcrumb__separator {
+  margin: 0;
   display: block;
 }
 
-.upload-button {
-  outline: none;
+header {
+  z-index: 1000;
+  background-color: #fff;
+  border-bottom: 1px solid rgba(0, 0, 0, .075);
+  -webkit-box-shadow: 0 0 5px rgba(0, 0, 0, .1);
+  box-shadow: 0 0 5px rgba(0, 0, 0, .1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 0;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+header img {
+  height: 2.5em;
+}
+
+header > div:first-child > .action, header img {
+  margin-right: 1em;
+}
+
+img {
+  max-width: 100%;
+  border-style: none;
+}
+
+*, :active, :focus, :hover {
+  outline: 0;
+}
+
+* {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+html {
+  line-height: 1.15;
+  -webkit-text-size-adjust: 100%;
+}
+
+.right-logo {
+  height: 4em;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  width: 100%;
+  padding: .5em .5em .5em 1em;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -moz-user-select: none; /*火狐*/
+  -webkit-user-select: none; /*webkit浏览器*/
+  -ms-user-select: none; /*IE10*/
+  -khtml-user-select: none; /*早期浏览器*/
+  user-select: none;
+}
+
+.left-operate {
+  -webkit-box-pack: end;
+  -ms-flex-pack: end;
+  justify-content: flex-end;
+}
+
+header > div {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  width: 100%;
+  padding: .5em .5em .5em 1em;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.action {
   display: inline-block;
   cursor: pointer;
-  -webkit-transition: all 0.2s ease;
-  transition: all 0.2s ease;
+  -webkit-transition: all .2s ease;
+  transition: all .2s ease;
   border: 0;
   margin: 0;
+  color: #546e7a;
   border-radius: 50%;
   background: transparent;
   padding: 0;
@@ -658,10 +787,33 @@ body > .el-container {
   position: relative;
 }
 
-.upload-button i {
-  padding: 0.4em;
-  -webkit-transition: all 0.1s ease-in-out;
-  transition: all 0.1s ease-in-out;
+.action:hover {
+  background-color: rgba(0, 0, 0, .1);
+}
+
+[type=button], [type=reset], [type=submit], button {
+  -webkit-appearance: button;
+}
+
+button, select {
+  text-transform: none;
+}
+
+button, input {
+  overflow: visible;
+}
+
+button, input, optgroup, select, textarea {
+  font-family: inherit;
+  font-size: 100%;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.action i {
+  padding: .4em;
+  -webkit-transition: all .1s ease-in-out;
+  transition: all .1s ease-in-out;
   border-radius: 50%;
 }
 
@@ -669,7 +821,7 @@ body > .el-container {
   font-family: Material Icons;
   font-weight: 400;
   font-style: normal;
-  font-size: 20px;
+  font-size: 24px;
   display: inline-block;
   line-height: 1;
   text-transform: none;
@@ -680,28 +832,105 @@ body > .el-container {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   -moz-osx-font-smoothing: grayscale;
-  -webkit-font-feature-settings: 'liga';
-  font-feature-settings: 'liga';
+  -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
 }
 
-.spanbutt button i {
-  font-size: 20px;
+header .action span {
+  display: none;
 }
 
-.spanbutt button {
-  background: none;
-  border: none;
-  outline: medium;
-  /* padding: 9px 10px; */
-  border-radius: 50%;
-  width: 42px;
-  height: 42px;
-  margin: -5px;
-  color: #546e7a;
+.operate-btn {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  vertical-align: middle;
+  position: relative;
 }
 
-.spanbutt button:hover {
-  background: rgba(0, 0, 0, 0.1);
-  cursor: pointer;
+.el-aside {
+  width: 16em;
+  position: fixed;
+  top: 4em;
+  left: 0;
 }
+
+aside .action {
+  width: 100%;
+  display: block;
+  border-radius: 0;
+  font-size: 1.1em;
+  padding: .5em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  background-color: transparent;
+}
+
+.el-aside .action > * {
+  vertical-align: middle;
+}
+
+.el-aside div:first-child {
+  border-bottom: 1px solid rgba(0, 0, 0, .05);
+}
+
+main {
+  min-height: 1em;
+  margin: 0 1em 1em auto;
+  width: calc(100% - 19em);
+}
+
+main {
+  display: block;
+}
+
+/deep/ .el-main {
+  flex: none;
+  padding: 0;
+}
+
+@media (max-width: 1024px) {
+  main {
+    width: calc(100% - 13em);
+  }
+
+  .el-aside {
+    width: 10em !important;
+  }
+}
+
+@media (max-width: 736px) {
+  main {
+    margin: 0 1em;
+    width: calc(100% - 2em);
+  }
+
+  .layout {
+    padding-bottom: 5em;
+  }
+
+  .el-aside {
+    top: 0;
+    z-index: 99999;
+    background: #fff;
+    height: 100%;
+    width: 16em;
+    -webkit-box-shadow: 0 0 5px rgba(0, 0, 0, .1);
+    box-shadow: 0 0 5px rgba(0, 0, 0, .1);
+    -webkit-transition: left .1s ease;
+    transition: left .1s ease;
+    left: -17em;
+  }
+
+  #listing.list .item .size {
+    display: none !important;
+  }
+}
+
 </style>
