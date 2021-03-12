@@ -32,11 +32,6 @@
               <i class="el-icon-upload material-icons"></i>
             </button>
           </el-upload>
-          <!-- 详情 -->
-          <el-button title="详情" aria-label="详情" class="action">
-            <i class="el-icon-info material-icons"></i>
-            <span>详情</span>
-          </el-button>
         </div>
       </el-header>
       <el-container>
@@ -55,7 +50,7 @@
               </i>
               <span>新建文件夹</span>
             </el-button>
-            <el-button aria-label="我的分享" title="我的分享" class="action" @click="insertFileFolder">
+            <el-button aria-label="我的分享" title="我的分享" class="action" @click="fileShareList">
               <i class="material-icons">
                 <svg-icon icon-class="file-share"></svg-icon>
               </i>
@@ -137,6 +132,11 @@ export default {
         icon: 'el-icon-delete-solid',
         show: false,
         method: 'fileDeletion'
+      }, {
+        title: '文件详情',
+        icon: 'el-icon-info',
+        show: false,
+        method: 'documentDetails'
       }],
       // 路径信息的面包屑导航(数组中的第一位元素为主页)
       breadcrumbs: [{
@@ -163,19 +163,26 @@ export default {
     // 监听 fileList 数据的实时变化
     fileList: {
       handler: function () {
+        // 筛选所有选中的数据
         let selectData = this.fileList.filter(res => res.select)
         if (!selectData.length) {
+          // 如果没有选中的数据 ，那么所有的按钮都不显示
           this.operateBtn.forEach(res => {
             res.show = false
           })
         }
+        // 如果只选中了一条数据
         if (selectData.length === 1) {
           this.operateBtn.forEach(res => {
             res.show = true
           })
+          // 如果选中的这一条数据是文件夹 ，则不显示 文件详情 按钮
+          this.operateBtn[5].show = !selectData[0]['fileFolder']
         }
         if (selectData.length > 1) {
+          // 如果选中了不止一条数据，则 重命名、文件详情 按钮不显示
           this.operateBtn[1].show = false
+          this.operateBtn[5].show = false
         }
       },
       // 深度监听
@@ -199,7 +206,11 @@ export default {
      * 右上角-文件分享 按钮
      */
     fileSharing: function () {
-
+      console.log('文件分享')
+      this.$message({
+        showClose: true,
+        message: '开发中，敬请期待！'
+      })
     },
     /**
      * 右上角-重命名 按钮
@@ -251,13 +262,21 @@ export default {
      * 右上角-文件复制 按钮
      */
     fileCopy: function () {
-
+      console.log('文件复制')
+      this.$message({
+        showClose: true,
+        message: '开发中，敬请期待！'
+      })
     },
     /**
      * 右上角-文件移动 按钮
      */
     fileMove: function () {
-
+      console.log('文件移动')
+      this.$message({
+        showClose: true,
+        message: '开发中，敬请期待！'
+      })
     },
     /**
      * 右上角-文件删除 按钮
@@ -287,6 +306,16 @@ export default {
           })
         })
       }).catch(() => {
+      })
+    },
+    /**
+     * 右上角-文件详情 按钮
+     */
+    documentDetails: function () {
+      console.log('文件详情')
+      this.$message({
+        showClose: true,
+        message: '开发中，敬请期待！'
       })
     },
     // ============================== 页面工具方法
@@ -375,7 +404,13 @@ export default {
      * 页面左侧菜单栏-我的文件
      */
     myFile: function () {
-      // this.$router.push({name: 'home'})
+      if (this.$route.path !== '/home') {
+        this.$router.push({name: 'home'})
+      } else {
+        this.previous({
+          fileId: 0
+        })
+      }
     },
     /**
      * 页面左侧菜单栏-新建文件夹
@@ -406,6 +441,16 @@ export default {
           console.log(err)
         })
       }).catch(() => {
+      })
+    },
+    /**
+     * 页面左侧菜单栏-我的分享列表
+     */
+    fileShareList: function () {
+      console.log('我的分享列表')
+      this.$message({
+        showClose: true,
+        message: '开发中，敬请期待！'
       })
     },
     /**

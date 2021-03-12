@@ -122,6 +122,12 @@ export default {
       // 判断当前点击的是否为文件夹
       if (item['fileFolder']) {
         this.$emit('doubleClick', item)
+      } else {
+        console.log('双击打开文件')
+        this.$message({
+          showClose: true,
+          message: '开发中，敬请期待！'
+        })
       }
     },
     /**
