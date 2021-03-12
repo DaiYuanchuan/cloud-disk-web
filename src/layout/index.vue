@@ -348,10 +348,13 @@ export default {
      * 页面 面包屑点击事件(加载上一级)
      */
     previous: function (item) {
-      this.page = 1
-      this.getFileListInfo(this.page, item.fileId, true, response => {
-        this.breadcrumbs = this.breadcrumbs.slice(0, this.breadcrumbs.findIndex(res => res.fileId === item.fileId) + 1)
-      })
+      // 判断点击的是否是当前的目录(面包屑的最后一个元素为当前元素)
+      if (item.fileId !== this.breadcrumbs[this.breadcrumbs.length - 1].fileId) {
+        this.page = 1
+        this.getFileListInfo(this.page, item.fileId, true, response => {
+          this.breadcrumbs = this.breadcrumbs.slice(0, this.breadcrumbs.findIndex(res => res.fileId === item.fileId) + 1)
+        })
+      }
     },
     /**
      * 页面 文件双击事件(只有文件被双击了才会触发)
@@ -719,20 +722,6 @@ header > div:first-child > .action, header img {
 img {
   max-width: 100%;
   border-style: none;
-}
-
-*, :active, :focus, :hover {
-  outline: 0;
-}
-
-* {
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;
-}
-
-html {
-  line-height: 1.15;
-  -webkit-text-size-adjust: 100%;
 }
 
 .right-logo {

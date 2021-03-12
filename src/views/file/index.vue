@@ -5,7 +5,7 @@
       <div class="breadcrumbs">
         <span v-for="(item, index) in breadcrumbsTruncation()" :key="index"
               :aria-label="item.fileName" :title="index === 0 ? item.fileName : ''">
-          <i :class="index === 0 ? 'shadow' : ''" class="material-icons">
+          <i :class="index === 0 ? 'shadow' : ''" class="material-icons" @click="$emit('previous', item, index)">
             <svg-icon :icon-class="index === 0 ? 'file-home' : 'breadcrumb-right'"></svg-icon>
           </i>
           <span v-if="index !== 0" class="breadcrumb-item shadow" @click="$emit('previous', item, index)">
