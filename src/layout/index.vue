@@ -90,6 +90,50 @@
       @remove="remove"
       @close="close"
     ></uploader>
+
+    <!-- 分享文件的弹窗 -->
+    <el-dialog title="文件分享" :visible.sync="showFileSharingDialog" :before-close="beforeClose">
+      <el-form v-if="showFileSharingRequestResults === false" :model="fileSharingForm">
+        <el-form-item label="链接有效期：">
+          <el-select v-model="fileSharingForm.periodOfValiditySelectValue" placeholder="请选择活动区域">
+            <el-option v-for="(item, index) in fileSharingForm.periodOfValidity"
+                       :key="index" :label="item.label" :value="item.value"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="是否需要加密：">
+          <el-radio-group v-model="fileSharingForm.encrypt">
+            <el-radio v-for="(item, index) in fileSharingForm.encryptionRequired"
+                      :key="index" :label="item.label" :value="item.value"></el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <span v-else>
+        <p>
+          <strong>分享名称：</strong>
+          {{ fileSharingForm.fileSharingRequestResults['shareFileName'] }}
+        </p>
+        <p>
+          <strong>分享地址：</strong>
+          <code style="word-wrap: break-word;">
+            <a>
+              {{ fileSharingForm.fileSharingRequestResults['shareShortUrl'] }}
+            </a>
+          </code>
+        </p>
+        <p>
+          <strong>有效期：</strong>
+          {{ fileSharingForm.fileSharingRequestResults['periodOfValidity'] }}
+        </p>
+        <p v-if="fileSharingForm.fileSharingRequestResults['encryptionRequired']">
+          <strong>提取码：</strong>
+          {{ fileSharingForm.fileSharingRequestResults['shareCode'] }}
+        </p>
+      </span>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="createFileShare">确 定</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -97,6 +141,7 @@
 import {logout} from '@/api/login'
 import {getToken, upload} from '@/api/qiniu'
 import {search, insertFileFolder, deleteFile, renameFile} from '@/api/file'
+import {createShare} from '@/api/share'
 import {resetRouter} from '@/router/index'
 import cookies from 'js-cookie'
 import uploader from '@/components/upload/uploader'
@@ -111,7 +156,7 @@ export default {
         title: '分享',
         icon: 'el-icon-share',
         show: false,
-        method: 'fileSharing'
+        method: 'fileSharingBtn'
       }, {
         title: '重命名',
         icon: 'el-icon-edit-outline',
@@ -152,7 +197,34 @@ export default {
       // 上传面板中的文件上传的列队信息(包含着所有状态的文件数据)
       uploadedFilesList: [],
       // 是否显示当前文件上传面板
-      displayUploadPanel: false
+      displayUploadPanel: false,
+      // 是否显示文件分享的对话框
+      showFileSharingDialog: false,
+      // 是否显示文件分享的请求结果
+      showFileSharingRequestResults: false,
+      // 文件分享表单
+      fileSharingForm: {
+        // 链接有效期的表单选中值
+        periodOfValiditySelectValue: 86400,
+        // 链接有效期
+        periodOfValidity: [{
+          label: '1天', value: 86400
+        }, {
+          label: '7天', value: 604800
+        }, {
+          label: '永久有效', value: -1
+        }],
+        // 是否需要加密的表单选中值
+        encrypt: '是',
+        // 是否需要加密
+        encryptionRequired: [{
+          label: '是', value: true
+        }, {
+          label: '否', value: false
+        }],
+        // 文件分享api请求结果
+        fileSharingRequestResults: {}
+      }
     }
   },
   components: {
@@ -205,11 +277,52 @@ export default {
     /**
      * 右上角-文件分享 按钮
      */
-    fileSharing: function () {
-      console.log('文件分享')
-      this.$message({
-        showClose: true,
-        message: '开发中，敬请期待！'
+    fileSharingBtn: function () {
+      this.showFileSharingDialog = true
+    },
+    /**
+     * 文件分享Dialog关闭前的回调函数
+     */
+    beforeClose: function (done) {
+      if (done !== false) {
+        this.$emit('update:visible', false)
+        this.$emit('close')
+        this.showFileSharingDialog = false
+        this.showFileSharingRequestResults = false
+        this.fileSharingForm.fileSharingRequestResults = {}
+      }
+    },
+    /**
+     * 创建文件分享链接
+     */
+    createFileShare: function () {
+      console.log(this.showFileSharingRequestResults)
+      if (this.showFileSharingRequestResults) {
+        this.showFileSharingDialog = false
+        this.showFileSharingRequestResults = false
+        return
+      }
+      let encrypt = this.fileSharingForm.encryptionRequired.filter(res => res.label === this.fileSharingForm.encrypt)
+      let periodOfValidity = this.fileSharingForm.periodOfValidity.filter(res => res.value === this.fileSharingForm.periodOfValiditySelectValue)
+      // 获取当前选中的数据
+      let selectData = this.fileList.filter(res => res.select)
+      if (!selectData.length) {
+        // 如果没有数据选中的 ，则不执行
+        return
+      }
+
+      // 创建文件分享链接
+      createShare({
+        encrypt: encrypt[0].value,
+        time: this.fileSharingForm.periodOfValiditySelectValue,
+        files: selectData.map(item => item.fileId)
+      }).then((response) => {
+        response.data['periodOfValidity'] = periodOfValidity[0].label
+        response.data['encryptionRequired'] = encrypt[0].value
+        this.fileSharingForm.fileSharingRequestResults = response.data
+        this.showFileSharingRequestResults = true
+      }).catch((err) => {
+        console.log(err)
       })
     },
     /**

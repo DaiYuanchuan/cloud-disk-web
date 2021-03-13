@@ -218,6 +218,7 @@ export default {
         } else {
           this.card.isShow = false
           this.form.isShow = false
+          this.file.sharedRootList = []
           response.data['fileInfo'].forEach(res => {
             res['select'] = false
             this.file.sharedRootList.push(res)
