@@ -23,11 +23,6 @@ export default {
   outline: 0;
 }
 
-* {
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;
-}
-
 html {
   line-height: 1.15;
   -webkit-text-size-adjust: 100%;

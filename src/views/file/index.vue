@@ -45,7 +45,7 @@
           <div role="button" tabindex="0" draggable="true"
                v-for="(item,index) in fileList" :key="index"
                @click="choose($event, item, index)" @dblclick="doubleClick(item)"
-               @keydown.a="ctrlA($event)"
+               @keydown.a="ctrlA($event)" @keydown.delete="$emit('delete')"
                :data-dir="item.fileFolder" :aria-label="item.fileName"
                :aria-selected="!item.select ? 'false' : 'true'"
                class="item">
@@ -108,7 +108,7 @@ export default {
       // 变量scrollHeight是滚动条的总高度
       let scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
       // 滚动条到底部的条件
-      if (Math.round(scrollTop + windowHeight) === scrollHeight) {
+      if (Math.round(scrollTop + windowHeight + 1) === scrollHeight) {
         // 加载下一页
         this.$emit('nextPage')
       }

@@ -74,7 +74,7 @@
         <el-main>
           <router-view :breadcrumbs="breadcrumbs" :file-list="fileList"
                        @nextPage="nextPage" @doubleClick="doubleClick"
-                       @previous="previous"></router-view>
+                       @previous="previous" @delete="fileDeletion"></router-view>
         </el-main>
       </el-container>
     </el-container>
@@ -282,13 +282,17 @@ export default {
      * 右上角-文件删除 按钮
      */
     fileDeletion: function () {
+      // 获取当前选中的数据
+      let selectData = this.fileList.filter(res => res.select)
+      if (!selectData.length) {
+        // 如果没有数据选中的 ，则不执行
+        return
+      }
       this.$confirm('你确定要删除这个文件/文件夹吗?', '提示', {
         confirmButtonText: '删除',
         closeOnClickModal: false,
         cancelButtonText: '取消'
       }).then(() => {
-        // 获取当前选中的数据
-        let selectData = this.fileList.filter(res => res.select)
         selectData.forEach(res => {
           deleteFile({
             fileId: res.fileId
@@ -312,10 +316,23 @@ export default {
      * 右上角-文件详情 按钮
      */
     documentDetails: function () {
-      console.log('文件详情')
-      this.$message({
-        showClose: true,
-        message: '开发中，敬请期待！'
+      // 获取当前选中的文件数据
+      let selectData = this.fileList.filter(res => res.select && !res['fileFolder'])
+      if (!selectData.length) {
+        // 如果没有数据选中的 ，则不执行
+        return
+      }
+
+      this.$alert(
+        `<p><strong>名称：</strong>${selectData[0]['fileName']}</p>
+                  <p><strong>大小：</strong>${storageUnitConversion(selectData[0]['fileSize'])}</p>
+                  <p><strong>创建时间：</strong>${selectData[0]['createTime']}</p>
+                  <p><strong>引用地址：</strong>
+                  <code style="word-wrap: break-word;">
+                  <a>${process.env.BASE_API}/disk-file/resource/redirection?key=${selectData[0]['fileKey']}</a>
+                  </code></p>`, '文件信息', {
+          dangerouslyUseHTMLString: true
+        }).catch(res => {
       })
     },
     // ============================== 页面工具方法
@@ -478,7 +495,8 @@ export default {
         }).catch((err) => {
           console.log(err)
         })
-      }).catch(() => {
+      }).catch((err) => {
+        console.log(err)
       })
     },
     // ============================== 文件上传部分方法
@@ -608,16 +626,19 @@ export default {
         if (!this.displayUploadPanel) {
           this.displayUploadPanel = true
         }
-        // 向上传面板中的文件列队添加新的文件数据
-        this.uploadedFilesList.push({
-          name: file.name,
-          uid: file.uid,
-          size: storageUnitConversion(file.size),
-          status: 'waiting',
-          state: this.fileStatusText('waiting'),
-          progress: this.progressStyle(0),
-          icon: this.fileCategory(file.name.split('.').pop().toLowerCase(), file.raw.type.split('/')[0])
-        })
+        let regular = /^((?![\\/:*?<>|'%]).){1,50}$/
+        if (regular.test(file.name)) {
+          // 向上传面板中的文件列队添加新的文件数据
+          this.uploadedFilesList.push({
+            name: file.name,
+            uid: file.uid,
+            size: storageUnitConversion(file.size),
+            status: 'waiting',
+            state: this.fileStatusText('waiting'),
+            progress: this.progressStyle(0),
+            icon: this.fileCategory(file.name.split('.').pop().toLowerCase(), file.raw.type.split('/')[0])
+          })
+        }
       }
     },
     /**
@@ -927,6 +948,11 @@ main {
 /deep/ .el-main {
   flex: none;
   padding: 0;
+}
+
+* {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1024px) {

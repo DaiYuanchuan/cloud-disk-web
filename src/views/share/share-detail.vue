@@ -19,7 +19,7 @@
               <div class="error-img">
                 <img src="/static/img/errorImg_492ea64.png">
               </div>
-              {{card.cardMessage}}
+              {{ card.cardMessage }}
             </div>
             <div
               class="platform-tips"
@@ -69,7 +69,7 @@
             </div>
             <div class="verify-property">
               <div class="verify-user theme-share-text">
-                <div class="username theme-share-name">{{form.userName}}</div>
+                <div class="username theme-share-name">{{ form.userName }}</div>
                 <div style="margin-left: 5px;">给您加密分享了文件</div>
               </div>
             </div>
@@ -90,25 +90,27 @@
             type="primary"
             class="code-button"
             v-on:click="extractingFiles('codeForm')"
-          > 提取文件 </el-button>
+          > 提取文件
+          </el-button>
         </el-form-item>
       </el-form>
     </div>
 
     <!-- 文件列表页面 -->
-    <upload v-if="file.isShow"></upload>
+    <shareList v-if="file.isShow" :root-list="file.sharedRootList" :code="form.code"/>
 
   </div>
 </template>
 
 <script>
-import { shareDetail } from '@/api/share'
-import upload from '@/views/qiniu/upload.vue'
+import {shareDetail} from '@/api/share'
+import shareList from '@/views/share/share-list'
+import cookies from 'js-cookie'
 
 export default {
   name: 'share-detail',
   components: {
-    'upload': upload
+    shareList
   },
   data () {
     // 验证码长度校验
@@ -138,12 +140,13 @@ export default {
       },
       // 表单验证，需要在 el-form-item 元素中增加 prop 属性
       rules: {
-        code: [{ required: true, trigger: 'blur', validator: validateSecurityCode }]
+        code: [{required: true, trigger: 'blur', validator: validateSecurityCode}]
       },
       file: {
         // 文件列表是否展示
         isShow: false,
-        fileInfo: []
+        // 文件分享的根目录列表
+        sharedRootList: []
       }
     }
   },
@@ -178,6 +181,11 @@ export default {
      * 获取分享详情
      */
     detail () {
+      // 从cookie中获取到分享的code
+      let shortCode = cookies.get(`short:${this.$route.params.short}`)
+      if (shortCode !== undefined) {
+        this.form.code = shortCode
+      }
       shareDetail({
         shareShort: this.$route.params.short,
         code: this.form.code
@@ -187,12 +195,18 @@ export default {
           this.form.isShow = false
           this.file.isShow = false
           this.card.cardMessage = response.message
+          if (shortCode !== undefined) {
+            cookies.remove(`short:${this.$route.params.short}`)
+          }
         } else if (response.code === '428' || response.code === '499') {
           this.card.isShow = false
           this.form.isShow = true
           this.file.isShow = false
           this.form.userName = response.data.userInfo.userName
           this.form.userAvatar = response.data.userInfo.userAvatar
+          if (shortCode !== undefined) {
+            cookies.remove(`short:${this.$route.params.short}`)
+          }
           if (response.code === '499') {
             this.$message({
               message: response.message || 'error',
@@ -204,8 +218,17 @@ export default {
         } else {
           this.card.isShow = false
           this.form.isShow = false
+          response.data['fileInfo'].forEach(res => {
+            res['select'] = false
+            this.file.sharedRootList.push(res)
+          })
+          if (shortCode === undefined) {
+            // code添加到cookies中，并且设置 3 小时的有效时间
+            cookies.set(`short:${this.$route.params.short}`, this.form.code, {
+              expires: new Date(new Date().getTime() + 3 * 60 * 60 * 1000)
+            })
+          }
           this.file.isShow = true
-          this.file.fileInfo = response.data.fileInfo
         }
       }).catch((err) => {
         console.log(err)
@@ -315,8 +338,7 @@ dt {
 }
 
 .CMxQsC {
-  background: url('https://pan.baidu.com/sns/box-static/disk-share/widget/pageModule/init/image/share_tit_bg_5855301.png?t=1608023046263')
-    no-repeat;
+  background: url('https://pan.baidu.com/sns/box-static/disk-share/widget/pageModule/init/image/share_tit_bg_5855301.png?t=1608023046263') no-repeat;
   background-size: 100% 100%;
   border-radius: 4px;
   height: 100px;

@@ -32,7 +32,8 @@
           type="primary"
           class="login-button"
           v-on:click="login('loginForm')"
-        > 登录 </el-button>
+        > 登录
+        </el-button>
       </el-form-item>
       <el-form-item class="login-blocks">
         <a
@@ -50,10 +51,10 @@
 </template>
 
 <script>
-import { validWeChatId, validEmail, validUsername } from '@/utils/validate'
-import { login, secretKeyLogin } from '@/api/login'
-import { asyncRoutes } from '@/router/routers'
-import { resetRouter } from '@/router/index'
+import {validWeChatId, validEmail, validUsername} from '@/utils/validate'
+import {login, secretKeyLogin} from '@/api/login'
+import {asyncRoutes} from '@/router/routers'
+import {resetRouter} from '@/router/index'
 import cookies from 'js-cookie'
 
 export default {
@@ -83,8 +84,8 @@ export default {
       },
       // 表单验证，需要在 el-form-item 元素中增加 prop 属性
       rules: {
-        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        password: [{ required: true, trigger: 'blur', validator: validatePassword }]
+        username: [{required: true, trigger: 'blur', validator: validateUsername}],
+        password: [{required: true, trigger: 'blur', validator: validatePassword}]
       }
     }
   },
@@ -111,7 +112,7 @@ export default {
             localStorage.setItem('secretKey', response.data.userInfo.userSecretKey)
             // 动态添加路由数据
             this.$router.addRoutes(asyncRoutes)
-            this.$router.push({ name: 'home' })
+            this.$router.push({name: 'home'})
           }).catch((err) => {
             console.log(err)
           })
@@ -123,13 +124,13 @@ export default {
      */
     registered () {
       // 使用name跳转
-      this.$router.push({ name: 'register' })
+      this.$router.push({name: 'register'})
     },
     /**
      * 跳转忘记密码
      */
     forgotPasswd () {
-      this.$router.push({ name: 'forgot-passwd' })
+      this.$router.push({name: 'forgot-passwd'})
     },
     /**
      * 用户密钥登陆
@@ -149,7 +150,7 @@ export default {
             // 动态添加路由数据
             resetRouter()
             this.$router.addRoutes(asyncRoutes)
-            this.$router.push({ name: 'home' })
+            this.$router.push({name: 'home'})
           }).catch((err) => {
             console.log(err)
             localStorage.removeItem('secretKey')
@@ -207,15 +208,68 @@ img {
   text-align: right;
   zoom: 1;
 }
+
 .keep-left {
   color: #9b9ea0;
   cursor: pointer;
   font-size: 12px;
   float: left;
 }
+
 .keep-right {
   color: #9b9ea0;
   cursor: pointer;
   font-size: 12px;
 }
+
+@media (max-width: 736px) {
+  #login {
+    background: #fff;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .login-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    max-width: 16em;
+    width: 70%;
+    border: 0;
+  }
+}
+
+@media (max-width: 450px) {
+  #login form {
+    top: 40%;
+    max-width: 21em;
+  }
+}
+
+@media (max-width: 376px) {
+  #login form {
+    top: 43%;
+    max-width: 19em;
+  }
+}
+
+@media (max-width: 360px) {
+  #login form {
+    top: 45%;
+    max-width: 16em;
+  }
+}
+
+@media (max-width: 330px) {
+  #login form {
+    top: 50%;
+    max-width: 16em;
+  }
+}
+
 </style>
