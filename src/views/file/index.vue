@@ -1,151 +1,104 @@
 <template>
-  <div class="home">
-
-    <div id="mbx">
-
-      <el-breadcrumb
-        class="textmbx"
-        separator-class="el-icon-arrow-right"
-      >
-        <el-breadcrumb-item
-          v-for="(item, index) in breadcrumbs"
-          :key="item.fileId"
-          @click.native="previous(item, index)"
-        >{{item.fileName}}</el-breadcrumb-item>
-      </el-breadcrumb>
-
-    </div>
-
-    <div class="topsa">
-      <p>
-        名称
-      </p>
-      <p>
-        时间
-      </p>
-      <p>
-        大小
-      </p>
-
-    </div>
-
-    <div
-      class="grid-content bg-purple-dark item"
-      v-for="item in diskFile"
-      :key="item.fileId"
-      @dblclick="nextLevel(item)"
-      @click="choose($event)"
-      data-selected="false"
-      :fileid="item.fileId"
-      :name="item.fileName"
-    >
-
-      <img
-        v-if="item.fileFolder"
-        src="/static/img/folder.png"
-        alt=""
-      >
-      <img
-        v-else
-        src="/static/img/file.png"
-        alt=""
-      >
-      <p>{{item.fileName}}</p>
-      <p>{{item.createTime}}</p>
-      <p>{{item.fileFolder ? '-' : storageUnitConversion(item.fileSize)}}</p>
-    </div>
-
-    <div>
-
-      <!-- 显示图片 -->
-      <el-image-viewer
-        v-show="imageUrl !== ''"
-        :on-close="closeViewer"
-        :url-list="[imageUrl]"
-      />
-
-      <!-- 播放视频 -->
-      <el-dialog
-        :center="true"
-        :roundButton="true"
-        :before-close="beforeClose"
-        :visible.sync="dialogVideo"
-      >
-        <div
-          slot="footer"
-          id="dplayer"
-          ref="dplayer"
-        ></div>
-      </el-dialog>
-    </div>
-
+  <div class="file-panel">
+    <slot :breadcrumbs="breadcrumbs" :file-list="fileList">
+      <!-- 面包屑部分 -->
+      <div class="breadcrumbs">
+        <span v-for="(item, index) in breadcrumbsTruncation()" :key="index"
+              :aria-label="item.fileName" :title="index === 0 ? item.fileName : ''">
+          <i :class="index === 0 ? 'shadow' : ''" class="material-icons" @click="$emit('previous', item, index)">
+            <svg-icon :icon-class="index === 0 ? 'file-home' : 'breadcrumb-right'"></svg-icon>
+          </i>
+          <span v-if="index !== 0" class="breadcrumb-item shadow" @click="$emit('previous', item, index)">
+            {{ breadcrumbs.length &lt; 5 ? item.fileName : index === 1 ? '...' : item.fileName }}
+          </span>
+        </span>
+      </div>
+      <div v-if="!fileList.length">
+        <h2 class="message">
+          <i class="material-icons">
+            <svg-icon icon-class="file-crying-face"></svg-icon>
+          </i>
+          <span>这里没有任何文件...</span>
+        </h2>
+      </div>
+      <!-- 文件列表部分 -->
+      <div v-else id="listing" class="list">
+        <!-- title -->
+        <div class="list-title">
+          <div class="item header">
+            <div></div>
+            <div>
+              <p role="button" tabindex="0" title="名称" aria-label="名称" class="name">
+                <span>名称</span>
+              </p>
+              <p role="button" tabindex="0" title="大小" aria-label="大小" class="size">
+                <span>大小</span>
+              </p>
+              <p role="button" tabindex="0" title="最后修改时间" aria-label="最后修改时间" class="modified">
+                <span>最后修改</span>
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- 文件列表 -->
+        <div class="list-file">
+          <div role="button" tabindex="0" draggable="true"
+               v-for="(item,index) in fileList" :key="index"
+               @click="choose($event, item, index)" @dblclick="doubleClick(item)"
+               @keydown.a="ctrlA($event)" @keydown.delete="$emit('delete')"
+               :data-dir="item.fileFolder" :aria-label="item.fileName"
+               :aria-selected="!item.select ? 'false' : 'true'"
+               class="item">
+            <div>
+              <i class="material-icons">
+                <svg-icon :icon-class="iconClass(item)"></svg-icon>
+              </i>
+            </div>
+            <div>
+              <p class="name">{{ item.fileName }}</p>
+              <p :data-order="item.fileSize === 0 ? -1 : storageUnitFormatting(item.fileSize)" class="size">
+                {{ storageUnitFormatting(item.fileSize) }}</p>
+              <p class="modified">
+                <time>{{ timeDifferenceCalculation(item) }}</time>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </slot>
   </div>
 </template>
 
 <script>
-import { search, download } from '@/api/file'
-import { storageUnitConversion } from '@/utils/utils'
-import DPlayer from 'dplayer'
-import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
+import {storageUnitConversion, timeDifference, mimeTypes} from '@/utils/utils'
 
 export default {
-  name: 'home',
-  props: ['file', 'path'],
-  components: {
-    ElImageViewer
+  name: 'file-panel',
+  props: {
+    // 路径信息的面包屑导航(数组中的第一位元素为主页)
+    breadcrumbs: {
+      type: Array,
+      default () {
+        return []
+      }
+    },
+    // 文件列表(用来渲染的文件列表数据)
+    fileList: {
+      type: Array,
+      default () {
+        return []
+      }
+    }
   },
   data () {
-    return {
-      // 初始化分页信息
-      page: 1,
-      // 构建文件初始化数据
-      diskFile: [],
-      // 如果页面上拉触底请求下一页的数据时 没有数据了 这里显示true
-      documentRetrieval: false,
-      // 路径信息的面包屑导航
-      breadcrumbs: [{
-        fileName: '/',
-        fileId: 0
-      }],
-      // 是否显示播放视频的 dialog
-      dialogVideo: false,
-      // 图片地址
-      imageUrl: '',
-      // 视频插件对象
-      player: null
-    }
+    return {}
   },
   // 钩子函数：页面加载完成后执行
   mounted: function () {
-    this.player = new DPlayer({
-      container: document.getElementById('dplayer'),
-      volume: 1,
-      playbackSpeed: [0.5, 1, 1.25, 1.5, 2, 2.5, 3, 4],
-      contextmenu: [],
-      video: {
-        url: ''
-      }
-    })
-    search({
-      page: this.page,
-      fileParentId: 0
-    }).then((response) => {
-      console.log(response.data)
-      this.diskFile = response.data.diskFile
-      this.$emit('getCurrentFile', response.data.diskFile)
-    }).catch((err) => {
-      console.log(err)
-    })
-    window.getSelection().removeAllRanges()
   },
-  watch: {
-    file: function (val) {
-      this.diskFile = val
-    },
-    path: function (val) {
-      this.breadcrumbs = val
-    }
-  },
+  // 钩子函数: 数据监听
+  watch: {},
+  // 钩子函数：页面创建时加载
   created: function () {
     window.onscroll = () => {
       // 变量scrollTop是滚动条滚动时，距离顶部的距离
@@ -155,428 +108,414 @@ export default {
       // 变量scrollHeight是滚动条的总高度
       let scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
       // 滚动条到底部的条件
-      if (parseInt(scrollTop + windowHeight) === scrollHeight) {
-        // 后台加载数据的函数
-        this.onReachBottom()
+      if (Math.round(scrollTop + windowHeight + 1) === scrollHeight) {
+        // 加载下一页
+        this.$emit('nextPage')
       }
     }
   },
   methods: {
     /**
-     * 点击执行单选事件
+     * 文件列表 - 双击事件
      */
-    click: function (event) {
-      for (let item of document.getElementsByClassName('item')) {
-        if (item !== event.currentTarget) {
-          item.dataset.selected = 'false'
-        }
-      }
-      if (event.currentTarget.dataset.selected === 'false') {
-        this.$emit('getOperation', true)
-        this.$emit('getMultiSelect', true)
-        event.currentTarget.dataset.selected = 'true'
-      } else {
-        this.$emit('getOperation', false)
-        this.$emit('getMultiSelect', false)
-        event.currentTarget.dataset.selected = 'false'
-      }
-    },
-    /**
-     * ctrl 执行多选事件
-     */
-    ctrl: function (event) {
-      // 如果点击的同时 按下了 ctrl
-      if (!event.ctrlKey) {
-        for (let item of document.getElementsByClassName('item')) {
-          if (item !== event.currentTarget) {
-            item.dataset.selected = 'false'
-          }
-        }
-      }
-      if (event.currentTarget.dataset.selected === 'false') {
-        event.currentTarget.dataset.selected = 'true'
-      } else {
-        event.currentTarget.dataset.selected = 'false'
-      }
-
-      // 获取所有已经点击的值
-      let size = 0
-      for (let item of document.getElementsByClassName('item')) {
-        if (item.dataset.selected === 'true') {
-          size++
-        }
-      }
-      this.$emit('getMultiSelect', size === 1)
-      this.$emit('getOperation', size > 0)
-    },
-    /**
-     * shift 执行多选事件
-     */
-    shift: function (event) {
-      // 获取所有已经点击的值
-      let size = 0
-      let arr = []
-      for (let item of document.getElementsByClassName('item')) {
-        arr.push(item)
-        if (item.dataset.selected === 'true') {
-          size++
-        }
-      }
-      if (size > 1) {
-        this.click(event)
-        return
-      }
-      // 起始值
-      let startIdx = 0
-      // 结束值
-      let endIdx = 0
-      arr.forEach((item, index) => {
-        if (item.dataset.selected === 'true') {
-          startIdx = index
-        }
-        if (item === event.currentTarget) {
-          endIdx = index
-        }
-      })
-      // 用户可能反向选取，所以要取绝对值
-      const sum = Math.abs(startIdx - endIdx) + 1
-      // 获取起点和终点较小的值
-      const min = Math.min(startIdx, endIdx)
-      this.$emit('getMultiSelect', sum === 1)
-      let i = 0
-      while (i < sum) {
-        const index = min + i
-        document.getElementsByClassName('item')[index].dataset.selected = 'true'
-        i++
-      }
-    },
-    /**
-     * 点击选中事件
-     */
-    choose: function (event) {
-      if (event.ctrlKey) {
-        this.ctrl(event)
-        return
-      }
-
-      if (event.shiftKey) {
-        this.shift(event)
-        return
-      }
-
-      this.click(event)
-    },
-    /**
-     * 存储单元转换
-     */
-    storageUnitConversion: function (bytes) {
-      return storageUnitConversion(bytes)
-    },
-    /**
-     * 上一级
-     */
-    previous: function (item, idx) {
-      this.page = 1
-      // 文件夹拥有下一级
-      search({
-        page: this.page,
-        fileParentId: item.fileId
-      }).then((response) => {
-        this.diskFile = response.data.diskFile
-        let breadcrumbs = []
-        this.breadcrumbs.forEach(function (item, index) {
-          if (index <= idx) {
-            breadcrumbs.push(item)
-          }
-        })
-        this.breadcrumbs = breadcrumbs
-        // 传给父组件的值
-        this.$emit('getBreadcrumbs', breadcrumbs)
-        this.$emit('getCurrentFile', response.data.diskFile)
-        this.$emit('getOperation', false)
-        this.$emit('getMultiSelect', false)
-        this.documentRetrieval = false
-      }).catch((err) => {
-        console.log(err)
-      })
-    },
-    /**
-     * 下一级
-     */
-    nextLevel: function (item) {
-      console.log(item)
+    doubleClick: function (item) {
       // 判断当前点击的是否为文件夹
-      if (item.fileFolder === true) {
-        // 设置当前页码为1
-        this.page = 1
-        // 文件夹拥有下一级
-        search({
-          page: this.page,
-          fileParentId: item.fileId
-        }).then((response) => {
-          // 增加面包屑导航数据
-          this.breadcrumbs.push({
-            fileId: item.fileId,
-            fileName: item.fileName
-          })
-          this.formatCrumbs()
-          this.diskFile = response.data.diskFile
-          this.documentRetrieval = response.data.diskFile.length <= 0
-          // 传给父组件的值
-          this.$emit('getBreadcrumbs', this.breadcrumbs)
-          this.$emit('getCurrentFile', response.data.diskFile)
-          this.$emit('getOperation', false)
-          this.$emit('getMultiSelect', false)
-        }).catch((err) => {
-          console.log(err)
-        })
+      if (item['fileFolder']) {
+        this.$emit('doubleClick', item)
       } else {
-        console.log('当前点击的是文件')
-        console.log(item.fileMimeType)
-        download({
-          key: item.fileKey,
-          time: 3600
-        }).then((res) => {
-          if (item.fileMimeType.indexOf('image') !== -1 && item.fileMimeType !== 'application/x-iso9660-image') {
-            this.imageUrl = res.data
-            return
-          }
-          if (item.fileMimeType.indexOf('video') !== -1) {
-            console.log('点击的是视频')
-            this.dialogVideo = true
-            this.player.switchVideo({
-              url: res.data
-            })
-            this.player.play()
-            return
-          }
-          // 如果当前文件的属性是图片
-          this.download(res.data, item.fileName)
-        }).catch((err) => {
-          console.log(err)
+        console.log('双击打开文件')
+        this.$message({
+          showClose: true,
+          message: '开发中，敬请期待！'
         })
       }
     },
     /**
-     * 大图预览关闭事件回掉
+     * 文件列表 单机选中事件
      */
-    closeViewer: function () {
-      this.imageUrl = ''
-    },
-    // 下载文件
-    download (url, name) {
-      let link = document.createElement('a')
-      link.style.display = 'none'
-      link.href = url
-      link.setAttribute('download', name)
-      document.body.appendChild(link)
-      link.click()
-      link.parentNode.removeChild(link)
+    choose: function (event, item, index) {
+      if (event.ctrlKey) {
+        this.ctrl(item)
+      } else if (event.shiftKey) {
+        this.shift(item, index)
+      } else {
+        this.click(item)
+      }
     },
     /**
-     * Dialog 关闭前的回调函数
+     * 当前页面的文件列表-单击执行事件
      */
-    beforeClose (done) {
-      // 关闭播放器
-      this.dialogVideo = false
-      // 暂停视频播放
-      this.player.pause()
-    },
-    /**
-     * 页面上拉触底事件的处理函数
-     */
-    onReachBottom () {
-      let that = this
-      let page = that.page + 1
-      if (!that.documentRetrieval) {
-        // 根据下标获取数据
-        let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
-        // 文件检索 获取用户根目录文件
-        search({
-          page: page,
-          fileParentId: breadcrumbs.fileId
-        }).then(data => {
-          // 如果数据不为空
-          if (data.data.diskFile.length > 0) {
-            that.diskFile = that.diskFile.concat(data.data.diskFile)
-            that.page = page
-            that.documentRetrieval = false
-            this.$emit('getCurrentFile', that.diskFile)
-            console.log(data.data)
-          } else {
-            that.documentRetrieval = true
+    click: function (item) {
+      if (!item.select) {
+        // 取消之前所选的
+        this.fileList.forEach(res => {
+          if (res.select) {
+            res.select = false
           }
-        }).catch(e => {
-          console.log(e)
+        })
+      }
+      item.select = !item.select
+    },
+    /**
+     * ctrl 执行多选事件(按住 ctrl + 鼠标 左键触发)
+     */
+    ctrl: function (item) {
+      item.select = !item.select
+    },
+    /**
+     * ctrl + A 执行全选事件(按住 ctrl + A 触发)
+     */
+    ctrlA: function (event) {
+      if (event.ctrlKey) {
+        // 全选
+        this.fileList.forEach(res => {
+          res.select = true
         })
       }
     },
     /**
-     * 格式化面包屑数组
-     * 返回一个新的数组，数组第一位显示 ...
-     * 入: [1，2，3，4，5，6]
-     * 出: [1，...，4，5，6]
+     * shift 执行多选事件(按住 shift + 鼠标 左键触发)
      */
-    formatCrumbs () {
-      let array = this.breadcrumbs
-      let length = 5
-      // 如果数组的长度 <= 需要格式化的长度
-      if (array.length <= length - 1) {
+    shift: function (item, index) {
+      // 获取所有被选中的值
+      let selectData = this.fileList.filter(res => res.select)
+      if (!selectData.length) {
+        // 如果没有被选中的 ，则默认选择当前元素
+        item.select = !item.select
+        return
+      }
+      // 获取当前已经被选中的最小值的下标
+      let minIndex = this.fileList.map(item => item.fileId).indexOf(selectData[0].fileId) + 1
+      if (minIndex === index || item.select) {
+        // 如果选中了它本身 或者的已经是选中状态的了
+        item.select = !item.select
+        return
+      }
+      if (minIndex > index) {
+        minIndex -= 1
+      }
+      for (let i = Math.min(index, minIndex); i <= Math.max(index, minIndex); i++) {
+        this.fileList[i].select = true
+      }
+    },
+    /**
+     * 存储单位格式化
+     * @param size 字节数
+     */
+    storageUnitFormatting: function (size) {
+      if (size > 0) {
+        return storageUnitConversion(size)
+      }
+      return '—'
+    },
+    /**
+     * 时间差计算
+     * @param item 文件对象
+     */
+    timeDifferenceCalculation: function (item) {
+      // 默认等于创建时间
+      let time = item['createTime']
+      // 如果更新时间不为空，则 等于 更新时间
+      if (item['updateTime'] !== undefined) {
+        time = item['updateTime']
+      }
+      let difference = timeDifference((new Date(time.replace(new RegExp('-', 'gm'), '/'))).getTime())
+      if (difference === '') {
+        return time
+      }
+      return difference
+    },
+    /**
+     * 获取文件icon
+     * @param item 文件对象
+     */
+    iconClass: function (item) {
+      if (item['fileFolder']) {
+        return 'file-folder'
+      }
+      // 获取文件类型
+      return mimeTypes(item['fileMimeType'])
+    },
+    /**
+     * 面包屑breadcrumbs数组截断，第一位 + 后四位
+     */
+    breadcrumbsTruncation: function () {
+      if (this.breadcrumbs.length < 5) {
         // 不进行格式化 ，返回原数组
-        return array
+        return this.breadcrumbs
       }
-      let newarray = []
-      newarray.push({
-        fileName: array[0].fileName,
-        fileId: array[0].fileId
-      })
-      newarray.push({
-        fileName: '...',
-        fileId: array[array.length - 4].fileId
-      })
-      newarray.push({
-        fileName: array[array.length - 3].fileName,
-        fileId: array[array.length - 3].fileId
-      })
-      newarray.push({
-        fileName: array[array.length - 2].fileName,
-        fileId: array[array.length - 2].fileId
-      })
-      newarray.push({
-        fileName: array[array.length - 1].fileName,
-        fileId: array[array.length - 1].fileId
-      })
-      console.log(newarray)
-
-      console.log(array.slice(-4))
-      return newarray
+      // 切片数组[取后4位元素]
+      let sliceArray = this.breadcrumbs.slice(-4)
+      // 向新数组的开头插入第一个元素
+      sliceArray.unshift(this.breadcrumbs[0])
+      return sliceArray
     }
   }
 }
 </script>
 
-<style scoped>
-.item[data-selected='true'] {
-  background-color: #2196f3;
-  color: #ffffff;
-}
-
-.item {
-  text-align: left;
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  line-height: 11px;
-  padding: 10px;
-  position: relative;
-  overflow: hidden;
-  cursor: default;
-}
-.item img {
-  position: absolute;
-  top: 23px;
-  width: 25px;
-  left: 15px;
-}
-#mbx {
-  width: 99%;
-  height: 55px;
-  line-height: 10px;
-  padding: 0px 0px 0px 10px;
-  text-align: left;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-}
-.topsa {
-  width: 100%;
-  height: 40px;
-  line-height: 10px;
-  margin: 0px 0px 10px 0px;
-}
-.topsa p:nth-of-type(1) {
-  width: 42%;
-  text-align: left;
-  padding: 0px 0px 0px 15px;
-  float: left;
-}
-.topsa p {
-  width: 25%;
-  float: right;
-  text-align: center;
-}
-.textmbx {
-  float: left;
-  font-size: 17px;
-  line-height: 45px;
-  padding: 0px 5px;
-}
-.item p:nth-of-type(1) {
-  width: 42%;
-  text-align: left;
-  padding: 0px 0px 0px 15px;
-  float: left;
-  position: relative;
-  left: 20px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.item p {
-  line-height: 18px;
-  width: 25%;
-  float: right;
-  text-align: center;
-}
-.home {
-  overflow-y: auto;
-  -moz-user-height: 90.7vh;
-  -webkit-user-height: 90.7vh;
-  -ms-user-height: 90.7vh;
-  -khtml-user-height: 90.7vh;
-  height:calc(93vh - 20px);
-  overflow-x: hidden;
+<style scoped lang="scss">
+.file-panel {
+  display: block;
+  outline: none;
+  box-sizing: border-box;
   -moz-user-select: none; /*火狐*/
   -webkit-user-select: none; /*webkit浏览器*/
   -ms-user-select: none; /*IE10*/
   -khtml-user-select: none; /*早期浏览器*/
   user-select: none;
-  padding: 0px 20px 10px 0px;
 }
 
-.home::-webkit-scrollbar {
-  width: 5px;
+.breadcrumbs, .breadcrumbs span {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  color: #6f6f6f;
 }
 
-.home::-webkit-scrollbar-track {
-  background: #999;
-  border-radius: 2px;
+.breadcrumbs {
+  height: 3em;
+  border-bottom: 1px solid rgba(0, 0, 0, .05);
 }
 
-.home::-webkit-scrollbar-thumb {
-  background: #2196f3;
-  border-radius: 5px;
+a {
+  text-decoration: none;
+  background-color: transparent;
 }
 
-.home::-webkit-scrollbar-thumb:hover {
-  background: #2196f3;
+.breadcrumbs .shadow {
+  color: inherit;
+  -webkit-transition: .1s ease-in;
+  transition: .1s ease-in;
+  border-radius: .125em;
 }
 
-.home::-webkit-scrollbar-corner {
-  background: #2196f3;
+.breadcrumbs .shadow:hover {
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, .05);
 }
-html::-webkit-scrollbar {
-  width: 5px;
+
+.breadcrumb-item {
+  padding: .2em;
 }
-body::-webkit-scrollbar {
-  width: 5px;
-}
-.el-breadcrumb__separator {
-  display: block;
+
+.material-icons {
+  font-family: Material Icons;
+  font-weight: 400;
+  font-style: normal;
   font-size: 24px;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
 }
-#dplayer {
-  top: -30px;
+
+.message {
+  text-align: center;
+  font-size: 2em;
+  margin: 1em auto;
+  display: block !important;
+  width: 95%;
+  color: rgba(0, 0, 0, .3);
+  font-weight: 500;
 }
-.el-dialog,
-.el-pager li {
-  background: none;
+
+.message i {
+  font-size: 2.5em;
+  margin-bottom: .2em;
+  display: block;
+}
+
+#listing.list {
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+}
+
+#listing .item.header {
+  display: none !important;
+  background-color: #ccc;
+}
+
+#listing.list .item.header {
+  display: -webkit-box !important;
+  display: -ms-flexbox !important;
+  display: flex !important;
+  background: #fafafa;
+  z-index: 999;
+  padding: .85em;
+  border: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, .1);
+}
+
+#listing.list .item {
+  width: 100%;
+  margin: 0;
+  border: 1px solid rgba(0, 0, 0, .1);
+  padding: 1em;
+  border-top: 0;
+}
+
+#listing .item {
+  background-color: #fff;
+  position: relative;
+  -ms-flex-wrap: nowrap;
+  flex-wrap: nowrap;
+  color: #6f6f6f;
+  -webkit-transition: background .1s ease, opacity .1s ease;
+  transition: background .1s ease, opacity .1s ease;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+#listing.list .item.header > div:first-child {
+  width: 0;
+}
+
+#listing.list .item div:first-of-type {
+  width: 3em;
+}
+
+#listing.list .item div:last-of-type {
+  width: calc(100% - 3em);
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+#listing .item div:last-of-type {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+#listing.list .item.header .active {
+  font-weight: 700;
+}
+
+#listing.list .item.header .name {
+  margin-right: 3em;
+}
+
+#listing.list .item .name {
+  width: 50%;
+}
+
+#listing .item div:last-of-type * {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+#listing.list .name {
+  outline: 0;
+  font-weight: 400;
+}
+
+#listing .item p {
+  margin: 0;
+}
+
+p {
+  display: block;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+}
+
+#listing.list .header span {
+  vertical-align: middle;
+}
+
+#listing.list .header .active i, #listing.list .header p:hover i {
+  opacity: 1;
+}
+
+#listing.list .header i {
+  opacity: 0;
+  -webkit-transition: all .1s ease;
+  transition: all .1s ease;
+}
+
+#listing.list .header i {
+  font-size: 1.5em;
+  vertical-align: middle;
+  margin-left: .2em;
+}
+
+#listing.list .item .size {
+  width: 25%;
+}
+
+#listing .item .modified, #listing .item .size {
+  font-size: .9em;
+  outline: 0;
+}
+
+#listing .item, #listing > div {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+#listing > div {
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  -webkit-box-pack: start;
+  -ms-flex-pack: start;
+  justify-content: flex-start;
+}
+
+#listing.list .item div:first-of-type i {
+  font-size: 2em;
+}
+
+#listing .item i {
+  font-size: 4em;
+}
+
+#listing .item i, #listing .item img {
+  margin-right: .1em;
+  vertical-align: bottom;
+}
+
+#listing .item[aria-selected=true] {
+  background: #2196f3 !important;
+  color: #fff !important;
+}
+
+.list-file {
+  cursor: pointer
+}
+
+@media (max-width: 736px) {
+  #listing.list .item .size {
+    display: none !important;
+  }
+}
+
+@media (max-width: 450px) {
+  #listing.list .item .modified {
+    display: none !important;
+  }
 }
 </style>

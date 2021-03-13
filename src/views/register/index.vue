@@ -42,7 +42,8 @@
           v-on:click="sendSecurityCode()"
           :disabled="!disabled"
           class="zmm"
-        > {{codeText}} </el-button>
+        > {{ codeText }}
+        </el-button>
       </el-form-item>
       <el-form-item prop="securityCode">
         <el-input
@@ -56,21 +57,23 @@
           class="button-register"
           type="primary"
           v-on:click="register('registerForm')"
-        > 注册 </el-button>
+        > 注册
+        </el-button>
       </el-form-item>
       <el-form-item class="login-blocks">
         <router-link
           :to="{ name: 'login'}"
           class="keep-right"
-        > >>前往登录 </router-link>
+        > >>前往登录
+        </router-link>
       </el-form-item>
     </el-form>
   </div>
 </template>
 
 <script>
-import { validWeChatId, validEmail, validUsername } from '@/utils/validate'
-import { sendSecurityCode, register } from '@/api/login'
+import {validWeChatId, validEmail, validUsername} from '@/utils/validate'
+import {sendSecurityCode, register} from '@/api/login'
 
 export default {
   name: 'register',
@@ -132,11 +135,11 @@ export default {
       codeText: '获取验证码',
       // 表单验证，需要在 el-form-item 元素中增加 prop 属性
       rules: {
-        userName: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        userPwd: [{ required: true, trigger: 'blur', validator: validatePassword }],
-        reUserPwd: [{ required: true, trigger: 'blur', validator: validateRePassword }],
-        userEmail: [{ required: true, trigger: 'blur', validator: validateEmail }],
-        securityCode: [{ required: true, trigger: 'blur', validator: validateSecurityCode }]
+        userName: [{required: true, trigger: 'blur', validator: validateUsername}],
+        userPwd: [{required: true, trigger: 'blur', validator: validatePassword}],
+        reUserPwd: [{required: true, trigger: 'blur', validator: validateRePassword}],
+        userEmail: [{required: true, trigger: 'blur', validator: validateEmail}],
+        securityCode: [{required: true, trigger: 'blur', validator: validateSecurityCode}]
       }
     }
   },
@@ -158,7 +161,7 @@ export default {
               duration: 3 * 1000
             })
             // 跳转登陆页面
-            this.$router.push({ name: 'login' })
+            this.$router.push({name: 'login'})
           }).catch((err) => {
             console.log(err)
           })
@@ -268,5 +271,87 @@ img {
 
 .button-register {
   width: 100%;
+}
+
+@media (max-width: 736px) {
+  #login {
+    background: #fff;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .login-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    max-width: 16em;
+    border: 0;
+    width: 90%;
+  }
+
+  #login h1 {
+    text-align: center;
+    font-size: 2.5em;
+    margin: .4em 0 .67em;
+  }
+
+  #login form {
+    position: fixed;
+    left: 50%;
+    margin: 0;
+    padding: .1em 1em;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    max-width: 16em;
+    width: 90%;
+  }
+
+  .el-form-item {
+    margin: 0;
+    padding: .5em 1em;
+  }
+
+  >>> .el-form-item__content {
+    line-height: 1em;
+  }
+
+  >>> .el-input__inner {
+    argin-bottom: .5em;
+    display: block;
+    width: 100%;
+    border-radius: .1em;
+    padding: .5em 1em;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, .1);
+    -webkit-transition: all .2s ease;
+    transition: all .2s ease;
+    color: #333;
+    margin: 0;
+  }
+}
+
+@media (max-width: 450px) {
+  #login form {
+    max-width: 21em;
+  }
+}
+
+@media (max-width: 376px) {
+  #login form {
+    top: 55%;
+    max-width: 19em;
+  }
+}
+
+@media (max-width: 360px) {
+  #login form {
+    top: 64%;
+    max-width: 16em;
+  }
 }
 </style>

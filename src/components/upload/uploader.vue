@@ -54,15 +54,15 @@
                     :icon="item.icon"
                     class="uploader-file-icon"
                   ></i>
-                  {{item.name}}
+                  {{ item.name }}
                 </div>
-                <div class="uploader-file-size">{{item.size}}</div>
+                <div class="uploader-file-size">{{ item.size }}</div>
                 <div class="uploader-file-meta"></div>
                 <div class="uploader-file-status">
-                  <span v-show="item.status !== 'uploading'">{{item.state}}</span>
+                  <span v-show="item.status !== 'uploading'">{{ item.state }}</span>
                   <!-- <span style="">paused</span> -->
                   <span v-show="item.status === 'uploading'">
-                    <span>{{item.progress.progress}}</span>
+                    <span>{{ item.progress.progress }}</span>
                   </span>
                 </div>
                 <div class="uploader-file-actions">
@@ -126,8 +126,7 @@ export default {
       unfoldFileList: true
     }
   },
-  computed: {
-  },
+  computed: {},
   methods: {
     /**
      * 折叠、展开面板动态切换
@@ -154,6 +153,11 @@ export default {
   right: 15px;
   bottom: 15px;
   width: 550px;
+  -moz-user-select: none; /*火狐*/
+  -webkit-user-select: none; /*webkit浏览器*/
+  -ms-user-select: none; /*IE10*/
+  -khtml-user-select: none; /*早期浏览器*/
+  user-select: none;
 }
 
 .uploader-list {
@@ -239,15 +243,19 @@ li {
 .uploader-file[status='uploading'] .uploader-file-pause {
   display: block;
 }
+
 .uploader-file[status='paused'] .uploader-file-resume {
   display: block;
 }
+
 .uploader-file[status='error'] .uploader-file-retry {
   display: block;
 }
+
 .uploader-file[status='success'] .uploader-file-remove {
   display: none;
 }
+
 .uploader-file[status='error'] .uploader-file-progress {
   background: #ffe0e0;
 }
@@ -272,9 +280,11 @@ li {
   height: 100%;
   overflow: hidden;
 }
+
 .uploader-file-info:hover {
   background-color: rgba(240, 240, 240, 0.2);
 }
+
 .uploader-file-info i,
 .uploader-file-info em {
   font-style: normal;
@@ -288,6 +298,7 @@ li {
   margin-top: 13px;
   margin-right: 8px;
 }
+
 .uploader-file-icon::before {
   content: '📃';
   display: block;
@@ -296,18 +307,23 @@ li {
   line-height: 1;
   text-indent: 0;
 }
+
 .uploader-file-icon[icon='folder']::before {
   content: '📂';
 }
+
 .uploader-file-icon[icon='image']::before {
   content: '🖼️';
 }
+
 .uploader-file-icon[icon='video']::before {
   content: '🎬';
 }
+
 .uploader-file-icon[icon='audio']::before {
   content: '🎵';
 }
+
 .uploader-file-icon[icon='document']::before {
   content: '📋';
 }
@@ -316,13 +332,16 @@ li {
   width: 13%;
   text-indent: 10px;
 }
+
 .uploader-file-meta {
   width: 8%;
 }
+
 .uploader-file-status {
   width: 24%;
   text-indent: 20px;
 }
+
 .uploader-file-name,
 .uploader-file-size,
 .uploader-file-meta,
@@ -332,6 +351,7 @@ li {
   position: relative;
   height: 100%;
 }
+
 .uploader-file-name {
   width: 45%;
   overflow: hidden;
@@ -343,6 +363,7 @@ li {
 .uploader-file-actions {
   width: 10%;
 }
+
 .uploader-file-actions > span {
   display: none;
   float: left;
@@ -351,21 +372,25 @@ li {
   margin-top: 16px;
   margin-right: 10px;
   cursor: pointer;
-  background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAABkCAYAAAD0ZHJ6AAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAAJcEhZcwAACxMAAAsTAQCanBgAAARkSURBVGje7ZnfS1NRHMAH4ptPkvQSuAdBkCxD8FUQJMEULUgzy1KyyPVQ4JMiiP4Bvg6EwUQQfMmwhwRDshwaKUjDVCgoSdDNHkzTJZ6+Z37Purve8+PeTb2TM/ggu+ew89l33x8H9BBCPG7GowXTJej3+wnDvEm0JuLC04+EYWftVAUv+fiCvDUdQR1BHUEdQR3BTIygvixoQS14XgTtthLVdpNWwXRLqvQ724LplFRtyrYF0yVpFLQrKRVMh6RZ0I6kkmCqklaCqpKZH0FX56Crq9jVfdDVk0RfFrSgFsxkQVmLcdKCVrKySCrryhPEyYShhzOcrFtG0EoilfHHk1CRU5rF6ZjNZhlVOW6RnMSVyyilKies4pO41diVy8wIujoHXV3FGdMHXTtJKLFYTLhZtq4vC1rwXApCZTIqgR6g1PBMCO9DL3bMMSqBHqDU8EyISDAHiGKvWwcCQG2KgjlAFCDAOhAAap0K5gKLphk8mqJgLrCIgoxRJ4J5wKpJ7gAoMkn5EBXBPGDVJHcAFJmkfIhQcAql1oBpTvTol9gG9pm4RHAKpdaAaU706JfYBvaZuJVgPQrt4sFlnOh5MC/p3lmJYD0K7eLBZZzoeTAv6d5ZnuAYHjpgEOnk5F0ufhG6v1ggOIaHDhhEOjl5l4tfhO4vthLcwAMrFNvLJO5vEwhu4IEViu1lEve3WQmyoihQFBzG/V0CQVYUBYqCw7i/SxTBcpsRbFeIYLnNCLZbCY5b5KAnxRwct8hBj9McZFVMW0ihRNBuFdMWUigRlFaxuQ9WWYjRMTiIe5z0wSoLMToGB3GPsA9aTZIJoB+nRgBnM1tzOkkmgH6cGgGczWzNpzqLx3n/aULJJgezeNw07oxQySbVywKjBOgFRnDs+VEsx8FlgVEC9AIjOPb8KJYjvSzoG7UW1IJaUAtqQS14toLNM5fN5APdwBJA8G83Pk/aK/rgzVvXzeQD3cASQPBvNz5P2ssTzAaGUIrHEO6zI5gNDKEUjyHcxxWkh4Ylcowwk1QQpIeGJXKMMJO0EgwqyjGCioJBJvDrxRMSuVOTJEXfbz1/bHwWtBL0yoQehK6RucgE+bGzanzulQh6E3IgQV+xpc8kcrfuSO7eTfJ3ZYmQw0Oy9azVKOk1C/bJ5D5F38YPeLfx0rjWJxHsS0SqsSYuxySjj5qO5Oj7xQWy2VBtFOwzCy6ryH3YfE3uh64Y1xckgstJPydEjkkeHv07Iy4Xaao15+KCWTBx6M/db+T9xivSErqaJDdzXI6yLRE8Vgg0coex/SPJvT0SbWu0KpZtbgSpCH3NRt7I5OxHkObc6heU+/M/J5vrpBFM5GBLqCQux14COXs5CNXK5OjPGm1tSMrJSOMNYQ4mVTGV/L6zTL7+DovkbFUxbSW0Wo05l8hJWsU+cRWfSh+Mt5Lb1ck/J1TvVsdDaR/MiEni+llsdZuZp62EViu+96bpNjNPWwmtVnzvFd5m9IVVC54x/wA7gNvqFG9vXQAAAABJRU5ErkJggg==')
-    no-repeat 0 0;
+  background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAABkCAYAAAD0ZHJ6AAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAAJcEhZcwAACxMAAAsTAQCanBgAAARkSURBVGje7ZnfS1NRHMAH4ptPkvQSuAdBkCxD8FUQJMEULUgzy1KyyPVQ4JMiiP4Bvg6EwUQQfMmwhwRDshwaKUjDVCgoSdDNHkzTJZ6+Z37Purve8+PeTb2TM/ggu+ew89l33x8H9BBCPG7GowXTJej3+wnDvEm0JuLC04+EYWftVAUv+fiCvDUdQR1BHUEdQR3BTIygvixoQS14XgTtthLVdpNWwXRLqvQ724LplFRtyrYF0yVpFLQrKRVMh6RZ0I6kkmCqklaCqpKZH0FX56Crq9jVfdDVk0RfFrSgFsxkQVmLcdKCVrKySCrryhPEyYShhzOcrFtG0EoilfHHk1CRU5rF6ZjNZhlVOW6RnMSVyyilKies4pO41diVy8wIujoHXV3FGdMHXTtJKLFYTLhZtq4vC1rwXApCZTIqgR6g1PBMCO9DL3bMMSqBHqDU8EyISDAHiGKvWwcCQG2KgjlAFCDAOhAAap0K5gKLphk8mqJgLrCIgoxRJ4J5wKpJ7gAoMkn5EBXBPGDVJHcAFJmkfIhQcAql1oBpTvTol9gG9pm4RHAKpdaAaU706JfYBvaZuJVgPQrt4sFlnOh5MC/p3lmJYD0K7eLBZZzoeTAv6d5ZnuAYHjpgEOnk5F0ufhG6v1ggOIaHDhhEOjl5l4tfhO4vthLcwAMrFNvLJO5vEwhu4IEViu1lEve3WQmyoihQFBzG/V0CQVYUBYqCw7i/SxTBcpsRbFeIYLnNCLZbCY5b5KAnxRwct8hBj9McZFVMW0ihRNBuFdMWUigRlFaxuQ9WWYjRMTiIe5z0wSoLMToGB3GPsA9aTZIJoB+nRgBnM1tzOkkmgH6cGgGczWzNpzqLx3n/aULJJgezeNw07oxQySbVywKjBOgFRnDs+VEsx8FlgVEC9AIjOPb8KJYjvSzoG7UW1IJaUAtqQS14toLNM5fN5APdwBJA8G83Pk/aK/rgzVvXzeQD3cASQPBvNz5P2ssTzAaGUIrHEO6zI5gNDKEUjyHcxxWkh4Ylcowwk1QQpIeGJXKMMJO0EgwqyjGCioJBJvDrxRMSuVOTJEXfbz1/bHwWtBL0yoQehK6RucgE+bGzanzulQh6E3IgQV+xpc8kcrfuSO7eTfJ3ZYmQw0Oy9azVKOk1C/bJ5D5F38YPeLfx0rjWJxHsS0SqsSYuxySjj5qO5Oj7xQWy2VBtFOwzCy6ryH3YfE3uh64Y1xckgstJPydEjkkeHv07Iy4Xaao15+KCWTBx6M/db+T9xivSErqaJDdzXI6yLRE8Vgg0coex/SPJvT0SbWu0KpZtbgSpCH3NRt7I5OxHkObc6heU+/M/J5vrpBFM5GBLqCQux14COXs5CNXK5OjPGm1tSMrJSOMNYQ4mVTGV/L6zTL7+DovkbFUxbSW0Wo05l8hJWsU+cRWfSh+Mt5Lb1ck/J1TvVsdDaR/MiEni+llsdZuZp62EViu+96bpNjNPWwmtVnzvFd5m9IVVC54x/wA7gNvqFG9vXQAAAABJRU5ErkJggg==') no-repeat 0 0;
 }
+
 .uploader-file-actions > span:hover {
   background-position-x: -21px;
 }
+
 .uploader-file-actions .uploader-file-pause {
   background-position-y: 0;
 }
+
 .uploader-file-actions .uploader-file-resume {
   background-position-y: -17px;
 }
+
 .uploader-file-actions .uploader-file-retry {
   background-position-y: -53px;
 }
+
 .uploader-file-actions .uploader-file-remove {
   display: block;
   background-position-y: -34px;

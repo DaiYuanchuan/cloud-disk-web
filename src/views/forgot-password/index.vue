@@ -1,7 +1,7 @@
 <template>
   <div class="body">
     <div class="h1">
-      <h1>{{title}}</h1>
+      <h1>{{ title }}</h1>
     </div>
     <el-form
       ref="resetPassword"
@@ -71,7 +71,8 @@
         <el-button
           type="primary"
           @click="submit('resetPassword')"
-        >{{next}}</el-button>
+        >{{ next }}
+        </el-button>
       </el-form-item>
 
     </el-form>
@@ -80,8 +81,8 @@
 </template>
 
 <script>
-import { validEmail, validUsername } from '@/utils/validate'
-import { sendSecurityCode, verifySecurityCode, resetPassword } from '@/api/login'
+import {validEmail, validUsername} from '@/utils/validate'
+import {sendSecurityCode, verifySecurityCode, resetPassword} from '@/api/login'
 
 export default {
   name: 'forgot-passwd',
@@ -130,10 +131,10 @@ export default {
       },
       // 表单验证，需要在 el-form-item 元素中增加 prop 属性
       rules: {
-        userPwd: [{ required: true, trigger: 'blur', validator: validatePassword }],
-        reUserPwd: [{ required: true, trigger: 'blur', validator: validateRePassword }],
-        userEmail: [{ required: true, trigger: 'blur', validator: validateEmail }],
-        securityCode: [{ required: true, trigger: 'blur', validator: validateSecurityCode }]
+        userPwd: [{required: true, trigger: 'blur', validator: validatePassword}],
+        reUserPwd: [{required: true, trigger: 'blur', validator: validateRePassword}],
+        userEmail: [{required: true, trigger: 'blur', validator: validateEmail}],
+        securityCode: [{required: true, trigger: 'blur', validator: validateSecurityCode}]
       },
       title: '忘记密码',
       next: '下一步',
@@ -181,7 +182,7 @@ export default {
                 userPwd: this.form.userPwd
               }).then((response) => {
                 // 跳转登陆页面
-                this.$router.push({ name: 'login' })
+                this.$router.push({name: 'login'})
               }).catch((err) => {
                 console.log(err)
               })
@@ -202,12 +203,14 @@ export default {
   height: 100vh;
   background: #f5f6f7 !important;
 }
+
 .h1 {
   width: 100%;
   text-align: center;
   height: 130px;
   line-height: 130px;
 }
+
 .h1 h1 {
   font-size: 32px;
   font-weight: 400;
@@ -215,19 +218,23 @@ export default {
   max-width: 1000px;
   position: relative;
 }
+
 .frame {
   max-width: 1000px;
   height: auto;
   margin: 0 auto;
   background: #fff;
 }
+
 .el-step__title.is-process {
   font-weight: 700;
   color: #c9c7cc;
 }
+
 .el-input {
   width: 420px;
 }
+
 /deep/ .el-input__inner {
   height: 45px;
   margin: 0px 0px 10px;
@@ -248,6 +255,7 @@ export default {
   transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
   width: 100%;
 }
+
 /deep/ .el-form-item__content {
   width: 420px;
   margin: 0 auto;
@@ -259,18 +267,46 @@ export default {
   margin: 0 auto;
   height: auto;
 }
+
 .step p {
   line-height: 80px;
   padding-top: 28px;
 }
+
 .button {
   width: 420px;
   text-align: center;
   margin: 16px auto;
   height: 100px;
 }
+
 .button button {
   width: 100%;
   height: 45px;
 }
+
+@media screen and (max-width: 768px) {
+  body {
+    background-color: #fff;
+    position: relative;
+    min-height: 100%;
+    padding-bottom: 80px;
+    box-sizing: border-box;
+  }
+
+  .body {
+    padding: 0 20px;
+  }
+
+  .frame {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    max-width: 16em;
+    width: 90%;
+  }
+}
+
 </style>
