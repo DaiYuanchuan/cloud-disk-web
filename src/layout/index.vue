@@ -563,7 +563,7 @@ export default {
             console.log(err)
           })
         })
-        return
+        this.filePreprocessing = []
       }
       // 获取所有move类型文件
       let move = this.filePreprocessing.filter(res => res.type === 'move')
@@ -587,6 +587,7 @@ export default {
             console.log(err)
           })
         })
+        this.filePreprocessing = []
       }
     },
     /**
