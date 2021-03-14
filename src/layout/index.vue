@@ -564,6 +564,7 @@ export default {
           })
         })
         this.filePreprocessing = []
+        return
       }
       // 获取所有move类型文件
       let move = this.filePreprocessing.filter(res => res.type === 'move')
@@ -588,6 +589,17 @@ export default {
           })
         })
         this.filePreprocessing = []
+        return
+      }
+      if (e.clipboardData.items.length > 0 && (e.clipboardData.items[0].type === 'image/png' ||
+        e.clipboardData.items[0].type === 'image/jpeg' ||
+        e.clipboardData.items[0].type === 'image/gif')) {
+        let upload = this.$refs.elementUpload
+        if (!upload) {
+          return
+        }
+        upload.handleStart(new File([e.clipboardData.items[0].getAsFile()], new Date().getTime() + '.png'))
+        upload.submit()
       }
     },
     /**
