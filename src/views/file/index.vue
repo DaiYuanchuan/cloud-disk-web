@@ -145,15 +145,21 @@ export default {
       }
       // 设置重定向地址
       let redirectionAddress = process.env.BASE_API + '/disk-file/resource/redirection?key='
-      // 判断当前点击的是否是图片，执行图片预览操作
-      if (fileCategory(item['fileMimeType']) === 'image') {
-        // 实时筛选出当前文件中的所有图片类型的文件
-        this.elImageViewer.imagesList = this.fileList.filter(res => fileCategory(res['fileMimeType']) === 'image')
-          .map(res => redirectionAddress + res['fileKey'])
-        // 设置初始索引值
-        this.elImageViewer.initialIndex = this.elImageViewer.imagesList.findIndex(res => res === redirectionAddress + item['fileKey'])
-        // 显示 大图预览组件
-        this.elImageViewer.show = true
+      switch (fileCategory(item['fileMimeType'])) {
+        // 执行图片预览操作
+        case 'image':
+          // 实时筛选出当前文件中的所有图片类型的文件
+          this.elImageViewer.imagesList = this.fileList.filter(res => fileCategory(res['fileMimeType']) === 'image')
+            .map(res => redirectionAddress + res['fileKey'])
+          // 设置初始索引值
+          this.elImageViewer.initialIndex = this.elImageViewer.imagesList.findIndex(res => res === redirectionAddress + item['fileKey'])
+          // 显示 大图预览组件
+          this.elImageViewer.show = true
+          break
+        default:
+          // 默认新窗口打开
+          window.open(redirectionAddress + item['fileKey'], '_blank')
+          break
       }
     },
     /**
