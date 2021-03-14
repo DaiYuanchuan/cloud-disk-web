@@ -9,8 +9,8 @@ import cookies from 'js-cookie'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import App from './App'
-import {asyncRoutes} from './router/routers'
 import router from './router'
+import {asyncRoutes} from './router/routers'
 
 import './icons' // icon
 
