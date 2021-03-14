@@ -22,7 +22,8 @@
         </h2>
       </div>
       <!-- 文件列表部分 -->
-      <div v-else id="listing" class="list" @keydown.ctrl.c="$emit('ctrlC')" @keydown.ctrl.x="$emit('ctrlX')">
+      <div v-else id="listing" class="list" @keydown.ctrl.c="$emit('ctrlC')"
+           @keydown.ctrl.x="$emit('ctrlX')" @keydown.enter="enter">
         <!-- title -->
         <div class="list-title">
           <div class="item header">
@@ -238,6 +239,19 @@ export default {
       for (let i = Math.min(index, minIndex); i <= Math.max(index, minIndex); i++) {
         this.fileList[i].select = true
       }
+    },
+    /**
+     * 回车 执行打开文件夹事件(按住 enter 触发)
+     */
+    enter: function () {
+      // 获取所有被选中的值
+      let selectData = this.fileList.filter(res => res.select)
+      // 只允许选择一个值
+      if (selectData.length !== 1) {
+        return
+      }
+      // 执行doubleClick事件
+      this.doubleClick(selectData[0])
     },
     /**
      * 存储单位格式化
