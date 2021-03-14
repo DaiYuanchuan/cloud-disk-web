@@ -41,6 +41,32 @@ export function renameFile (params) {
 }
 
 /**
+ * 复制文件
+ *
+ * @param {*} params 复制文件需要的参数
+ */
+export function copyFile (params) {
+  return request({
+    url: '/disk-file/copy-file',
+    method: 'post',
+    data: qs.stringify(params)
+  })
+}
+
+/**
+ * 移动文件
+ *
+ * @param {*} params 移动文件需要的参数
+ */
+export function moveFile (params) {
+  return request({
+    url: '/disk-file/move-file',
+    method: 'post',
+    data: qs.stringify(params)
+  })
+}
+
+/**
  * 文件搜索、检索文件、获取文件列表
  *
  * @param {object} params 包含需要搜索的文件参数信息

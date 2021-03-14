@@ -22,7 +22,7 @@
         </h2>
       </div>
       <!-- 文件列表部分 -->
-      <div v-else id="listing" class="list">
+      <div v-else id="listing" class="list" @keydown.ctrl.c="$emit('ctrlC')" @keydown.ctrl.x="$emit('ctrlX')">
         <!-- title -->
         <div class="list-title">
           <div class="item header">
@@ -41,11 +41,10 @@
           </div>
         </div>
         <!-- 文件列表 -->
-        <div class="list-file">
+        <div class="list-file" @keydown.delete="$emit('delete')" @keydown.a="ctrlA($event)">
           <div role="button" tabindex="0" draggable="true"
                v-for="(item,index) in fileList" :key="index"
                @click="choose($event, item, index)" @dblclick="doubleClick(item)"
-               @keydown.a="ctrlA($event)" @keydown.delete="$emit('delete')"
                :data-dir="item.fileFolder" :aria-label="item.fileName"
                :aria-selected="!item.select ? 'false' : 'true'"
                class="item">

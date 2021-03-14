@@ -64,12 +64,13 @@
       @pause="pause"
       @resume="resume"
     ></uploader>
+
   </div>
 </template>
 
 <script>
-import { getToken, upload } from '@/api/qiniu'
-import { storageUnitConversion } from '@/utils/utils'
+import {getToken, upload} from '@/api/qiniu'
+import {storageUnitConversion} from '@/utils/utils'
 import DPlayer from 'dplayer'
 import uploader from '@/components/upload/uploader'
 // 获取七牛token 后端通过Access Key,Secret Key,bucket等生成token
@@ -78,12 +79,14 @@ import uploader from '@/components/upload/uploader'
 export default {
   data () {
     return {
-      dataObj: { token: '', key: '' },
+      dataObj: {token: '', key: ''},
       image_uri: [],
       fileList: [],
       player: null,
       file: [],
-      dialogVideo: false
+      dialogVideo: false,
+      dialogPlay: true,
+      videoUrl: 'http://111.231.141.191:8084/disk-file/resource/redirection?key=cloud/fb0e7500802946cc9c46fe9519535499/4b1bcbfb9a6a4b82af36782a970453ed9qi4k6ema1.mp4'
     }
   },
   components: {
@@ -99,7 +102,8 @@ export default {
       let nextSibling = curTarget.nextSibling
       while (nextSibling.nodeType === 3 && /\s/.test(nextSibling.nodeValue)) {
         nextSibling = nextSibling.nextSibling
-      };
+      }
+
       let detailScrollHeight = nextSibling.scrollHeight
       if (containsCurClass) {
         curTarget.classList.remove('up')
@@ -196,8 +200,8 @@ export default {
       file.subscription.unsubscribe()
     },
     /**
-    * 开始事件
-    */
+     * 开始事件
+     */
     resume (file) {
       console.log('resume', file)
       file.status = 'waiting'
@@ -284,6 +288,7 @@ export default {
 .same_module {
   border: 1px solid grey;
 }
+
 .title {
   color: #fff;
   height: 30px;
@@ -293,23 +298,29 @@ export default {
   cursor: pointer;
   overflow: hidden;
 }
+
 .title span {
   vertical-align: middle;
 }
+
 .title .arrow {
   float: right;
 }
+
 .detail {
   overflow: hidden;
 }
+
 .detail .inner {
   padding: 5px 10px;
   background: #808080;
   color: #fff;
 }
+
 .detail p {
   line-height: 26px;
 }
+
 .arrow {
   display: inline-block;
   border-top: 2px solid;
@@ -324,9 +335,11 @@ export default {
   top: 50%;
   margin-top: -10px;
 }
+
 .up .arrow {
   transform: rotate(135deg);
 }
+
 .upload-button {
   outline: none;
   display: inline-block;
