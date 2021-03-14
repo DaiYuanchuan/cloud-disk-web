@@ -209,7 +209,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .login-box {
   border: 1px solid #dcdfe6;
   width: 350px;
