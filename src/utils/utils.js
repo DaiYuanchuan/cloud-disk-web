@@ -10,7 +10,10 @@ export function storageUnitConversion (bytes) {
   return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i]
 }
 
-const typeMap = {
+/**
+ * 此类型用于页面的svg维护
+ */
+const typeToSvg = {
   'image/pict': 'file-list-picture',
   'image/x-portable-graymap': 'file-list-picture',
   'application/atom+xml': 'file-list-picture',
@@ -190,15 +193,40 @@ const typeMap = {
 }
 
 /**
- * 根据mime类型判断文件所属于分类类型
+ * 根据mime类型判断文件所属的SVG图片类型
+ * 用于 与文件列表的SVG相互对应
  * @param type 文件的mime类型
  */
 export function mimeTypes (type) {
-  let mimeSvg = typeMap[type]
+  let mimeSvg = typeToSvg[type]
   if (mimeSvg === undefined) {
     return 'file'
   }
   return mimeSvg
+}
+
+const typeMap = {
+  image: ['image/gif', 'image/png', 'image/bmp', 'image/jpeg', 'application/x-shockwave-flash'],
+  video: ['mp4', 'm3u8', 'rmvb', 'avi', 'swf', '3gp', 'mkv', 'flv'],
+  audio: ['mp3', 'wav', 'wma', 'ogg', 'aac', 'flac', 'amr'],
+  document: ['doc', 'txt', 'json', 'docx', 'pages', 'epub', 'pdf', 'vue', 'numbers', 'csv', 'xls', 'xlsx', 'keynote', 'ppt', 'pptx']
+}
+
+/**
+ * 根据mime类型判断当前文件是否支持预览
+ * 支持预览的 ，返回预览类型
+ * @param mimeType 文件的mime类型
+ */
+export function fileCategory (mimeType) {
+  // 未能匹配到默认返回的类型
+  let type = 'unknown'
+  Object.keys(typeMap).forEach((_type) => {
+    const extensions = typeMap[_type]
+    if (extensions.indexOf(mimeType) > -1) {
+      type = _type
+    }
+  })
+  return type
 }
 
 /**

@@ -74,6 +74,7 @@
         <el-main>
           <router-view :breadcrumbs="breadcrumbs" :file-list="fileList"
                        @nextPage="nextPage" @doubleClick="doubleClick"
+                       @ctrlC="setPreprocessing('copy')" @ctrlX="setPreprocessing('move')"
                        @previous="previous" @delete="fileDeletion"></router-view>
         </el-main>
       </el-container>
@@ -140,7 +141,7 @@
 <script>
 import {logout} from '@/api/login'
 import {getToken, upload} from '@/api/qiniu'
-import {search, insertFileFolder, deleteFile, renameFile} from '@/api/file'
+import {search, insertFileFolder, deleteFile, renameFile, copyFile, moveFile} from '@/api/file'
 import {createShare} from '@/api/share'
 import {resetRouter} from '@/router/index'
 import cookies from 'js-cookie'
@@ -194,6 +195,8 @@ export default {
       pageBottomEvent: false,
       // 当前页面的文件列表信息(记录着当前页面中所有的文件数据)
       fileList: [],
+      // 文件预处理信息列表(ctrl+c 复制后进入此列表，ctrl+v 粘贴读取此列表的数据 ，以实现复制、移动功能)
+      filePreprocessing: [],
       // 上传面板中的文件上传的列队信息(包含着所有状态的文件数据)
       uploadedFilesList: [],
       // 是否显示当前文件上传面板
@@ -263,7 +266,10 @@ export default {
   },
   // 钩子函数：页面加载完成后执行
   mounted: function () {
+    // 自动获取文件列表的第一页
     this.getFileListInfo()
+    // 监听粘贴事件 ，将粘贴事件绑定到 ctrlV 方法
+    document.addEventListener('paste', this.ctrlV)
   },
   methods: {
     /**
@@ -526,6 +532,92 @@ export default {
         this.breadcrumbs.push({
           fileId: item.fileId,
           fileName: item.fileName
+        })
+      })
+    },
+    /**
+     * 页面 ctrl + v 事件(文件粘贴)
+     */
+    ctrlV: function (e) {
+      // 获取所有copy类型文件
+      let copy = this.filePreprocessing.filter(res => res.type === 'copy')
+      // 获取当前展开的目录的文件夹id
+      let fpId = this.breadcrumbs[this.breadcrumbs.length - 1].fileId
+      if (copy.length > 0) {
+        // 复制文件
+        copy.forEach(res => {
+          copyFile({
+            fromFileId: res.file.fileId,
+            targetFileId: fpId
+          }).then((response) => {
+            console.log(response)
+            // 删除成功的提示框
+            this.$message({
+              type: 'success',
+              message: '复制完成!'
+            })
+            // 在当前的文件列表中添加对应的文件数据
+            response.data['select'] = false
+            this.fileList.unshift(response.data)
+          }).catch((err) => {
+            console.log(err)
+          })
+        })
+        this.filePreprocessing = []
+        return
+      }
+      // 获取所有move类型文件
+      let move = this.filePreprocessing.filter(res => res.type === 'move')
+      if (move.length > 0) {
+        // 移动文件
+        move.forEach(res => {
+          moveFile({
+            fromFileId: res.file.fileId,
+            targetFileId: fpId
+          }).then((response) => {
+            console.log(response)
+            // 删除成功的提示框
+            this.$message({
+              type: 'success',
+              message: '剪切完成!'
+            })
+            // 在当前的文件列表中添加对应的文件数据
+            response.data['select'] = false
+            this.fileList.unshift(response.data)
+          }).catch((err) => {
+            console.log(err)
+          })
+        })
+        this.filePreprocessing = []
+        return
+      }
+      if (e.clipboardData.items.length > 0 && (e.clipboardData.items[0].type === 'image/png' ||
+        e.clipboardData.items[0].type === 'image/jpeg' ||
+        e.clipboardData.items[0].type === 'image/gif')) {
+        let upload = this.$refs.elementUpload
+        if (!upload) {
+          return
+        }
+        upload.handleStart(new File([e.clipboardData.items[0].getAsFile()], new Date().getTime() + '.png'))
+        upload.submit()
+      }
+    },
+    /**
+     * 当执行 ctrl + c 或者 ctrl + v 时 ，向 文件预处理信息队列 添加需要处理的文件信息
+     */
+    setPreprocessing: function (type) {
+      // 获取当前选中的数据
+      let selectData = this.fileList.filter(res => res.select)
+      if (!selectData.length) {
+        // 如果没有数据选中的 ，则不执行
+        return
+      }
+      // 清空文件预处理信息队列后，重新添加数据
+      this.filePreprocessing = []
+      selectData.forEach(res => {
+        this.filePreprocessing.push({
+          file: res,
+          type: type
         })
       })
     },

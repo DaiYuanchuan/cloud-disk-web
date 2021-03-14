@@ -22,7 +22,8 @@
         </h2>
       </div>
       <!-- 文件列表部分 -->
-      <div v-else id="listing" class="list">
+      <div v-else id="listing" class="list" @keydown.ctrl.c="$emit('ctrlC')"
+           @keydown.ctrl.x="$emit('ctrlX')" @keydown.enter="enter">
         <!-- title -->
         <div class="list-title">
           <div class="item header">
@@ -41,12 +42,11 @@
           </div>
         </div>
         <!-- 文件列表 -->
-        <div class="list-file">
+        <div class="list-file" @keydown.delete="$emit('delete')" @keydown.a="ctrlA($event)">
           <div role="button" tabindex="0" draggable="true"
                v-for="(item,index) in fileList" :key="index"
                @click="choose($event, item, index)" @dblclick="doubleClick(item)"
-               @keydown.a="ctrlA($event)" @keydown.delete="$emit('delete')"
-               :data-dir="item.fileFolder" :aria-label="item.fileName"
+               :data-dir="item['fileFolder']" :aria-label="item.fileName"
                :aria-selected="!item.select ? 'false' : 'true'"
                class="item">
             <div>
@@ -66,11 +66,18 @@
         </div>
       </div>
     </slot>
+
+    <!-- element 大图预览组件 -->
+    <el-image-viewer v-if="elImageViewer.show"
+                     :initialIndex="elImageViewer.initialIndex"
+                     :on-close="imageViewerClose"
+                     :url-list="elImageViewer.imagesList"/>
   </div>
 </template>
 
 <script>
-import {storageUnitConversion, timeDifference, mimeTypes} from '@/utils/utils'
+import {storageUnitConversion, timeDifference, mimeTypes, fileCategory} from '@/utils/utils'
+import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
 
 export default {
   name: 'file-panel',
@@ -90,8 +97,21 @@ export default {
       }
     }
   },
+  components: {
+    ElImageViewer
+  },
   data () {
-    return {}
+    return {
+      // element图片预览组件
+      elImageViewer: {
+        // 是否显示图片的大图预览
+        show: false,
+        // 初始索引值(索引基于 图片列表imagesList 字段)
+        initialIndex: 0,
+        // 需要进行 大图预览的 图片列表
+        imagesList: []
+      }
+    }
   },
   // 钩子函数：页面加载完成后执行
   mounted: function () {
@@ -122,13 +142,35 @@ export default {
       // 判断当前点击的是否为文件夹
       if (item['fileFolder']) {
         this.$emit('doubleClick', item)
-      } else {
-        console.log('双击打开文件')
-        this.$message({
-          showClose: true,
-          message: '开发中，敬请期待！'
-        })
+        return
       }
+      // 设置重定向地址
+      let redirectionAddress = process.env.BASE_API + '/disk-file/resource/redirection?key='
+      switch (fileCategory(item['fileMimeType'])) {
+        // 执行图片预览操作
+        case 'image':
+          // 实时筛选出当前文件中的所有图片类型的文件
+          this.elImageViewer.imagesList = this.fileList.filter(res => fileCategory(res['fileMimeType']) === 'image')
+            .map(res => redirectionAddress + res['fileKey'])
+          // 设置初始索引值
+          this.elImageViewer.initialIndex = this.elImageViewer.imagesList.findIndex(res => res === redirectionAddress + item['fileKey'])
+          // 显示 大图预览组件
+          this.elImageViewer.show = true
+          break
+        default:
+          // 默认新窗口打开
+          window.open(redirectionAddress + item['fileKey'], '_blank')
+          break
+      }
+    },
+    /**
+     * element 大图预览组件 关闭组件
+     */
+    imageViewerClose: function () {
+      // 关闭 大图预览组件
+      this.elImageViewer.show = false
+      this.elImageViewer.initialIndex = 0
+      this.elImageViewer.imagesList = []
     },
     /**
      * 文件列表 单机选中事件
@@ -197,6 +239,19 @@ export default {
       for (let i = Math.min(index, minIndex); i <= Math.max(index, minIndex); i++) {
         this.fileList[i].select = true
       }
+    },
+    /**
+     * 回车 执行打开文件夹事件(按住 enter 触发)
+     */
+    enter: function () {
+      // 获取所有被选中的值
+      let selectData = this.fileList.filter(res => res.select)
+      // 只允许选择一个值
+      if (selectData.length !== 1) {
+        return
+      }
+      // 执行doubleClick事件
+      this.doubleClick(selectData[0])
     },
     /**
      * 存储单位格式化
