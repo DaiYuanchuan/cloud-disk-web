@@ -107,12 +107,14 @@
 export default {
   name: 'uploader',
   props: {
+    // 上面面板中维护的文件上传列表
     fileList: {
       type: Array,
       default () {
         return {}
       }
     },
+    // 是否显示文件上传面板
     displayUploadPanel: {
       type: Boolean,
       default () {

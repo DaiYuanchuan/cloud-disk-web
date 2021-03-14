@@ -554,7 +554,7 @@ export default {
             // 删除成功的提示框
             this.$message({
               type: 'success',
-              message: '复制成功!'
+              message: '复制完成!'
             })
             // 在当前的文件列表中添加对应的文件数据
             response.data['select'] = false
@@ -579,7 +579,7 @@ export default {
             // 删除成功的提示框
             this.$message({
               type: 'success',
-              message: '剪切成功!'
+              message: '剪切完成!'
             })
             // 在当前的文件列表中添加对应的文件数据
             response.data['select'] = false
