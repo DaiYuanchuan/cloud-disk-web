@@ -161,7 +161,7 @@ const typeToSvg = {
   'image/jpeg': 'file-list-picture',
   'application/ogg': 'file',
   'image/x-icon': 'file',
-  'image/svg+xml': 'file',
+  'image/svg+xml': 'file-list-picture',
   'application/x-shar': 'file',
   'video/x-flv': 'file',
   'application/x-director': 'file',
@@ -206,7 +206,7 @@ export function mimeTypes (type) {
 }
 
 const typeMap = {
-  image: ['image/gif', 'image/png', 'image/bmp', 'image/jpeg', 'application/x-shockwave-flash'],
+  image: ['image/gif', 'image/png', 'image/bmp', 'image/jpeg', 'application/x-shockwave-flash', 'image/svg+xml'],
   video: ['video/mp4', 'video/ogg', 'video/webm'],
   audio: ['mp3', 'wav', 'wma', 'ogg', 'aac', 'flac', 'amr'],
   document: ['doc', 'txt', 'json', 'docx', 'pages', 'epub', 'pdf', 'vue', 'numbers', 'csv', 'xls', 'xlsx', 'keynote', 'ppt', 'pptx']
