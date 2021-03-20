@@ -207,7 +207,7 @@ export function mimeTypes (type) {
 
 const typeMap = {
   image: ['image/gif', 'image/png', 'image/bmp', 'image/jpeg', 'application/x-shockwave-flash'],
-  video: ['mp4', 'm3u8', 'rmvb', 'avi', 'swf', '3gp', 'mkv', 'flv'],
+  video: ['video/mp4', 'video/ogg', 'video/webm'],
   audio: ['mp3', 'wav', 'wma', 'ogg', 'aac', 'flac', 'amr'],
   document: ['doc', 'txt', 'json', 'docx', 'pages', 'epub', 'pdf', 'vue', 'numbers', 'csv', 'xls', 'xlsx', 'keynote', 'ppt', 'pptx']
 }

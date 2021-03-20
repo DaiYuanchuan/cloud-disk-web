@@ -66,7 +66,7 @@
         </div>
       </div>
     </slot>
-
+    <!--    <div class="el-image-viewer__mask"></div>-->
     <!-- element 大图预览组件 -->
     <el-image-viewer v-if="elImageViewer.show"
                      :initialIndex="elImageViewer.initialIndex"
@@ -156,6 +156,9 @@ export default {
           this.elImageViewer.initialIndex = this.elImageViewer.imagesList.findIndex(res => res === redirectionAddress + item['fileKey'])
           // 显示 大图预览组件
           this.elImageViewer.show = true
+          break
+        // 执行视频预览程序
+        case 'video':
           break
         default:
           // 默认新窗口打开
