@@ -154,7 +154,13 @@ export default {
           preload: 'auto',
           volume: 1,
           playbackSpeed: [0.5, 1, 1.25, 1.5, 2, 2.5, 3, 4],
-          contextmenu: [],
+          contextmenu: [{
+            text: '新窗口打开',
+            click: (player) => {
+              // 默认新窗口打开
+              window.open(player.video.currentSrc, '_blank')
+            }
+          }],
           // 当前正在播放的视频url和hash值
           video: {
             // 文件url
@@ -666,6 +672,10 @@ p {
 
 .list-file {
   cursor: pointer
+}
+
+#previewVideo {
+  max-height: 100%;
 }
 
 @media (max-width: 736px) {
