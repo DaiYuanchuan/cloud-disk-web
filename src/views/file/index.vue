@@ -72,12 +72,31 @@
                      :initialIndex="elImageViewer.initialIndex"
                      :on-close="imageViewerClose"
                      :url-list="elImageViewer.imagesList"/>
+
+    <!-- vue-dPlayer视频预览组件 -->
+    <div tabindex="-1" ref="el-image-viewer__wrapper" class="el-image-viewer__wrapper"
+         :style="{ 'z-index': videoViewer.zIndex }" v-show="videoViewer.show">
+      <div class="el-image-viewer__mask"></div>
+      <!-- 关闭视频预览组件 -->
+      <span class="el-image-viewer__btn el-image-viewer__close" @click="videoViewerClose">
+            <i class="el-icon-circle-close"></i>
+          </span>
+      <div class="el-image-viewer__canvas">
+        <previewVideo ref="previewVideo" id="previewVideo" class="el-image-viewer__img"
+                      :options="videoViewer.options"
+                      :style="videoViewerStyle"/>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script>
 import {storageUnitConversion, timeDifference, mimeTypes, fileCategory} from '@/utils/utils'
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
+import previewVideo from 'vue-dplayer'
+import 'vue-dplayer/dist/vue-dplayer.css'
+import cookies from 'js-cookie'
 
 export default {
   name: 'file-panel',
@@ -98,7 +117,7 @@ export default {
     }
   },
   components: {
-    ElImageViewer
+    ElImageViewer, previewVideo
   },
   data () {
     return {
@@ -110,6 +129,40 @@ export default {
         initialIndex: 0,
         // 需要进行 大图预览的 图片列表
         imagesList: []
+      },
+      // vue-dPlayer视频预览组件
+      videoViewer: {
+        // 是否显示视频预览组件
+        show: false,
+        // 控件显示的层级
+        zIndex: 2000,
+        transform: {
+          scale: 1,
+          deg: 0,
+          offsetX: 0,
+          offsetY: 0,
+          enableTransition: false
+        },
+        // vue-dPlayer视频控件参数
+        options: {
+          container: document.getElementById('previewVideo'),
+          // 是否自动循环
+          loop: true,
+          // 是否自动播放
+          autoplay: true,
+          lang: 'zh-cn',
+          preload: 'auto',
+          volume: 1,
+          playbackSpeed: [0.5, 1, 1.25, 1.5, 2, 2.5, 3, 4],
+          contextmenu: [],
+          // 当前正在播放的视频url和hash值
+          video: {
+            // 文件url
+            url: '',
+            // 文件hash值
+            hash: ''
+          }
+        }
       }
     }
   },
@@ -156,6 +209,26 @@ export default {
           this.elImageViewer.initialIndex = this.elImageViewer.imagesList.findIndex(res => res === redirectionAddress + item['fileKey'])
           // 显示 大图预览组件
           this.elImageViewer.show = true
+          break
+        // 执行视频预览程序
+        case 'video':
+          // 更新视频源
+          this.$refs.previewVideo.dp.switchVideo({
+            url: redirectionAddress + item['fileKey']
+          })
+          // 从cookie中获取对应视频源播放时间
+          let playTime = cookies.get(`videoHash:${item['fileHash']}`)
+          // 为当前播放赋值
+          this.videoViewer.options.video = {
+            video: redirectionAddress + item['fileKey'],
+            hash: item['fileHash']
+          }
+          // 播放视频
+          this.$refs.previewVideo.dp.play()
+          // 跳转到视频指定的时间
+          this.$refs.previewVideo.dp.seek(playTime === undefined ? 0 : playTime)
+          // 显示视频预览组件
+          this.videoViewer.show = true
           break
         default:
           // 默认新窗口打开
@@ -304,6 +377,39 @@ export default {
       // 向新数组的开头插入第一个元素
       sliceArray.unshift(this.breadcrumbs[0])
       return sliceArray
+    },
+    /**
+     * 视频预览组件样式
+     * @returns {{'margin-left': string, transform: string, 'margin-top': string, transition: string}}
+     */
+    videoViewerStyle: function () {
+      const {scale, deg, offsetX, offsetY, enableTransition} = this.transform
+      const style = {
+        transform: `scale(${scale}) rotate(${deg}deg)`,
+        transition: enableTransition ? 'transform .3s' : '',
+        'margin-left': `${offsetX}px`,
+        'margin-top': `${offsetY}px`
+      }
+      style.maxWidth = style.maxHeight = '100%'
+      return style
+    },
+    /**
+     * 关闭视频预览组件
+     */
+    videoViewerClose: function () {
+      // 利用cookies保存当前视频当前播放时间
+      cookies.set(`videoHash:${this.videoViewer.options.video.hash}`, this.$refs.previewVideo.dp.video.currentTime)
+      // 为当前播放赋值
+      this.videoViewer.options.video = {
+        video: '',
+        hash: ''
+      }
+      // 关闭视频预览控件
+      this.videoViewer.show = false
+      // 暂停视频播放
+      this.$refs.previewVideo.dp.pause()
+      // 跳转到视频指定的时间
+      this.$refs.previewVideo.dp.seek(0)
     }
   }
 }
