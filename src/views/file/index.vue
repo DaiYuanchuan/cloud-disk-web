@@ -674,8 +674,14 @@ p {
   cursor: pointer
 }
 
+.el-image-viewer__canvas {
+  max-height: 83%;
+  max-width: 85%;
+  margin: 0 auto;
+}
+
 #previewVideo {
-  max-height: 100%;
+  top: 10%;
 }
 
 @media (max-width: 736px) {
