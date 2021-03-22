@@ -69,6 +69,7 @@
             </i>
             <span>登出</span>
           </el-button>
+          <p class="credits"><span><a @click="helpPanel">帮助</a></span></p>
         </el-aside>
         <!-- main -->
         <el-main>
@@ -933,7 +934,7 @@ export default {
      * uid:文件唯一标识
      * result:回调函数
      */
-    uploadedFilesListFilter (uid, result) {
+    uploadedFilesListFilter: function (uid, result) {
       this.uploadedFilesList.forEach(res => {
         if (res.uid === uid) {
           result(res)
@@ -943,7 +944,7 @@ export default {
     /**
      * 状态换算
      */
-    fileStatusText (status) {
+    fileStatusText: function (status) {
       return {
         success: '成功',
         error: '失败',
@@ -951,6 +952,28 @@ export default {
         paused: '暂停',
         waiting: '等待'
       }[status]
+    },
+    /**
+     * 帮助面板
+     */
+    helpPanel: function () {
+      this.$alert(
+        `<div class="card-content">
+                    <ul>
+                      <li><strong>DEL</strong> - 删除所选的文件/文件夹</li>
+                      <li><strong>CTRL + Click</strong> - 选择多个文件或目录</li>
+                      <li><strong>SHIFT + Click</strong> - 连续选择多个文件或目录</li>
+                      <li><strong>CTRL + A</strong> - 选择全部文件或目录</li>
+                      <li><strong>CTRL + X</strong> - 剪切一个或多个文件/文件夹</li>
+                      <li><strong>CTRL + C</strong> - 复制一个或多个文件/文件夹</li>
+                      <li><strong>CTRL + V</strong> - 粘贴一个或多个文件/文件夹</li>
+                      <li><strong>Click</strong> - 选择文件或目录</li>
+                      <li><strong>Double Click</strong> - 打开文件/文件夹</li>
+                    </ul>
+                   </div>`, '帮助', {
+          dangerouslyUseHTMLString: true
+        }).catch(res => {
+      })
     }
   }
 }
@@ -1158,6 +1181,27 @@ main {
 * {
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
+}
+
+.credits {
+  -moz-user-select: none; /*火狐*/
+  -webkit-user-select: none; /*webkit浏览器*/
+  -ms-user-select: none; /*IE10*/
+  -khtml-user-select: none; /*早期浏览器*/
+  user-select: none;
+  font-size: .6em;
+  margin: 3em 2.5em;
+  color: #a5a5a5;
+}
+
+.credits > span {
+  display: block;
+  margin: .3em 0;
+}
+
+.credits a, .credits a:hover {
+  color: inherit;
+  cursor: pointer;
 }
 
 @media (max-width: 1024px) {
