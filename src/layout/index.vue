@@ -1204,6 +1204,10 @@ main {
   cursor: pointer;
 }
 
+.card > div {
+  padding: 1em 1em;
+}
+
 @media (max-width: 1024px) {
   main {
     width: calc(100% - 13em);
@@ -1242,4 +1246,26 @@ main {
   }
 }
 
+@media (max-width: 450px) {
+  /deep/ .el-dialog {
+    width: 84%;
+  }
+
+  /deep/ .el-dialog__body {
+    padding: 20px 20px 0 20px;
+  }
+
+  /deep/ .el-message-box {
+    width: 90%;
+  }
+}
+
+</style>
+<style>
+@media (max-width: 730px) {
+  .el-message-box {
+    width: 300px;
+    word-wrap: break-word;
+  }
+}
 </style>

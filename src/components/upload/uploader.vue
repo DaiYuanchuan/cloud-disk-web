@@ -405,4 +405,10 @@ li {
   transform: translate(-50%, -50%);
   font-size: 16px;
 }
+
+@media (max-width: 450px) {
+  #global-uploader {
+    width: 90%;
+  }
+}
 </style>
