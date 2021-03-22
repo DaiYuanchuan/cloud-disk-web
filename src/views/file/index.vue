@@ -670,10 +670,6 @@ p {
   color: #fff !important;
 }
 
-.list-file {
-  cursor: pointer
-}
-
 .el-image-viewer__canvas {
   max-height: 83%;
   max-width: 85%;
@@ -682,6 +678,12 @@ p {
 
 #previewVideo {
   top: 10%;
+}
+
+@media (min-width: 736px) {
+  .list-file {
+    cursor: pointer
+  }
 }
 
 @media (max-width: 736px) {
