@@ -224,6 +224,7 @@ export default {
           this.$refs.previewVideo.dp.switchVideo({
             url: redirectionAddress + item['fileKey']
           })
+          document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
           // 从cookie中获取对应视频源播放时间
           let playTime = cookies.get(`videoHash:${item['fileHash']}`)
           // 为当前播放赋值
@@ -413,6 +414,7 @@ export default {
         video: '',
         hash: ''
       }
+      document.body.setAttribute('style', 'margin: 0; background: #fafafa;')
       // 关闭视频预览控件
       this.videoViewer.show = false
       // 暂停视频播放
