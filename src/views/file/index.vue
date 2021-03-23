@@ -208,6 +208,8 @@ export default {
       switch (fileCategory(item['fileMimeType'])) {
         // 执行图片预览操作
         case 'image':
+          // 大图预览时 取消 body 的滚动条
+          document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
           // 实时筛选出当前文件中的所有图片类型的文件
           this.elImageViewer.imagesList = this.fileList.filter(res => fileCategory(res['fileMimeType']) === 'image')
             .map(res => redirectionAddress + res['fileKey'])
@@ -222,6 +224,7 @@ export default {
           this.$refs.previewVideo.dp.switchVideo({
             url: redirectionAddress + item['fileKey']
           })
+          document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
           // 从cookie中获取对应视频源播放时间
           let playTime = cookies.get(`videoHash:${item['fileHash']}`)
           // 为当前播放赋值
@@ -248,6 +251,7 @@ export default {
     imageViewerClose: function () {
       // 关闭 大图预览组件
       this.elImageViewer.show = false
+      document.body.setAttribute('style', 'margin: 0; background: #fafafa;')
       this.elImageViewer.initialIndex = 0
       this.elImageViewer.imagesList = []
     },
@@ -410,6 +414,7 @@ export default {
         video: '',
         hash: ''
       }
+      document.body.setAttribute('style', 'margin: 0; background: #fafafa;')
       // 关闭视频预览控件
       this.videoViewer.show = false
       // 暂停视频播放
