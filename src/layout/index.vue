@@ -1306,4 +1306,16 @@ main {
     word-wrap: break-word;
   }
 }
+
+@media (max-width: 376px) {
+  .el-message {
+    min-width: 340px;
+  }
+}
+
+@media (max-width: 330px) {
+  .el-message {
+    min-width: 300px;
+  }
+}
 </style>
