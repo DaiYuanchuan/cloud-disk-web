@@ -421,6 +421,43 @@ export default {
       this.$refs.previewVideo.dp.pause()
       // 跳转到视频指定的时间
       this.$refs.previewVideo.dp.seek(0)
+    },
+    dragover: function (e, item, index) {
+      e.stopPropagation()
+      e.preventDefault()
+      // 为所有同级元素赋值
+      e.target.parentElement.childNodes.forEach(nodes => {
+        nodes.setAttribute('style', 'opacity: .5;')
+      })
+      // e.target.setAttribute('style', 'opacity: 1;')
+      console.log('fileDragover ', item, index)
+    },
+    drop: function (e, item, index) {
+      // 阻止拖拽的默认行为
+      e.stopPropagation()
+      e.preventDefault()
+      console.log('fileDrop ', item, index)
+    },
+    dragStart: function (e, item, index) {
+      // 拖拽开始时 ，判断如果当前元素没有被选中，则取消其他所有选中的元素 同时 选中当前元素
+      if (!item.select) {
+        this.fileList.forEach(res => {
+          res.select = false
+        })
+        item.select = true
+      }
+      console.log('拖放开始', e.target.parentElement.childNodes, item, index)
+      // 为所有同级元素赋值
+      e.target.parentElement.childNodes.forEach(nodes => {
+        nodes.setAttribute('style', 'opacity: .5;')
+      })
+    },
+    dragEnd: function (e, item, index) {
+      // 为所有同级元素赋值
+      e.target.parentElement.childNodes.forEach(nodes => {
+        nodes.setAttribute('style', 'opacity: 1;')
+      })
+      console.log('拖放结束', item, index)
     }
   }
 }
