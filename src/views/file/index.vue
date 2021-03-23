@@ -187,7 +187,7 @@ export default {
       // 变量scrollHeight是滚动条的总高度
       let scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
       // 滚动条到底部的条件
-      if (Math.round(scrollTop + windowHeight + 1) === scrollHeight) {
+      if ((Math.floor(scrollTop) + windowHeight) + 1 === scrollHeight) {
         // 加载下一页
         this.$emit('nextPage')
       }
@@ -503,7 +503,6 @@ a {
 }
 
 .breadcrumbs .shadow:hover {
-  cursor: pointer;
   background-color: rgba(0, 0, 0, .05);
 }
 
@@ -725,6 +724,11 @@ p {
 @media (min-width: 736px) {
   .list-file {
     cursor: pointer
+  }
+
+  .breadcrumbs .shadow:hover {
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, .05);
   }
 }
 

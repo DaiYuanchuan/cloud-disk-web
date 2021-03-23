@@ -1092,7 +1092,6 @@ header > div {
 
 .action {
   display: inline-block;
-  cursor: pointer;
   -webkit-transition: all .2s ease;
   transition: all .2s ease;
   border: 0;
@@ -1253,6 +1252,12 @@ main {
 
   .el-aside {
     width: 10em !important;
+  }
+}
+
+@media (min-width: 736px) {
+  .action {
+    cursor: pointer
   }
 }
 
