@@ -969,6 +969,7 @@ export default {
                       <li><strong>CTRL + V</strong> - 粘贴一个或多个文件/文件夹</li>
                       <li><strong>Click</strong> - 选择文件或目录</li>
                       <li><strong>Double Click</strong> - 打开文件/文件夹</li>
+                      <li><strong>Click + Enter</strong> - 选中后回车打开文件/文件夹</li>
                     </ul>
                    </div>`, '帮助', {
           dangerouslyUseHTMLString: true
