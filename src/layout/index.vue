@@ -1006,7 +1006,7 @@ export default {
 
       // 批量添加文件
       for (let i = 0; i < e.dataTransfer.files.length; i++) {
-        if (e.dataTransfer.files[i].type !== '') {
+        if (e.dataTransfer.files[i].size > 0) {
           // 向文件队列中添加文件信息
           upload.handleStart(new File([e.dataTransfer.files[i]], e.dataTransfer.files[i].name))
         }
