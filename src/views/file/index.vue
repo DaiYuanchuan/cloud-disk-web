@@ -187,7 +187,7 @@ export default {
       // 变量scrollHeight是滚动条的总高度
       let scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
       // 滚动条到底部的条件
-      if (Math.round(scrollTop + windowHeight + 1) === scrollHeight) {
+      if ((Math.floor(scrollTop) + windowHeight) + 1 === scrollHeight) {
         // 加载下一页
         this.$emit('nextPage')
       }
@@ -421,6 +421,43 @@ export default {
       this.$refs.previewVideo.dp.pause()
       // 跳转到视频指定的时间
       this.$refs.previewVideo.dp.seek(0)
+    },
+    dragover: function (e, item, index) {
+      e.stopPropagation()
+      e.preventDefault()
+      // 为所有同级元素赋值
+      e.target.parentElement.childNodes.forEach(nodes => {
+        nodes.setAttribute('style', 'opacity: .5;')
+      })
+      // e.target.setAttribute('style', 'opacity: 1;')
+      console.log('fileDragover ', item, index)
+    },
+    drop: function (e, item, index) {
+      // 阻止拖拽的默认行为
+      e.stopPropagation()
+      e.preventDefault()
+      console.log('fileDrop ', item, index)
+    },
+    dragStart: function (e, item, index) {
+      // 拖拽开始时 ，判断如果当前元素没有被选中，则取消其他所有选中的元素 同时 选中当前元素
+      if (!item.select) {
+        this.fileList.forEach(res => {
+          res.select = false
+        })
+        item.select = true
+      }
+      console.log('拖放开始', e.target.parentElement.childNodes, item, index)
+      // 为所有同级元素赋值
+      e.target.parentElement.childNodes.forEach(nodes => {
+        nodes.setAttribute('style', 'opacity: .5;')
+      })
+    },
+    dragEnd: function (e, item, index) {
+      // 为所有同级元素赋值
+      e.target.parentElement.childNodes.forEach(nodes => {
+        nodes.setAttribute('style', 'opacity: 1;')
+      })
+      console.log('拖放结束', item, index)
     }
   }
 }
@@ -466,7 +503,6 @@ a {
 }
 
 .breadcrumbs .shadow:hover {
-  cursor: pointer;
   background-color: rgba(0, 0, 0, .05);
 }
 
@@ -685,9 +721,20 @@ p {
   top: 10%;
 }
 
+@media (max-width: 769px) {
+  #listing.list .item .name {
+    width: 17em;
+  }
+}
+
 @media (min-width: 736px) {
   .list-file {
     cursor: pointer
+  }
+
+  .breadcrumbs .shadow:hover {
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, .05);
   }
 }
 
@@ -697,9 +744,32 @@ p {
   }
 }
 
-@media (max-width: 450px) {
+@media (max-width: 451px) {
   #listing.list .item .modified {
     display: none !important;
   }
+
+  #listing.list .item .name {
+    width: 15em;
+  }
 }
+
+@media (max-width: 415px) {
+  #listing.list .item .name {
+    width: 17em;
+  }
+}
+
+@media (max-width: 376px) {
+  #listing.list .item .name {
+    width: 14em;
+  }
+}
+
+@media (max-width: 331px) {
+  #listing.list .item .name {
+    width: 10em;
+  }
+}
+
 </style>

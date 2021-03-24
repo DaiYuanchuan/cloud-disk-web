@@ -48,8 +48,8 @@ export const constantRoutes = [
 ]
 
 /**
-* 需要根据用户角色动态加载的路由
-*/
+ * 需要根据用户角色动态加载的路由
+ */
 export const asyncRoutes = [
   {
     path: '/',
@@ -60,7 +60,7 @@ export const asyncRoutes = [
         name: 'home',
         component: () => import('@/views/file/index'),
         meta: {
-          title: 'home',
+          title: '文档管理器',
           icon: 'theme'
         }
       },
@@ -69,7 +69,16 @@ export const asyncRoutes = [
         name: 'share-list',
         component: () => import('@/views/share/share-list'),
         meta: {
-          title: 'share-list',
+          title: '分享列表',
+          icon: 'theme'
+        }
+      },
+      {
+        path: 'share-record',
+        name: 'share-record',
+        component: () => import('@/views/share/share-record'),
+        meta: {
+          title: '分享记录',
           icon: 'theme'
         }
       }

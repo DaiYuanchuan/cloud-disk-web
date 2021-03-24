@@ -1,5 +1,5 @@
 <template>
-  <div class="layout">
+  <div class="layout" @dragover="dragover" @drop="drop">
     <el-container>
       <!-- 头部 -->
       <el-header height="65px">
@@ -969,11 +969,50 @@ export default {
                       <li><strong>CTRL + V</strong> - 粘贴一个或多个文件/文件夹</li>
                       <li><strong>Click</strong> - 选择文件或目录</li>
                       <li><strong>Double Click</strong> - 打开文件/文件夹</li>
+                      <li><strong>Click + Enter</strong> - 选中后回车打开文件/文件夹</li>
                     </ul>
                    </div>`, '帮助', {
           dangerouslyUseHTMLString: true
         }).catch(res => {
       })
+    },
+    /**
+     * 当被拖动的对象在另一对象容器范围内拖动时触发此事件
+     * @param e
+     */
+    dragover: function (e) {
+      // 阻止拖拽的默认行为
+      e.stopPropagation()
+      e.preventDefault()
+    },
+    /**
+     * 在一个拖动过程中，释放鼠标键时触发此事件
+     * @param e
+     */
+    drop: function (e) {
+      // 阻止拖拽的默认行为
+      e.stopPropagation()
+      e.preventDefault()
+      this.fileDrag(e)
+    },
+    /**
+     * 文件拖拽上传处理实现
+     * @param e
+     */
+    fileDrag: function (e) {
+      let upload = this.$refs.elementUpload
+      if (!upload) {
+        return
+      }
+
+      // 批量添加文件
+      for (let i = 0; i < e.dataTransfer.files.length; i++) {
+        if (e.dataTransfer.files[i].size > 0) {
+          // 向文件队列中添加文件信息
+          upload.handleStart(new File([e.dataTransfer.files[i]], e.dataTransfer.files[i].name))
+        }
+      }
+      upload.submit()
     }
   }
 }
@@ -1054,7 +1093,6 @@ header > div {
 
 .action {
   display: inline-block;
-  cursor: pointer;
   -webkit-transition: all .2s ease;
   transition: all .2s ease;
   border: 0;
@@ -1218,6 +1256,12 @@ main {
   }
 }
 
+@media (min-width: 736px) {
+  .action {
+    cursor: pointer
+  }
+}
+
 @media (max-width: 736px) {
   main {
     margin: 0 1em;
@@ -1266,6 +1310,18 @@ main {
   .el-message-box {
     width: 300px;
     word-wrap: break-word;
+  }
+}
+
+@media (max-width: 376px) {
+  .el-message {
+    min-width: 340px;
+  }
+}
+
+@media (max-width: 330px) {
+  .el-message {
+    min-width: 300px;
   }
 }
 </style>
