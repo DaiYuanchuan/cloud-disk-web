@@ -81,6 +81,15 @@ export const asyncRoutes = [
           title: '分享记录',
           icon: 'theme'
         }
+      },
+      {
+        path: 'setting',
+        name: 'setting',
+        component: () => import('@/views/setting/setting'),
+        meta: {
+          title: '设置',
+          icon: 'theme'
+        }
       }
     ]
   },

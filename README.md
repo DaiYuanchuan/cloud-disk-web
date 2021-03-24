@@ -12,6 +12,8 @@
 
 支持文件分享、复制、移动、粘贴等等
 
+可以针对不同的文件类型展示不同的文件图标
+
 支持大文件分片上传
 
 ##
@@ -25,7 +27,7 @@
 ![login](https://images.gitee.com/uploads/images/2021/0310/105344_a5d31fc9_1882312.png "login")
 
 #### 文件列表页面:
-![文件列表页面](https://images.gitee.com/uploads/images/2021/0324/141103_40187d49_1882312.png "文件列表页面")
+![文件列表页面](https://images.gitee.com/uploads/images/2021/0324/182730_dca68773_1882312.png "文件列表页面")
 
 #### 多文件上传页面:
 ![多文件上传页面](https://images.gitee.com/uploads/images/2021/0324/141357_78203cfd_1882312.png "多文件上传页面")
