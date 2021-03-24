@@ -50,6 +50,8 @@ const typeToSvg = {
   'application/mathml+xml': 'file',
   'text/html': 'file-list-html',
   'message/rfc822': 'file-list-html',
+  'multipart/related': 'file-list-html',
+  'application/x-iso9660-image': 'file-list-cd',
   'application/x-ns-proxy-autoconfig': 'file-list-html',
   'text/x-java-source,java': 'file-list-java',
   'application/java-vm': 'file-list-java',
