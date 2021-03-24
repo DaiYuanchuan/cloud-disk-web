@@ -1,5 +1,5 @@
 <template>
-  <div class="layout" @dragover="dragover" @drop="drop">
+  <div class="layout">
     <el-container>
       <!-- 头部 -->
       <el-header height="65px">
@@ -269,8 +269,11 @@ export default {
   mounted: function () {
     // 自动获取文件列表的第一页
     this.getFileListInfo()
-    // 监听粘贴事件 ，将粘贴事件绑定到 ctrlV 方法
+    // 监听全局粘贴事件 ，将粘贴事件绑定到 ctrlV 方法
     document.addEventListener('paste', this.ctrlV)
+    // 监听全局拖拽事件 ，将拖拽事件绑定到 dragover、drop 方法
+    document.addEventListener('dragover', this.dragover)
+    document.addEventListener('drop', this.drop)
   },
   methods: {
     /**
