@@ -721,6 +721,12 @@ p {
   top: 10%;
 }
 
+@media (max-width: 769px) {
+  #listing.list .item .name {
+    width: 17em;
+  }
+}
+
 @media (min-width: 736px) {
   .list-file {
     cursor: pointer
@@ -738,9 +744,32 @@ p {
   }
 }
 
-@media (max-width: 450px) {
+@media (max-width: 451px) {
   #listing.list .item .modified {
     display: none !important;
   }
+
+  #listing.list .item .name {
+    width: 15em;
+  }
 }
+
+@media (max-width: 415px) {
+  #listing.list .item .name {
+    width: 17em;
+  }
+}
+
+@media (max-width: 376px) {
+  #listing.list .item .name {
+    width: 14em;
+  }
+}
+
+@media (max-width: 331px) {
+  #listing.list .item .name {
+    width: 10em;
+  }
+}
+
 </style>
