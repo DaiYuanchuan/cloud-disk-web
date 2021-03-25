@@ -354,14 +354,18 @@ export default {
       // 默认等于创建时间
       let time = item['createTime']
       // 如果更新时间不为空，则 等于 更新时间
-      if (item['updateTime'] !== undefined) {
+      if (item['updateTime'] !== null && item['updateTime'] !== undefined) {
         time = item['updateTime']
       }
-      let difference = timeDifference((new Date(time.replace(new RegExp('-', 'gm'), '/'))).getTime())
-      if (difference === '') {
-        return time
+      if (time !== null) {
+        let difference = timeDifference((new Date(time.replace(new RegExp('-', 'gm'), '/'))).getTime())
+        if (difference === '') {
+          return time
+        }
+        return difference
+      } else {
+        return item['createTime']
       }
-      return difference
     },
     /**
      * 获取文件icon
