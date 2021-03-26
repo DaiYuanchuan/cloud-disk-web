@@ -46,7 +46,7 @@ const typeToSvg = {
   'video/vnd.mpegurl': 'file',
   'application/x-netcdf': 'file',
   'application/x-tcl': 'file',
-  'audio/amr': 'file',
+  'audio/amr': 'file-list-audio',
   'application/mathml+xml': 'file',
   'text/html': 'file-list-html',
   'message/rfc822': 'file-list-html',
