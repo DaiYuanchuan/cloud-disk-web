@@ -196,7 +196,7 @@ const typeToSvg = {
   'image/x-xwindowdump': 'file',
   'application/x-cpio': 'file',
   'video/x-sgi-movie': 'file',
-  'application/vnd.android.package-archive': 'file',
+  'application/vnd.android.package-archive': 'file-list-apk',
   'application/vnd.oasis.opendocument.presentation-template': 'file',
   'application/x-kchart': 'file',
   'application/x-tar': 'file-list-compress',
