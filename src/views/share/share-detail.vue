@@ -60,17 +60,15 @@
           <div class="CMxQsC">
             <div class="avatar">
               <div class="photo-frame theme-share-head">
-                <img
-                  :alt="form.userName"
-                  :src="form.userAvatar"
-                  width="44"
-                >
+                <el-avatar :size="50" :src="form.userAvatar" @error="true" :alt="form.userName">
+                  <img src="/static/img/default.png" :alt="form.userName"/>
+                </el-avatar>
               </div>
             </div>
             <div class="verify-property">
               <div class="verify-user theme-share-text">
                 <div class="username theme-share-name">{{ form.userName }}</div>
-                <div style="margin-left: 5px;">给您加密分享了文件</div>
+                <div style="margin-left: 5px;">给您分享了文件</div>
               </div>
             </div>
           </div>
@@ -249,7 +247,7 @@ export default {
 
 #mainContent {
   margin: 0 auto;
-  width: 980px;
+  max-width: 980px;
 }
 
 .b-rlv {
@@ -339,7 +337,7 @@ dt {
 }
 
 .CMxQsC {
-  background: url('https://pan.baidu.com/sns/box-static/disk-share/widget/pageModule/init/image/share_tit_bg_5855301.png?t=1608023046263') no-repeat;
+  background: url('/static/img/share_tit_bg.png') no-repeat;
   background-size: 100% 100%;
   border-radius: 4px;
   height: 100px;
@@ -349,22 +347,6 @@ dt {
   width: 20%;
   float: left;
   height: 100px;
-}
-
-.photo-frame,
-.photo-frame span {
-  width: 44px;
-  height: 44px;
-  overflow: hidden;
-  border-radius: 60px;
-  position: relative;
-  top: 30px;
-  left: 20px;
-}
-
-.photo-frame img {
-  width: 100%;
-  vertical-align: middle;
 }
 
 .verify-property {
@@ -391,5 +373,95 @@ dt {
 
 .verify-user div {
   float: left;
+}
+
+.photo-frame {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.detail {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 420px) {
+  .code-box {
+    width: 21em;
+    padding: 17px 16px 0 17px;
+  }
+
+  .avatar {
+    width: 24%;
+  }
+
+  .verify-property .username {
+    max-width: 8em;
+  }
+
+  .verify-property {
+    width: 76%;
+  }
+}
+
+@media (max-width: 380px) {
+  .code-box {
+    width: 18em;
+    padding: 17px 16px 0 17px;
+  }
+
+  .avatar {
+    width: 22%;
+  }
+
+  .verify-property .username {
+    max-width: 7em;
+  }
+
+  .verify-property {
+    width: 78%;
+  }
+}
+
+@media (max-width: 330px) {
+  .code-box {
+    width: 16em;
+    padding: 17px 16px 0 17px;
+  }
+
+  .verify-property .username {
+    max-width: 4em;
+  }
+
+  .avatar {
+    width: 26%;
+  }
+
+  .verify-property {
+    width: 72%;
+  }
+}
+</style>
+<style>
+@media (max-width: 730px) {
+  .el-message-box {
+    width: 300px;
+    word-wrap: break-word;
+  }
+}
+
+@media (max-width: 376px) {
+  .el-message {
+    min-width: 340px;
+  }
+}
+
+@media (max-width: 330px) {
+  .el-message {
+    min-width: 300px;
+  }
 }
 </style>
