@@ -52,9 +52,8 @@
 
 <script>
 import {validWeChatId, validEmail, validUsername} from '@/utils/validate'
-import {login, secretKeyLogin} from '@/api/login'
+import {login} from '@/api/login'
 import {asyncRoutes} from '@/router/routers'
-import {resetRouter} from '@/router/index'
 import cookies from 'js-cookie'
 
 export default {
@@ -91,7 +90,7 @@ export default {
   },
   // 钩子函数：页面加载完成后执行
   mounted: function () {
-    this.secretKeyLogin()
+    this.formAssignment()
   },
   methods: {
     /**
@@ -108,8 +107,9 @@ export default {
           }).then((response) => {
             console.log(response)
             cookies.set('userInfo', response.data.userInfo)
-            // 保存用户密钥数据
-            localStorage.setItem('secretKey', response.data.userInfo.userSecretKey)
+            // 保存用户名、密码等数据
+            localStorage.setItem('username', this.form.username)
+            localStorage.setItem('password', this.form.password)
             // 动态添加路由数据
             this.$router.addRoutes(asyncRoutes)
             this.$router.push({name: 'home'})
@@ -133,29 +133,21 @@ export default {
       this.$router.push({name: 'forgot-passwd'})
     },
     /**
-     * 用户密钥登陆
+     * 表单赋值
      */
-    secretKeyLogin () {
+    formAssignment () {
       let token = cookies.get('userInfo')
       if (token === undefined) {
-        // 未登录的情况下
-        // 获取缓存中localStorage的值
-        let secretKey = localStorage.getItem('secretKey')
-        if (secretKey != null) {
-          secretKeyLogin(secretKey).then((response) => {
-            console.log(response)
-            cookies.set('userInfo', response.data.userInfo)
-            // 保存用户密钥数据
-            localStorage.setItem('secretKey', response.data.userInfo.userSecretKey)
-            // 动态添加路由数据
-            resetRouter()
-            this.$router.addRoutes(asyncRoutes)
-            this.$router.push({name: 'home'})
-          }).catch((err) => {
-            console.log(err)
-            localStorage.removeItem('secretKey')
-          })
+        // 未登录的情况下，从缓存中获取用户名、密码信息
+        let username = localStorage.getItem('username')
+        if (username != null) {
+          this.form.username = username
         }
+        let password = localStorage.getItem('password')
+        if (password != null) {
+          this.form.password = password
+        }
+        localStorage.removeItem('secretKey')
       }
     }
   }

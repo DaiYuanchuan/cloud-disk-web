@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { Message, Loading } from 'element-ui'
+import {Message, Loading} from 'element-ui'
 import cookies from 'js-cookie'
 
 // 定义loading变量
@@ -75,6 +75,12 @@ service.interceptors.response.use(
         return Promise.reject(new Error(res || 'Error'))
       case '403':
         // 登录过期时
+        Message({
+          message: res.message || 'error',
+          showClose: true,
+          type: 'error',
+          duration: 3 * 1000
+        })
         cookies.remove('userInfo')
         location.reload()
         return Promise.reject(new Error(res || 'Error'))

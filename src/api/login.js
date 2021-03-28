@@ -25,18 +25,6 @@ export function logout () {
 }
 
 /**
- * 使用密钥登录
- *
- * @param {string} secretKey 用户密钥
- */
-export function secretKeyLogin (secretKey) {
-  return request({
-    url: '/disk-user/secret-key/' + secretKey,
-    method: 'get'
-  })
-}
-
-/**
  * 发送邮箱验证码
  *
  * @param {string} email 用户邮箱

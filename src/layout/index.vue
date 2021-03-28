@@ -694,13 +694,11 @@ export default {
      */
     logout: function () {
       this.$confirm('确认退出吗?', '提示').then(() => {
-        logout().then(res => {
+        logout().then(() => {
           // 重置路由
           resetRouter()
           cookies.remove('userInfo')
           this.$router.push({name: 'login'})
-          // 删除保存的用户密钥数据
-          localStorage.removeItem('secretKey')
         }).catch((err) => {
           console.log(err)
         })
