@@ -69,7 +69,6 @@ export default {
     }
     // 密码校验
     const validatePassword = (rule, value, callback) => {
-      console.log(validUsername(value))
       if (!validUsername(value)) {
         callback(new Error('密码 4 ~ 16位，不包含特殊字符'))
       } else {
@@ -106,13 +105,40 @@ export default {
             password: this.form.password
           }).then((response) => {
             console.log(response)
-            cookies.set('userInfo', response.data.userInfo)
-            // 保存用户名、密码等数据
-            localStorage.setItem('username', this.form.username)
-            localStorage.setItem('password', this.form.password)
-            // 动态添加路由数据
-            this.$router.addRoutes(asyncRoutes)
-            this.$router.push({name: 'home'})
+            // 如果code为499，则代表着当前账号被封了
+            if (response.code === '499') {
+              if (response.data.userInfo['userBanTime'] === -1) {
+                this.$alert(
+                  `<p class="cTMail-content" style="font-size: 14px; color: rgb(51, 51, 51); line-height: 24px; margin: 6px 0 0; word-wrap: break-word; word-break: break-all;">
+                    您的账号由于${response.data.userInfo['userReason']}，已被平台处以永久封号的处罚
+                    </p>`, '该账号已被限制登录', {
+                    dangerouslyUseHTMLString: true
+                  }).catch(res => {
+                })
+              } else {
+                this.$alert(
+                  `<p class="cTMail-content" style="font-size: 14px; color: rgb(51, 51, 51); line-height: 24px; margin: 6px 0 0; word-wrap: break-word; word-break: break-all;">
+                    您的账号由于${response.data.userInfo['userReason']}，已被平台处以封号${response.data['userBanTimeFormat']}的处罚
+                    </p>
+                    <p class="cTMail-content" style="font-size: 14px; color: rgb(51, 51, 51); line-height: 24px; margin: 6px 0 0; word-wrap: break-word; word-break: break-all;">
+                    解封时间：
+                      <span style="border-bottom: 1px dashed rgb(204, 204, 204); position: relative;">
+                        ${response.data.userInfo['userUnlockTime']}
+                      </span>
+                    </p>`, '该账号已被限制登录', {
+                    dangerouslyUseHTMLString: true
+                  }).catch(res => {
+                })
+              }
+            } else {
+              cookies.set('userInfo', response.data.userInfo)
+              // 保存用户名、密码等数据
+              localStorage.setItem('username', this.form.username)
+              localStorage.setItem('password', this.form.password)
+              // 动态添加路由数据
+              this.$router.addRoutes(asyncRoutes)
+              this.$router.push({name: 'home'})
+            }
           }).catch((err) => {
             console.log(err)
           })
@@ -261,6 +287,21 @@ img {
   #login form {
     top: 50%;
     max-width: 16em;
+  }
+}
+
+</style>
+<style>
+@media (max-width: 730px) {
+  .el-message-box {
+    width: 300px;
+    word-wrap: break-word;
+  }
+}
+
+@media (max-width: 450px) {
+  .el-message-box {
+    width: 90%;
   }
 }
 

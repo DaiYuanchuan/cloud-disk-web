@@ -1299,10 +1299,6 @@ main {
   /deep/ .el-dialog__body {
     padding: 20px 20px 0 20px;
   }
-
-  /deep/ .el-message-box {
-    width: 90%;
-  }
 }
 
 </style>
@@ -1311,6 +1307,12 @@ main {
   .el-message-box {
     width: 300px;
     word-wrap: break-word;
+  }
+}
+
+@media (max-width: 450px) {
+  .el-message-box {
+    width: 90%;
   }
 }
 
