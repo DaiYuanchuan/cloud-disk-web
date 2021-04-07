@@ -173,7 +173,6 @@ export default {
         if (password != null) {
           this.form.password = password
         }
-        localStorage.removeItem('secretKey')
       }
     }
   }

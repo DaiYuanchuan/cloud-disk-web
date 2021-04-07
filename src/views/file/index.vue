@@ -412,7 +412,9 @@ export default {
      */
     videoViewerClose: function () {
       // 利用cookies保存当前视频当前播放时间
-      cookies.set(`videoHash:${this.videoViewer.options.video.hash}`, this.$refs.previewVideo.dp.video.currentTime)
+      cookies.set(`videoHash:${this.videoViewer.options.video.hash}`, this.$refs.previewVideo.dp.video.currentTime, {
+        expires: new Date(new Date().getTime() + 30 * 12 * 60 * 60 * 1000)
+      })
       // 为当前播放赋值
       this.videoViewer.options.video = {
         video: '',

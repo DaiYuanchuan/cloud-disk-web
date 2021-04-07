@@ -78,7 +78,7 @@ export const asyncRoutes = [
         name: 'share-record',
         component: () => import('@/views/share/share-record'),
         meta: {
-          title: '分享记录',
+          title: '我的分享',
           icon: 'theme'
         }
       },
