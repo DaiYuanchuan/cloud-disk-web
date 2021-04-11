@@ -4,17 +4,23 @@
       <el-container>
         <!-- main -->
         <el-main>
-          <el-button
-            type="primary"
-            class="code-button"
-            @click="saveToMine"
-          > 保存到我的
+          <el-button class="code-button" @click="saveToMine">
+            <i class="material-icons">
+              <svg-icon icon-class="file-share-save"></svg-icon>
+            </i>
+            保存到我的
           </el-button>
           <filePanel :breadcrumbs="breadcrumbs" :file-list="fileList"
                      @nextPage="nextPage" @doubleClick="doubleClick" @previous="previous"></filePanel>
         </el-main>
       </el-container>
     </slot>
+
+    <!-- 文件 复制、移动 时选择目标文件夹的面板 -->
+    <file-card v-if="fileCard.show" :card-title="fileCard.title" :card-breadcrumbs="fileCard.cardBreadcrumbs"
+               @card-close="cardClose" @card-confirm="cardConfirm"
+               @card-folder-previous="cardFolderPrevious" @card-folder-next="cardFolderNext"></file-card>
+
   </div>
 </template>
 
@@ -22,6 +28,7 @@
 import filePanel from '@/views/file/index'
 import {copyFile} from '@/api/file'
 import {search} from '@/api/share'
+import fileCard from '@/components/fileCard/fileCard'
 import cookies from 'js-cookie'
 
 export default {
@@ -42,7 +49,7 @@ export default {
     }
   },
   components: {
-    filePanel
+    filePanel, fileCard
   },
   data () {
     return {
@@ -56,7 +63,19 @@ export default {
       // 页面上拉触底事件(如果页面上拉触底请求下一页的数据时 没有数据了 这里显示true 表示不请求数据)
       pageBottomEvent: false,
       // 当前页面的文件列表信息(记录着当前页面中所有的文件数据)
-      fileList: []
+      fileList: [],
+      // 文件 复制、移动 时选择的面板
+      fileCard: {
+        // 面板是否显示
+        show: false,
+        // 卡片抬头(复制、粘贴、保存..)
+        title: '',
+        // 面板内的文件夹路径信息面包屑导航(数组中的第一位元素为主页)
+        cardBreadcrumbs: [{
+          fileName: '/',
+          fileId: 0
+        }]
+      }
     }
   },
   // 钩子函数：页面加载完成后执行
@@ -167,6 +186,66 @@ export default {
       }
     },
     /**
+     * 关闭文件 保存 时选择目标文件夹的面板
+     */
+    cardClose: function () {
+      this.fileCard.title = ''
+      this.fileCard.show = false
+      document.body.setAttribute('style', 'margin: 0; background: #fafafa;')
+    },
+    /**
+     * 保存 时选择目标文件夹面板中的确认事件
+     * @param currentlySelectedValue 文件夹面板中选中的目标文件夹的文件id
+     */
+    cardConfirm: function (currentlySelectedValue) {
+      // 获取所有当前选中的数据
+      let selectData = this.fileList.filter(res => res.select)
+      if (!selectData.length) {
+        // 如果没有数据选中的 ，则默认为全部文件
+        selectData = this.fileList
+      }
+
+      // 保存至我的文件夹
+      selectData.forEach(res => {
+        copyFile({
+          code: this.code,
+          shareShort: this.$route.params.short,
+          shareKey: res.shareKey,
+          fromFileId: res.fileId,
+          targetFileId: currentlySelectedValue
+        }).then((response) => {
+          console.log(response)
+          // 复制成功的提示框
+          this.$message({
+            type: 'success',
+            message: '保存成功!'
+          })
+        }).catch((err) => {
+          console.log(err)
+        })
+      })
+      this.cardClose()
+    },
+    /**
+     * 复制、移动 时选择目标文件夹面板中返回上一级事件
+     * @param fileParentId 上一级文件夹id
+     */
+    cardFolderPrevious: function (fileParentId) {
+      this.fileCard.cardBreadcrumbs = this.fileCard.cardBreadcrumbs.slice(0, this.fileCard.cardBreadcrumbs
+        .findIndex(res => res.fileId === fileParentId) + 1)
+    },
+    /**
+     * 复制、移动 时选择目标文件夹面板中加载下一级事件
+     * @param item 加载完成后返回的面包屑对象
+     */
+    cardFolderNext: function (item) {
+      // 增加面包屑导航数据
+      this.fileCard.cardBreadcrumbs.push({
+        fileId: item.fileId,
+        fileName: item.fileName
+      })
+    },
+    /**
      * 保存到我的网盘
      */
     saveToMine: function () {
@@ -178,31 +257,10 @@ export default {
         return
       }
 
-      // 筛选所有选中的数据
-      let selectData = this.fileList.filter(res => res.select)
-      if (!selectData.length) {
-        return
-      }
-
-      // 复制文件
-      selectData.forEach(res => {
-        copyFile({
-          code: this.code,
-          shareShort: this.$route.params.short,
-          shareKey: res.shareKey,
-          fromFileId: res.fileId,
-          targetFileId: 0
-        }).then((response) => {
-          console.log(response)
-          // 删除成功的提示框
-          this.$message({
-            type: 'success',
-            message: '操作成功!'
-          })
-        }).catch((err) => {
-          console.log(err)
-        })
-      })
+      // 打开文件夹面板时 取消 body 的滚动条
+      document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
+      this.fileCard.title = '保存'
+      this.fileCard.show = true
     }
   }
 }
