@@ -136,6 +136,11 @@
       </div>
     </el-dialog>
 
+    <!-- 文件 复制、移动 时选择目标文件夹的面板 -->
+    <file-card v-if="fileCard.show" :card-title="fileCard.title" :card-breadcrumbs="fileCard.cardBreadcrumbs"
+               @card-close="cardClose" @card-confirm="cardConfirm"
+               @card-folder-previous="cardFolderPrevious" @card-folder-next="cardFolderNext"></file-card>
+
   </div>
 </template>
 
@@ -147,6 +152,7 @@ import {createShare} from '@/api/share'
 import {resetRouter} from '@/router/index'
 import cookies from 'js-cookie'
 import uploader from '@/components/upload/uploader'
+import fileCard from '@/components/fileCard/fileCard'
 import {storageUnitConversion, formatDate} from '@/utils/utils'
 
 export default {
@@ -228,11 +234,23 @@ export default {
         }],
         // 文件分享api请求结果
         fileSharingRequestResults: {}
+      },
+      // 文件 复制、移动 时选择的面板
+      fileCard: {
+        // 面板是否显示
+        show: false,
+        // 卡片抬头(复制、粘贴、保存..)
+        title: '',
+        // 面板内的文件夹路径信息面包屑导航(数组中的第一位元素为主页)
+        cardBreadcrumbs: [{
+          fileName: '/',
+          fileId: 0
+        }]
       }
     }
   },
   components: {
-    uploader
+    uploader, fileCard
   },
   // 钩子函数: 数据监听
   watch: {
@@ -385,21 +403,19 @@ export default {
      * 右上角-文件复制 按钮
      */
     fileCopy: function () {
-      console.log('文件复制')
-      this.$message({
-        showClose: true,
-        message: '开发中，敬请期待！'
-      })
+      // 打开文件夹面板时 取消 body 的滚动条
+      document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
+      this.fileCard.title = '复制'
+      this.fileCard.show = true
     },
     /**
      * 右上角-文件移动 按钮
      */
     fileMove: function () {
-      console.log('文件移动')
-      this.$message({
-        showClose: true,
-        message: '开发中，敬请期待！'
-      })
+      // 打开文件夹面板时 取消 body 的滚动条
+      document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
+      this.fileCard.title = '移动'
+      this.fileCard.show = true
     },
     /**
      * 右上角-文件删除 按钮
@@ -456,6 +472,94 @@ export default {
                   </code></p>`, '文件信息', {
           dangerouslyUseHTMLString: true
         }).catch(res => {
+      })
+    },
+    /**
+     * 关闭文件 复制、移动 时选择目标文件夹的面板
+     */
+    cardClose: function () {
+      this.fileCard.title = ''
+      this.fileCard.show = false
+      document.body.setAttribute('style', 'margin: 0; background: #fafafa;')
+    },
+    /**
+     * 复制、移动 时选择目标文件夹面板中的确认事件
+     * @param currentlySelectedValue 文件夹面板中选中的目标文件夹的文件id
+     * @param cardTitle 文件夹面板的title(在当前页面只有俩种情况  复制 - 移动)
+     */
+    cardConfirm: function (currentlySelectedValue, cardTitle) {
+      // 获取所有当前选中的数据
+      let selectData = this.fileList.filter(res => res.select)
+      if (!selectData.length) {
+        // 如果没有数据选中的 ，则不执行
+        return
+      }
+      if (cardTitle === '复制') {
+        selectData.forEach(res => {
+          copyFile({
+            fromFileId: res.fileId,
+            targetFileId: currentlySelectedValue
+          }).then((response) => {
+            console.log(response)
+            // 复制成功的提示框
+            this.$message({
+              type: 'success',
+              message: '复制完成!'
+            })
+            // 如果目标文件夹与当前已经文件夹一致时，刷新当前文件夹
+            if (this.breadcrumbs[this.breadcrumbs.length - 1].fileId === currentlySelectedValue) {
+              // 在当前的文件列表中添加对应的文件数据
+              response.data['select'] = false
+              this.fileList.unshift(response.data)
+            }
+          }).catch((err) => {
+            console.log(err)
+          })
+        })
+      } else {
+        selectData.forEach(res => {
+          moveFile({
+            fromFileId: res.fileId,
+            targetFileId: currentlySelectedValue
+          }).then((response) => {
+            console.log(response)
+            // 删除成功的提示框
+            this.$message({
+              type: 'success',
+              message: '剪切完成!'
+            })
+            // 如果目标文件夹与当前已经文件夹一致时，刷新当前文件夹
+            if (this.breadcrumbs[this.breadcrumbs.length - 1].fileId === currentlySelectedValue) {
+              // 在当前的文件列表中添加对应的文件数据
+              response.data['select'] = false
+              this.fileList.unshift(response.data)
+            }
+            // 删除文件列表中对应的文件数据
+            this.fileList = this.fileList.filter(item => item !== res)
+          }).catch((err) => {
+            console.log(err)
+          })
+        })
+      }
+      this.cardClose()
+    },
+    /**
+     * 复制、移动 时选择目标文件夹面板中返回上一级事件
+     * @param fileParentId 上一级文件夹id
+     */
+    cardFolderPrevious: function (fileParentId) {
+      this.fileCard.cardBreadcrumbs = this.fileCard.cardBreadcrumbs.slice(0, this.fileCard.cardBreadcrumbs
+        .findIndex(res => res.fileId === fileParentId) + 1)
+    },
+    /**
+     * 复制、移动 时选择目标文件夹面板中加载下一级事件
+     * @param item 加载完成后返回的面包屑对象
+     */
+    cardFolderNext: function (item) {
+      // 增加面包屑导航数据
+      this.fileCard.cardBreadcrumbs.push({
+        fileId: item.fileId,
+        fileName: item.fileName
       })
     },
     // ============================== 页面工具方法
@@ -555,7 +659,7 @@ export default {
             targetFileId: fpId
           }).then((response) => {
             console.log(response)
-            // 删除成功的提示框
+            // 复制成功的提示框
             this.$message({
               type: 'success',
               message: '复制完成!'

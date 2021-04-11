@@ -4,11 +4,14 @@
       <el-container>
         <!-- main -->
         <el-main>
+          <el-button
+            type="primary"
+            class="code-button"
+            @click="saveToMine"
+          > 保存到我的
+          </el-button>
           <filePanel :breadcrumbs="breadcrumbs" :file-list="fileList"
                      @nextPage="nextPage" @doubleClick="doubleClick" @previous="previous"></filePanel>
-          <!--        <router-view :breadcrumbs="breadcrumbs" :file-list="fileList"-->
-          <!--                     @nextPage="nextPage" @doubleClick="doubleClick"-->
-          <!--                     @previous="previous" @delete="fileDeletion"></router-view>-->
         </el-main>
       </el-container>
     </slot>
@@ -17,7 +20,9 @@
 
 <script>
 import filePanel from '@/views/file/index'
+import {copyFile} from '@/api/file'
 import {search} from '@/api/share'
+import cookies from 'js-cookie'
 
 export default {
   name: 'share-list',
@@ -160,6 +165,44 @@ export default {
         this.page += 1
         this.getFileListInfo(this.page)
       }
+    },
+    /**
+     * 保存到我的网盘
+     */
+    saveToMine: function () {
+      // 获取cookie中缓存的用户信息
+      let token = cookies.get('userInfo')
+      if (token === undefined) {
+        // 如果在未登录的情况下使用，则跳转登录页面
+        this.$router.push({name: 'login'})
+        return
+      }
+
+      // 筛选所有选中的数据
+      let selectData = this.fileList.filter(res => res.select)
+      if (!selectData.length) {
+        return
+      }
+
+      // 复制文件
+      selectData.forEach(res => {
+        copyFile({
+          code: this.code,
+          shareShort: this.$route.params.short,
+          shareKey: res.shareKey,
+          fromFileId: res.fileId,
+          targetFileId: 0
+        }).then((response) => {
+          console.log(response)
+          // 删除成功的提示框
+          this.$message({
+            type: 'success',
+            message: '操作成功!'
+          })
+        }).catch((err) => {
+          console.log(err)
+        })
+      })
     }
   }
 }
