@@ -9,7 +9,7 @@
             <div class="leftTit">
               <h4>{{ shareFileName }}</h4>
               <p>
-                <i class="material-icons">
+                <i class="icons">
                   <svg-icon icon-class="file-share-time"></svg-icon>
                 </i>{{ shareCreateTime }}
                 <span>有效期：{{ shareExpirationTimeFormat }}</span>
@@ -17,7 +17,7 @@
             </div>
             <div class="">
               <el-button class="code-button" id="code-button" @click="saveToMine">
-                <i class="material-icons">
+                <i class="icons">
                   <svg-icon icon-class="file-share-save"></svg-icon>
                 </i>
                 保存到我的
