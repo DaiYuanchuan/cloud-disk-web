@@ -95,7 +95,8 @@
     </div>
 
     <!-- 文件列表页面 -->
-    <shareList v-if="file.isShow" :root-list="file.sharedRootList" :code="form.code"/>
+    <shareList v-if="file.isShow" :root-list="file.sharedRootList" :share-expiration-time-format="file.shareExpirationTimeFormat"
+               :code="form.code" :share-create-time="file.shareCreateTime" :share-file-name="file.shareFileName"/>
 
   </div>
 </template>
@@ -143,6 +144,12 @@ export default {
       file: {
         // 文件列表是否展示
         isShow: false,
+        // 分享请求信息
+        shareCreateTime: '',
+        // 格式化
+        shareExpirationTimeFormat: '',
+        // 分享文件名
+        shareFileName: '',
         // 文件分享的根目录列表
         sharedRootList: []
       }
@@ -216,15 +223,21 @@ export default {
         } else {
           this.card.isShow = false
           this.form.isShow = false
+          this.file.shareCreateTime = response.data['createTime']
+          this.file.shareExpirationTimeFormat = response.data['shareExpirationTimeFormat']
+          this.file.shareFileName = response.data['shareFileName']
           this.file.sharedRootList = []
           response.data['fileInfo'].forEach(res => {
             res['select'] = false
             this.file.sharedRootList.push(res)
           })
+          if (response.data['fileInfo'].length > 1) {
+            this.file.shareFileName = response.data['shareFileName'] + '等'
+          }
           if (shortCode === undefined) {
-            // code添加到cookies中，并且设置 3 小时的有效时间
+            // code添加到cookies中，并且设置 6 小时的有效时间
             cookies.set(`short:${this.$route.params.short}`, this.form.code, {
-              expires: new Date(new Date().getTime() + 3 * 60 * 60 * 1000)
+              expires: new Date(new Date().getTime() + 6 * 60 * 60 * 1000)
             })
           }
           this.file.isShow = true

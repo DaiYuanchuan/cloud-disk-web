@@ -1,15 +1,35 @@
 <template>
   <div class="layout">
-    <slot :root-list="rootList" :code="code">
+    <slot :root-list="rootList" :code="code" :share-expiration-time-format="shareExpirationTimeFormat"
+          :share-create-time="shareCreateTime" :share-file-name="shareFileName">
       <el-container>
         <!-- main -->
-        <el-main>
-          <el-button class="code-button" @click="saveToMine">
-            <i class="material-icons">
-              <svg-icon icon-class="file-share-save"></svg-icon>
-            </i>
-            保存到我的
-          </el-button>
+        <el-main class="share-list-main">
+          <div class="topBtn">
+            <div class="leftTit">
+              <h4>{{ shareFileName }}</h4>
+              <p>
+                <i class="material-icons">
+                  <svg-icon icon-class="file-share-time"></svg-icon>
+                </i>{{ shareCreateTime }}
+                <span>有效期：{{ shareExpirationTimeFormat }}</span>
+              </p>
+            </div>
+            <div class="">
+              <el-button class="code-button" id="code-button" @click="saveToMine">
+                <i class="material-icons">
+                  <svg-icon icon-class="file-share-save"></svg-icon>
+                </i>
+                保存到我的
+              </el-button>
+              <el-button class="code-button fot-button" @click="saveToMine">
+                <i class="material-icons">
+                  <svg-icon icon-class="file-share-save"></svg-icon>
+                </i>
+              </el-button>
+
+            </div>
+          </div>
           <filePanel :breadcrumbs="breadcrumbs" :file-list="fileList"
                      @nextPage="nextPage" @doubleClick="doubleClick" @previous="previous"></filePanel>
         </el-main>
@@ -42,6 +62,24 @@ export default {
       }
     },
     code: {
+      type: String,
+      default () {
+        return ''
+      }
+    },
+    shareExpirationTimeFormat: {
+      type: String,
+      default () {
+        return ''
+      }
+    },
+    shareCreateTime: {
+      type: String,
+      default () {
+        return ''
+      }
+    },
+    shareFileName: {
       type: String,
       default () {
         return ''
@@ -267,6 +305,57 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.breadcrumbs {
+  width: 100%;
+}
+
+.topBtn {
+  height: 100px;
+  position: relative;
+  width: 100%;
+  border-bottom: 1px solid #f6f6f6;
+}
+
+.share-list-main {
+  margin-top: 0;
+}
+
+.el-button {
+  position: absolute;
+  bottom: 28px;
+  right: 0;
+}
+
+.fot-button {
+  position: fixed;
+  bottom: 26px;
+  right: 10px;
+  z-index: 10;
+  cursor: none;
+}
+
+.leftTit h4 {
+  font-size: 18px;
+  font-weight: 800;
+  position: absolute;
+  top: 4px;
+}
+
+.leftTit p {
+  position: absolute;
+  top: 50px;
+  font-size: 13px;
+  color: #888;
+}
+
+.leftTit i {
+  margin-right: 6px;
+}
+
+.leftTit span {
+  margin-left: 10px;
+}
+
 .layout {
   font-family: Roboto, sans-serif;
   background-color: #fafafa;
@@ -284,7 +373,6 @@ export default {
 
 main {
   min-height: 1em;
-  margin: 0 1em 1em auto;
   width: calc(100% - 19em);
 }
 
@@ -297,4 +385,24 @@ main {
   box-sizing: border-box;
 }
 
+.fot-button {
+  display: none;
+}
+
+@media screen and (max-width: 480px) {
+  #code-button {
+    display: none;
+  }
+  .fot-button {
+    padding: 12px;
+    border-radius: 50%;
+    display: block;
+  }
+  .leftTit h4 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 12em;
+  }
+}
 </style>
