@@ -305,10 +305,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.breadcrumbs {
-  width: 100%;
-}
-
 .topBtn {
   height: 100px;
   position: relative;
@@ -339,6 +335,9 @@ export default {
   font-weight: 800;
   position: absolute;
   top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 20em;
 }
 
 .leftTit p {
