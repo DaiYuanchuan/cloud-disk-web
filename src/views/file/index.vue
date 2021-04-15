@@ -476,6 +476,10 @@ a {
 }
 
 .breadcrumb-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 20em;
+  display: inline-block !important;
   padding: .2em;
 }
 
