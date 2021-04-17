@@ -1,6 +1,7 @@
 <template>
   <div>
-    <el-avatar :size="50" src="https://cloud-storage-cs-1256166828.cos.ap-nanjing.myqcloud.com/backiee-129901.jpg" @error="true">
+    <el-avatar :size="50" src="https://cloud-storage-cs-1256166828.cos.ap-nanjing.myqcloud.com/backiee-129901.jpg"
+               @error="true">
       <img src="https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png" alt="yonghumog"/>
     </el-avatar>
     <el-upload
@@ -72,6 +73,8 @@
       @resume="resume"
     ></uploader>
 
+    <fileCard :card-title="cardTitle" :card-file-parent-id="cardFileParentId" v-if="true"></fileCard>
+
   </div>
 </template>
 
@@ -81,12 +84,148 @@ import {storageUnitConversion} from '@/utils/utils'
 import DPlayer from 'dplayer'
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
 import uploader from '@/components/upload/uploader'
+import fileCard from '@/components/fileCard/fileCard'
 // 获取七牛token 后端通过Access Key,Secret Key,bucket等生成token
 // 七牛官方sdk https://developer.qiniu.com/sdk#official-sdk
 
 export default {
   data () {
     return {
+      cardTitle: '保存',
+      cardShow: true,
+      cardFileParentId: 0,
+      cardFileList: [
+        {
+          'fileId': 5020,
+          'fileName': '11',
+          'fileHash': '',
+          'fileSize': 0,
+          'fileMimeType': 'application/octet-stream',
+          'fileKey': '',
+          'fileParentId': 0,
+          'fileUserId': 13,
+          'fileFolder': true,
+          'select': false,
+          'createTime': '2021-04-11 17:26:11'
+        },
+        {
+          'fileId': 5019,
+          'fileName': '10',
+          'fileHash': '',
+          'fileSize': 0,
+          'fileMimeType': 'application/octet-stream',
+          'fileKey': '',
+          'fileParentId': 0,
+          'fileUserId': 13,
+          'fileFolder': true,
+          'select': false,
+          'createTime': '2021-04-11 17:26:06'
+        },
+        {
+          'fileId': 5018,
+          'fileName': '9',
+          'fileHash': '',
+          'fileSize': 0,
+          'fileMimeType': 'application/octet-stream',
+          'fileKey': '',
+          'fileParentId': 0,
+          'fileUserId': 13,
+          'fileFolder': true,
+          'select': false,
+          'createTime': '2021-04-11 17:25:59'
+        },
+        {
+          'fileId': 5017,
+          'fileName': '8',
+          'fileHash': '',
+          'fileSize': 0,
+          'fileMimeType': 'application/octet-stream',
+          'fileKey': '',
+          'fileParentId': 0,
+          'fileUserId': 13,
+          'fileFolder': true,
+          'select': false,
+          'createTime': '2021-04-11 17:25:54'
+        },
+        {
+          'fileId': 5016,
+          'fileName': '7',
+          'fileHash': '',
+          'fileSize': 0,
+          'fileMimeType': 'application/octet-stream',
+          'fileKey': '',
+          'fileParentId': 0,
+          'fileUserId': 13,
+          'fileFolder': true,
+          'select': false,
+          'createTime': '2021-04-11 17:25:49'
+        },
+        {
+          'fileId': 5015,
+          'fileName': '6',
+          'fileHash': '',
+          'fileSize': 0,
+          'fileMimeType': 'application/octet-stream',
+          'fileKey': '',
+          'fileParentId': 0,
+          'fileUserId': 13,
+          'fileFolder': true,
+          'select': false,
+          'createTime': '2021-04-11 17:25:44'
+        },
+        {
+          'fileId': 5014,
+          'fileName': '5',
+          'fileHash': '',
+          'fileSize': 0,
+          'fileMimeType': 'application/octet-stream',
+          'fileKey': '',
+          'fileParentId': 0,
+          'fileUserId': 13,
+          'fileFolder': true,
+          'select': false,
+          'createTime': '2021-04-11 17:25:39'
+        },
+        {
+          'fileId': 5013,
+          'fileName': '4',
+          'fileHash': '',
+          'fileSize': 0,
+          'fileMimeType': 'application/octet-stream',
+          'fileKey': '',
+          'fileParentId': 0,
+          'fileUserId': 13,
+          'fileFolder': true,
+          'select': false,
+          'createTime': '2021-04-11 17:25:34'
+        },
+        {
+          'fileId': 5012,
+          'fileName': '3',
+          'fileHash': '',
+          'fileSize': 0,
+          'fileMimeType': 'application/octet-stream',
+          'fileKey': '',
+          'fileParentId': 0,
+          'fileUserId': 13,
+          'fileFolder': true,
+          'select': false,
+          'createTime': '2021-04-11 17:25:29'
+        },
+        {
+          'fileId': 5011,
+          'fileName': '2',
+          'fileHash': '',
+          'fileSize': 0,
+          'fileMimeType': 'application/octet-stream',
+          'fileKey': '',
+          'fileParentId': 0,
+          'fileUserId': 13,
+          'fileFolder': true,
+          'select': false,
+          'createTime': '2021-04-11 17:25:23'
+        }
+      ],
       dataObj: {token: '', key: ''},
       image_uri: [],
       fileList: [],
@@ -100,11 +239,19 @@ export default {
     }
   },
   components: {
-    uploader, ElImageViewer
+    uploader, ElImageViewer, fileCard
   },
   mounted: function () {
   },
   methods: {
+    /**
+     * 对父组件传入的fileList进行重新赋值与过滤，只保留文件夹部分
+     * @param fileList 父组件传入的文件列表信息
+     */
+    fileFolderList: function (fileList) {
+      console.log('+++++++++++++++', fileList)
+      return fileList
+    },
     fileKey: function () {
       return this.image.map(res => 'http://111.231.141.191:8084/disk-file/resource/redirection?key=' + res.fileKey)
     },

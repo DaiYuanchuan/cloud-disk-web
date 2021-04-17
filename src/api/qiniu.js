@@ -34,8 +34,11 @@ export const upload = (token, key, obj, next, error, complete) => {
   // params: object，用来放置自定义变量
   // mimeType: null || array，用来限制上传文件类型，为 null 时表示不对文件类型限制；限制类型放到数组里： ["image/png", "image/jpeg", "image/gif"]
   let config = {
+    // 是否开启 cdn 加速
     useCdnDomain: true,
+    // 是否禁止静态日志上报
     disableStatisticsReport: false,
+    // 上传失败后重试次数
     retryCount: 6,
     region: qiniu.region.z0
   }

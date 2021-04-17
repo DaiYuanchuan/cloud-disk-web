@@ -132,9 +132,11 @@ export default {
               }
             } else {
               cookies.set('userInfo', response.data.userInfo)
-              // 保存用户名、密码等数据
+              // 保存用户名、密码、邮箱、头像等数据
               localStorage.setItem('username', this.form.username)
               localStorage.setItem('password', this.form.password)
+              localStorage.setItem('userEmail', response.data.userInfo.userEmail)
+              localStorage.setItem('userAvatar', response.data.userInfo.userAvatar)
               // 动态添加路由数据
               this.$router.addRoutes(asyncRoutes)
               this.$router.push({name: 'home'})

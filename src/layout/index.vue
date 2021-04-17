@@ -50,11 +50,19 @@
               </i>
               <span>新建文件夹</span>
             </el-button>
+          </div>
+          <div>
             <el-button aria-label="我的分享" title="我的分享" class="action" @click="fileShareList">
               <i class="material-icons">
                 <svg-icon icon-class="file-share"></svg-icon>
               </i>
               <span>我的分享</span>
+            </el-button>
+            <el-button aria-label="问题反馈" title="问题反馈" class="action" @click="feedbackBtn">
+              <i class="material-icons">
+                <svg-icon icon-class="file-feedback"></svg-icon>
+              </i>
+              <span>问题反馈</span>
             </el-button>
           </div>
           <el-button aria-label="设置" title="设置" class="action" @click="setting">
@@ -136,6 +144,26 @@
       </div>
     </el-dialog>
 
+    <!-- 意见与反馈的表单对象 -->
+    <el-dialog title="意见与反馈" :visible.sync="feedback.show">
+      <el-form ref="feedback" :model="feedback.form" :rules="feedback.rules">
+        <el-form-item label="意见与问题" prop="feedbackContent">
+          <el-input type="textarea" v-model="feedback.form.feedbackContent" class="feedbackContent" maxlength="500"
+                    placeholder="您可以向我们提出您的疑问或者是一些建设性的意见"></el-input>
+        </el-form-item>
+        <el-form-item label="联系方式" prop="feedbackContact">
+          <el-input
+            type="text"
+            placeholder="请填写您的常用邮箱地址，便于我们与您联系。"
+            v-model="feedback.form.feedbackContact"
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="feedbackSubmit('feedback')">确 定</el-button>
+      </div>
+    </el-dialog>
+
     <!-- 文件 复制、移动 时选择目标文件夹的面板 -->
     <file-card v-if="fileCard.show" :card-title="fileCard.title" :card-breadcrumbs="fileCard.cardBreadcrumbs"
                @card-close="cardClose" @card-confirm="cardConfirm"
@@ -147,8 +175,10 @@
 <script>
 import {logout} from '@/api/login'
 import {getToken, upload} from '@/api/qiniu'
+import {validEmail} from '@/utils/validate'
 import {search, insertFileFolder, deleteFile, renameFile, copyFile, moveFile} from '@/api/file'
 import {createShare} from '@/api/share'
+import {insertFeedback} from '@/api/feedback'
 import {resetRouter} from '@/router/index'
 import cookies from 'js-cookie'
 import uploader from '@/components/upload/uploader'
@@ -158,6 +188,24 @@ import {storageUnitConversion, formatDate} from '@/utils/utils'
 export default {
   name: 'layout',
   data () {
+    // 邮箱校验
+    const validateEmail = (rule, value, callback) => {
+      if (validEmail(value)) {
+        callback()
+      } else {
+        callback(new Error('邮箱地址不规范'))
+      }
+    }
+    // 反馈内容的长度校验
+    const validateFeedbackContent = (rule, value, callback) => {
+      if (value.length === 0) {
+        callback(new Error('请填写您宝贵的意见，您的意见对我们真的很重要.'))
+      } else if (value.length <= 500) {
+        callback()
+      } else {
+        callback(new Error('请尽量精简您要反馈的内容'))
+      }
+    }
     return {
       // 右上角需要进行操作的按钮
       operateBtn: [{
@@ -246,6 +294,23 @@ export default {
           fileName: '/',
           fileId: 0
         }]
+      },
+      // 意见与反馈的对象
+      feedback: {
+        // 是否显示表单
+        show: false,
+        // 表单
+        form: {
+          // 联系方式
+          feedbackContact: '',
+          // 反馈内容
+          feedbackContent: ''
+        },
+        // 表单验证，需要在 el-form-item 元素中增加 prop 属性
+        rules: {
+          feedbackContact: [{required: true, trigger: 'blur', validator: validateEmail}],
+          feedbackContent: [{required: true, trigger: 'blur', validator: validateFeedbackContent}]
+        }
       }
     }
   },
@@ -784,6 +849,39 @@ export default {
       })
     },
     /**
+     * 页面左侧菜单栏-意见与反馈
+     */
+    feedbackBtn: function () {
+      // 用户联系方式 默认为当前账号绑定的邮箱地址
+      let userEmail = localStorage.getItem('userEmail')
+      if (userEmail != null) {
+        this.feedback.form.feedbackContact = userEmail
+      }
+      this.feedback.show = true
+    },
+    /**
+     * 意见与反馈 模态框的确认按钮
+     */
+    feedbackSubmit: function (formName) {
+      // 为表单绑定验证功能
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          insertFeedback({
+            feedbackContact: this.feedback.form.feedbackContact,
+            feedbackContent: this.feedback.form.feedbackContent
+          }).then((response) => {
+            this.feedback.show = false
+            this.$message({
+              type: 'success',
+              message: '提交成功，我们会尽快给您答复'
+            })
+          }).catch((err) => {
+            console.log(err)
+          })
+        }
+      })
+    },
+    /**
      * 页面左侧菜单栏-设置
      */
     setting: function () {
@@ -1302,7 +1400,7 @@ a {
   vertical-align: middle;
 }
 
-.el-aside div:first-child {
+.el-aside div {
   border-bottom: 1px solid rgba(0, 0, 0, .05);
 }
 
@@ -1349,6 +1447,10 @@ main {
 
 .card > div {
   padding: 1em 1em;
+}
+
+> > > .feedbackContent > textarea {
+  height: 6em;
 }
 
 @media (max-width: 1024px) {
