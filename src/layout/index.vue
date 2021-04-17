@@ -854,7 +854,7 @@ export default {
     feedbackBtn: function () {
       // 用户联系方式 默认为当前账号绑定的邮箱地址
       let userEmail = localStorage.getItem('userEmail')
-      if (userEmail != null) {
+      if (this.feedback.form.feedbackContact === '' && userEmail != null) {
         this.feedback.form.feedbackContact = userEmail
       }
       this.feedback.show = true
@@ -869,8 +869,9 @@ export default {
           insertFeedback({
             feedbackContact: this.feedback.form.feedbackContact,
             feedbackContent: this.feedback.form.feedbackContent
-          }).then((response) => {
+          }).then(() => {
             this.feedback.show = false
+            this.feedback.form.feedbackContent = ''
             this.$message({
               type: 'success',
               message: '提交成功，我们会尽快给您答复'
