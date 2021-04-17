@@ -1,13 +1,23 @@
 /**
  * 存储单元转换
- * @param {Long} bytes 字节数
+ * @param {*} bytes 字节数
  */
 export function storageUnitConversion (bytes) {
-  if (bytes === 0) return '0 B'
-  let k = 1024
-  let sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-  let i = Math.floor(Math.log(bytes) / Math.log(k))
-  return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i]
+  if (isNaN(bytes)) {
+    return ''
+  }
+  let symbols = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+  let exp = Math.floor(Math.log(bytes) / Math.log(2))
+  if (exp < 1) {
+    exp = 0
+  }
+  let i = Math.floor(exp / 10)
+  bytes = bytes / Math.pow(2, 10 * i)
+
+  if (bytes.toString().length > bytes.toFixed(2).toString().length) {
+    bytes = bytes.toFixed(2)
+  }
+  return bytes + ' ' + symbols[i]
 }
 
 /**
