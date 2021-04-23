@@ -48,6 +48,11 @@
                 class="uploader-file-progress"
                 :style="item.progress"
               ></div>
+              <!-- 计算etag进度条 -->
+              <div
+                class="uploader-file-etag-progress"
+                :style="item.etagProgress"
+              ></div>
               <div class="uploader-file-info">
                 <div class="uploader-file-name">
                   <i
@@ -246,6 +251,10 @@ li {
   display: block;
 }
 
+.uploader-file[status='waiting'] .uploader-file-remove {
+  display: none;
+}
+
 .uploader-file[status='paused'] .uploader-file-resume {
   display: block;
 }
@@ -258,7 +267,19 @@ li {
   display: none;
 }
 
+.uploader-file[status='etag'] .uploader-file-remove {
+  display: none;
+}
+
+.uploader-file[status='etag'] .uploader-file-etag-progress {
+  display: block;
+}
+
 .uploader-file[status='error'] .uploader-file-progress {
+  background: #ffe0e0;
+}
+
+.uploader-file[status='error'] .uploader-file-info {
   background: #ffe0e0;
 }
 
@@ -271,6 +292,15 @@ li {
   height: 100%;
   background: #e2eeff;
   transform: translateX(-100%);
+}
+
+.uploader-file-etag-progress {
+  display: none;
+  width: 100%;
+  height: 3%;
+  position: absolute;
+  bottom: 1px;
+  background: #637dff;
 }
 
 /**

@@ -14,15 +14,16 @@
     "build": "node build/build.js"
   },
   "dependencies": {
-    "axios": "^0.20.0",
+    "axios": "^0.21.1",
     "dplayer": "^1.26.0",
     "element-ui": "^2.13.2",
     "js-cookie": "^2.2.1",
+    "js-sha1": "^0.6.0",
     "nprogress": "^0.2.0",
     "qiniu": "^7.3.2",
     "qiniu-js": "^3.1.1",
     "vue": "^2.5.2",
-    "vue-axios": "^3.1.2",
+    "vue-axios": "^3.2.4",
     "vue-dplayer": "0.0.10",
     "vue-router": "^3.0.1",
     "vue-video-player": "^5.0.2"

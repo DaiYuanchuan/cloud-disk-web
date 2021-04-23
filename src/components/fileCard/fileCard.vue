@@ -1,6 +1,6 @@
 <template>
   <div class="fileTreeList" v-if="cardShow">
-    <slot :card-title="cardTitle" :card-file-parent-id="cardFileParentId" :card-breadcrumbs="cardBreadcrumbs">
+    <slot :card-title="cardTitle" :card-user-file-parent-id="cardUserFileParentId" :card-breadcrumbs="cardBreadcrumbs">
       <!-- 浮动卡片框 -->
       <div class="card floating">
         <!-- 卡片的抬头 -->
@@ -12,7 +12,7 @@
           <p>请选择欲{{ cardTitle }}至的目录：</p>
           <div>
             <ul class="file-list" ref="cardFileList" @scroll="cardFileListScroll">
-              <li v-if="cardBreadcrumbs[cardBreadcrumbs.length - 1].fileId !== 0" @click="click(null, true)"
+              <li v-if="cardBreadcrumbs[cardBreadcrumbs.length - 1].userFileId !== 0" @click="click(null, true)"
                   @dblclick="doubleClick(null, true)"
                   role="button" tabindex="0" aria-label=".." :aria-selected="fileParentSelect">
                 <i class="material-icons">
@@ -23,11 +23,11 @@
               <li role="button" tabindex="0"
                   v-for="(item, index) in fileList" :key="index"
                   @click="click(item, false)" @dblclick="doubleClick(item, false)"
-                  :aria-label="item.fileName" :aria-selected="!item.select ? 'false' : 'true'">
+                  :aria-label="item.userFileName" :aria-selected="!item.select ? 'false' : 'true'">
                 <i class="material-icons">
                   <svg-icon icon-class="file-folder"></svg-icon>
                 </i>
-                {{ item.fileName }}
+                {{ item.userFileName }}
               </li>
             </ul>
             <p>当前目录： <code>{{ breadcrumbsTruncation() }}</code>.</p>
@@ -81,13 +81,13 @@ export default {
       type: Array,
       default () {
         return [{
-          fileName: '/',
-          fileId: 0
+          userFileName: '/',
+          userFileId: 0
         }]
       }
     },
     // 卡片中展示的文件pid信息
-    cardFileParentId: {
+    cardUserFileParentId: {
       type: Number,
       default () {
         return 0
@@ -97,29 +97,29 @@ export default {
   // 钩子函数：页面加载完成后执行
   mounted: function () {
     // 页面加载完成后，根据对应的fileParentId查找文件夹列表
-    this.getFileFolderListInfo(this.page, this.cardFileParentId)
+    this.getFileFolderListInfo(this.page, this.cardUserFileParentId)
   },
   methods: {
     /**
      * 从服务器端获取文件夹列表信息
      * @param page 页码
-     * @param fileParentId 文件的上一级id
+     * @param userFileParentId 文件的上一级id
      * @param resetData 是否重置文件列表数据
      * @param callback 回调函数
      */
-    getFileFolderListInfo: function (page, fileParentId, resetData, callback) {
+    getFileFolderListInfo: function (page, userFileParentId, resetData, callback) {
       if (page === null || page === undefined) {
         // 默认第一页
         page = 1
       }
 
-      if (fileParentId === null || fileParentId === undefined) {
+      if (userFileParentId === null || userFileParentId === undefined) {
         // 默认从 路径信息的面包屑导航 数据中获取最后一位元素
-        fileParentId = this.cardBreadcrumbs[this.cardBreadcrumbs.length - 1].fileId
+        userFileParentId = this.cardBreadcrumbs[this.cardBreadcrumbs.length - 1].userFileId
       }
       search({
         page: page,
-        fileParentId: fileParentId,
+        userFileParentId: userFileParentId,
         fileFolder: true
       }).then((response) => {
         // 重置文件列表数据
@@ -128,22 +128,22 @@ export default {
         }
 
         // 当前pid为0 ，同时文件夹列表为空的
-        if (fileParentId === 0 && response.data['toTal'] === 0) {
+        if (userFileParentId === 0 && response.data['toTal'] === 0) {
           // 直接抛出成功的事件
           this.cardConfirm()
           return
         }
 
-        response.data['diskFile'].forEach(res => {
+        response.data['diskUserFile'].forEach(res => {
           res['select'] = false
           this.fileList.push(res)
         })
         // 判断是否进行下一次的分页请求
-        if (response.data['diskFile'].length < 100 || response.data['toTal'] < 100 ||
-          (response.data['diskFile'].length === 100 && response.data['toTal'] === 100)) {
+        if (response.data['diskUserFile'].length < 100 || response.data['toTal'] < 100 ||
+          (response.data['diskUserFile'].length === 100 && response.data['toTal'] === 100)) {
           // 数组长度小于 pageSize 不进行下一次分页请求
           this.pageBottomEvent = true
-        } else if (response.data['diskFile'].length === 100 && response.data['toTal'] > 100) {
+        } else if (response.data['diskUserFile'].length === 100 && response.data['toTal'] > 100) {
           this.pageBottomEvent = false
         }
         if (callback !== undefined) {
@@ -199,17 +199,17 @@ export default {
       this.page = 1
       // 返回上一层级
       if (isParentSelect) {
-        let fileParentId = this.cardBreadcrumbs[this.cardBreadcrumbs.length - 2].fileId
-        this.getFileFolderListInfo(this.page, fileParentId, true, response => {
-          this.$emit('card-folder-previous', fileParentId)
+        let userFileParentId = this.cardBreadcrumbs[this.cardBreadcrumbs.length - 2].userFileId
+        this.getFileFolderListInfo(this.page, userFileParentId, true, () => {
+          this.$emit('card-folder-previous', userFileParentId)
         })
       } else {
         // 下一级
-        this.getFileFolderListInfo(this.page, item.fileId, true, res => {
+        this.getFileFolderListInfo(this.page, item.userFileId, true, () => {
           // 增加面包屑导航数据
           this.$emit('card-folder-next', {
-            fileId: item.fileId,
-            fileName: item.fileName
+            userFileId: item.userFileId,
+            userFileName: item.userFileName
           })
         })
       }
@@ -220,12 +220,12 @@ export default {
      */
     breadcrumbsTruncation: function () {
       // 当前可以显示的 ，非首页路径字符串
-      let breadcrumbs = this.cardBreadcrumbs.filter(res => res.fileId !== 0)
+      let breadcrumbs = this.cardBreadcrumbs.filter(res => res.userFileId !== 0)
       if (!breadcrumbs.length) {
         // 如果是空的
         return '/'
       }
-      return '/' + breadcrumbs.map(item => item.fileName).join('/') + '/'
+      return '/' + breadcrumbs.map(item => item.userFileName).join('/') + '/'
     },
     /**
      * 卡片面板中文件夹列表对应的滚动条事件
@@ -254,9 +254,9 @@ export default {
       let currentlySelectedValue
       if (!currentlySelectedFileFolder.length) {
         // 判断文件父级是否被选中
-        currentlySelectedValue = this.cardBreadcrumbs[this.cardBreadcrumbs.length - (this.fileParentSelect ? 2 : 1)].fileId
+        currentlySelectedValue = this.cardBreadcrumbs[this.cardBreadcrumbs.length - (this.fileParentSelect ? 2 : 1)].userFileId
       } else {
-        currentlySelectedValue = currentlySelectedFileFolder[0].fileId
+        currentlySelectedValue = currentlySelectedFileFolder[0].userFileId
       }
       // 向父级抛出确认事件
       this.$emit('card-confirm', currentlySelectedValue, this.cardTitle)

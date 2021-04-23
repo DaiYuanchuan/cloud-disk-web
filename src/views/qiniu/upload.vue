@@ -73,7 +73,7 @@
       @resume="resume"
     ></uploader>
 
-    <fileCard :card-title="cardTitle" :card-file-parent-id="cardFileParentId" v-if="true"></fileCard>
+    <fileCard :card-title="cardTitle" :card-user-file-parent-id="cardFileParentId" v-if="true"></fileCard>
 
   </div>
 </template>

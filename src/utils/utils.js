@@ -376,3 +376,29 @@ export function randomString (length) {
   }
   return character
 }
+
+/**
+ * 通过Url下载文件
+ * @param {String} link 链接
+ * @param {String} name 下载的文件名
+ */
+export function downloadByUrl (link, name) {
+  if (typeof link !== 'string' || link.length <= 0) return
+  let f = document.createElement('a')
+  f.id = 'download-' + new Date().getTime()
+  f.href = link
+  f.download = name || '下载'
+  f.style.opacity = '0'
+  f.style.height = '1px'
+  f.style.width = '1px'
+  f.style.overflow = 'hidden'
+  f.style.position = 'fixed'
+  f.style.top = '-1'
+  f.style.left = '-1'
+  f.style.zIndex = '-1'
+  f.style.display = 'none'
+  f.target = '_blank'
+  document.body.appendChild(f)
+  document.querySelector('#' + f.id).click()
+  document.body.removeChild(document.getElementById(f.id))
+}

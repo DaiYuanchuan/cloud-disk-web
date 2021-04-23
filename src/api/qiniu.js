@@ -7,8 +7,9 @@ import * as qiniu from 'qiniu-js'
 export function getToken (params) {
   return request({
     url: '/uploader/token',
-    method: 'get',
-    params
+    loading: false,
+    method: 'post',
+    data: params
   })
 }
 

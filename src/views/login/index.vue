@@ -127,7 +127,7 @@ export default {
                       </span>
                     </p>`, '该账号已被限制登录', {
                     dangerouslyUseHTMLString: true
-                  }).catch(res => {
+                  }).catch(() => {
                 })
               }
             } else {

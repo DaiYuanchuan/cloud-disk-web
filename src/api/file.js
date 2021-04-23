@@ -15,15 +15,15 @@ export function insertFileFolder (params) {
 }
 
 /**
- * 删除文件
+ * 批量删除用户文件模块
  *
- * @param {long} id 文件id
+ * @param {object} params 文件id
  */
-export function deleteFile (id) {
+export function deleteFile (params) {
   return request({
-    url: '/disk-file/delete-file',
+    url: '/disk-file/delete-batch-file',
     method: 'post',
-    data: qs.stringify(id)
+    data: params
   })
 }
 
@@ -41,28 +41,28 @@ export function renameFile (params) {
 }
 
 /**
- * 复制文件
+ * 批量复制用户文件模块
  *
  * @param {*} params 复制文件需要的参数
  */
 export function copyFile (params) {
   return request({
-    url: '/disk-file/copy-file',
+    url: '/disk-file/copy-batch-file',
     method: 'post',
-    data: qs.stringify(params)
+    data: params
   })
 }
 
 /**
- * 移动文件
+ * 批量移动用户文件模块
  *
  * @param {*} params 移动文件需要的参数
  */
 export function moveFile (params) {
   return request({
-    url: '/disk-file/move-file',
+    url: '/disk-file/move-batch-file',
     method: 'post',
-    data: qs.stringify(params)
+    data: params
   })
 }
 
@@ -75,19 +75,6 @@ export function search (params) {
   params.pageSize = 100
   return request({
     url: '/disk-file/search',
-    method: 'get',
-    params
-  })
-}
-
-/**
- * 文件下载
- *
- * @param {object} params 包含下载参数信息
- */
-export function download (params) {
-  return request({
-    url: '/disk-file/resource',
     method: 'get',
     params
   })
