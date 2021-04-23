@@ -243,13 +243,31 @@ export default {
         selectData = this.fileList
       }
 
+      // 获取cookie中缓存的用户信息
+      let token = cookies.get('userInfo')
+      if (token === undefined) {
+        // 如果在未登录的情况下使用，则跳转登录页面
+        this.$router.push({name: 'login'})
+        return
+      }
+
+      let fileSize = 0
       let copyFileInfo = []
       selectData.forEach(res => {
+        fileSize += res.ossFileSize
         copyFileInfo.push({
           fromFileId: res.userFileId,
           shareKey: res.shareKey
         })
       })
+
+      let userInfo = JSON.parse(token)
+
+      // 判断上传空间容量
+      if (userInfo.userRemainingCapacity <= 0 || userInfo.userRemainingCapacity - fileSize < 0) {
+        this.$message.error('存储空间不足')
+        return
+      }
 
       // 保存至我的文件夹
       copyFile({

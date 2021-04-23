@@ -205,7 +205,6 @@ export default {
 }
 
 .uploader-close-icon {
-  font-family: layui-icon;
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -225,7 +224,7 @@ export default {
   overflow-x: hidden;
   overflow-y: auto;
   background-color: #fff;
-  padding: 0px;
+  padding: 0;
   margin: 0 auto;
   transition: all 0.5s;
 }

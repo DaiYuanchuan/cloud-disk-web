@@ -136,7 +136,6 @@ export default {
               localStorage.setItem('username', this.form.username)
               localStorage.setItem('password', this.form.password)
               localStorage.setItem('userEmail', response.data.userInfo.userEmail)
-              localStorage.setItem('userAvatar', response.data.userInfo.userAvatar)
               // 动态添加路由数据
               this.$router.addRoutes(asyncRoutes)
               this.$router.push({name: 'home'})

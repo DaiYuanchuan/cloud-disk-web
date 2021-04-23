@@ -79,6 +79,29 @@
           </el-button>
           <p class="credits"><span><a @click="helpPanel">帮助</a></span></p>
         </el-aside>
+        <div class="content-bottom">
+          <div class="storage-wrapper">
+            <div class="usage-progress">
+              <div class="text">
+                {{ storageUnitFormatting(userInfo.usedCapacity) }}
+                /
+                {{ storageUnitFormatting(userInfo.totalCapacity) }}
+              </div>
+              <span class="progress" :style="userInfo.percentageCapacity"></span>
+            </div>
+          </div>
+        </div>
+        <div class="sider-bottom">
+          <div class="bottom-wrapper">
+            <div class="user-info">
+              <el-avatar :size="35" @error="true" :alt="userInfo.username"
+                         :src="userInfo.userAvatar">
+                <img src="/static/img/default.png" alt="username"/>
+              </el-avatar>
+              <span class="user-info-name">{{ userInfo.username }}</span>
+            </div>
+          </div>
+        </div>
         <!-- main -->
         <el-main>
           <router-view :breadcrumbs="breadcrumbs" :file-list="fileList"
@@ -314,6 +337,21 @@ export default {
           feedbackContact: [{required: true, trigger: 'blur', validator: validateEmail}],
           feedbackContent: [{required: true, trigger: 'blur', validator: validateFeedbackContent}]
         }
+      },
+      // 当前登录的用户信息
+      userInfo: {
+        // 当前登录的用户名
+        username: '',
+        // 用户头像
+        userAvatar: '',
+        // 总容量
+        totalCapacity: '',
+        // 已用容量
+        usedCapacity: '',
+        // 剩余容量
+        remainingCapacity: '',
+        // 已用容量的百分比
+        percentageCapacity: {}
       }
     }
   },
@@ -353,6 +391,14 @@ export default {
   },
   // 钩子函数：页面加载完成后执行
   mounted: function () {
+    // 获取cookie缓存中的用户信息
+    let userInfo = cookies.get('userInfo')
+    if (userInfo === undefined) {
+      // 如果在未登录的情况下使用，则跳转登录页面
+      this.$router.push({name: 'login'})
+      return
+    }
+    this.setUserInfoCookies(JSON.parse(userInfo))
     // 自动获取文件列表的第一页
     this.getFileListInfo()
     // 监听全局粘贴事件 ，将粘贴事件绑定到 ctrlV 方法
@@ -514,7 +560,7 @@ export default {
         deleteFile(selectData.map(item => item.userFileId)).then((response) => {
           console.log(response)
           // 重新对cookie中的用户信息赋值
-          cookies.set('userInfo', response.data)
+          this.setUserInfoCookies(response.data)
           // 删除成功的提示框
           this.$message({
             type: 'success',
@@ -570,14 +616,21 @@ export default {
         // 如果没有数据选中的 ，则不执行
         return
       }
+      let fileSize = 0
       // 需要操作的用户文件标识集合信息
       let operationFileInfo = []
       selectData.forEach(res => {
+        fileSize += res.ossFileSize
         operationFileInfo.push({
           fromFileId: res.userFileId
         })
       })
       if (cardTitle === '复制') {
+        // 判断上传空间容量
+        if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - fileSize < 0) {
+          this.$message.error('存储空间不足')
+          return
+        }
         copyFile({
           copyFileInfo: operationFileInfo,
           targetFileId: currentlySelectedValue
@@ -597,7 +650,7 @@ export default {
             })
           }
           // 重新对cookie中的用户信息赋值
-          cookies.set('userInfo', response.data['userInfo'])
+          this.setUserInfoCookies(response.data['userInfo'])
         }).catch((err) => {
           console.log(err)
         })
@@ -739,13 +792,20 @@ export default {
       // 获取当前展开的目录的文件夹id
       let fpId = this.breadcrumbs[this.breadcrumbs.length - 1].userFileId
       if (copy.length > 0) {
+        let fileSize = 0
         // 需要操作的用户文件标识集合信息
         let operationFileInfo = []
         copy.forEach(res => {
+          fileSize += res.file.ossFileSize
           operationFileInfo.push({
             fromFileId: res.file.userFileId
           })
         })
+        // 判断上传空间容量
+        if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - fileSize < 0) {
+          this.$message.error('存储空间不足')
+          return
+        }
         // 复制文件
         copyFile({
           copyFileInfo: operationFileInfo,
@@ -763,7 +823,7 @@ export default {
             this.fileList.unshift(fromUserFileInfo)
           })
           // 重新对cookie中的用户信息赋值
-          cookies.set('userInfo', response.data['userInfo'])
+          this.setUserInfoCookies(response.data['userInfo'])
         }).catch((err) => {
           console.log(err)
         })
@@ -947,6 +1007,60 @@ export default {
         console.log(err)
       })
     },
+    /**
+     * 存储单位格式化
+     * @param size 字节数
+     */
+    storageUnitFormatting: function (size) {
+      if (size > 0) {
+        return storageUnitConversion(size)
+      }
+      return '0'
+    },
+    /**
+     * 上传成功后 增加当前已用容量信息
+     * @param fileSize 文件大小(字节)
+     */
+    setUserCapacityInfo: function (fileSize) {
+      console.log(fileSize)
+      // 获取cookie缓存中的用户信息
+      let token = cookies.get('userInfo')
+      if (token === undefined) {
+        // 如果在未登录的情况下使用，则跳转登录页面
+        this.$router.push({name: 'login'})
+        return
+      }
+      let userInfo = JSON.parse(token)
+      userInfo['userUsedCapacity'] = userInfo['userUsedCapacity'] + fileSize
+      userInfo['userRemainingCapacity'] = userInfo['userRemainingCapacity'] - fileSize
+      this.setUserInfoCookies(userInfo)
+    },
+    /**
+     * 重置cookie中的用户信息
+     * @param userInfo 最新的用户信息
+     */
+    setUserInfoCookies: function (userInfo) {
+      // 重新对cookie中的用户信息赋值
+      cookies.set('userInfo', userInfo)
+      this.userInfo = {
+        // 当前登录的用户名
+        username: userInfo.userName,
+        // 用户头像
+        userAvatar: userInfo.userAvatar,
+        // 总容量
+        totalCapacity: userInfo['userTotalCapacity'],
+        // 已用容量
+        usedCapacity: userInfo['userUsedCapacity'],
+        // 剩余容量
+        remainingCapacity: userInfo['userRemainingCapacity'],
+        // 已用容量的百分比
+        percentageCapacity: {
+          width: ((userInfo['userUsedCapacity'] / userInfo['userTotalCapacity']) * 100) + '%',
+          transitionDuration: '0.274778s',
+          background: 'rgb(28, 175, 253)'
+        }
+      }
+    },
     // ============================== 文件上传部分方法
     /**
      * 上传暂停事件
@@ -969,7 +1083,7 @@ export default {
         file.subscription = file.observable.subscribe(
           next => this.nextUpload(next, file.uid),
           error => this.errorUpload(error, file.uid),
-          complete => this.completeUpload(complete, file.uid))
+          complete => this.completeUpload(complete, file.uid, file.size))
       }
     },
     /**
@@ -1035,7 +1149,7 @@ export default {
     /**
      * 上传成功时返回
      */
-    completeUpload (complete, uid) {
+    completeUpload (complete, uid, size) {
       // 请求成功时返回统一状态码
       if (complete.code !== '200') {
         this.$message({
@@ -1050,6 +1164,7 @@ export default {
           res.state = this.fileStatusText('error')
         })
       } else {
+        this.setUserCapacityInfo(size)
         let uploadComplete = this.uploadedFilesList.filter(item => item.status === 'uploading')
         if (uploadComplete.length <= 0) {
           // 重新获取当前页面的数据
@@ -1074,12 +1189,23 @@ export default {
     handleChange (file) {
       // 添加文件时
       if (file.status === 'ready') {
-        // 显示文件上传面板
-        if (!this.displayUploadPanel) {
-          this.displayUploadPanel = true
+        // 规定文件上传大小 最大为 20 GB
+        let maxFileSize = 20 * 1024 * 1024 * 1024
+        if (file.size > maxFileSize) {
+          this.$message.error('单文件最大上传20GB')
+          return
+        }
+        // 判断上传空间容量
+        if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - file.size < 0) {
+          this.$message.error('存储空间不足')
+          return
         }
         let regular = /^((?![\\/:*?？^`~&<>|'%]).){1,50}$/
         if (regular.test(file.name)) {
+          // 显示文件上传面板
+          if (!this.displayUploadPanel) {
+            this.displayUploadPanel = true
+          }
           // 向上传面板中的文件列队添加新的文件数据
           this.uploadedFilesList.push({
             name: file.name,
@@ -1161,6 +1287,7 @@ export default {
               })
               response.data['diskUserFile']['select'] = false
               this.fileList.unshift(response.data['diskUserFile'])
+              this.setUserCapacityInfo(response.data['diskUserFile']['ossFileSize'])
             } else {
               // 执行普通上传程序
               const key = response.data.key
@@ -1169,7 +1296,7 @@ export default {
               let qiNiUp = upload(token, key, request,
                 next => this.nextUpload(next, request.file.uid),
                 error => this.errorUpload(error, request.file.uid),
-                complete => this.completeUpload(complete, request.file.uid))
+                complete => this.completeUpload(complete, request.file.uid, request.file.size))
               // 重置当前上传文件的状态
               this.uploadedFilesListFilter(request.file.uid, res => {
                 res.status = 'uploading'
@@ -1222,10 +1349,10 @@ export default {
       // 规定文件上传大小 最大为 20 GB
       let maxFileSize = 20 * 1024 * 1024 * 1024
       if (file.size > maxFileSize) {
-        this.$message.error('单文件最大上传20GB')
         return false
       }
-      return true
+      // 判断上传空间容量
+      return !(this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - file.size < 0)
     },
     /**
      * 文件上传队列过滤
@@ -1548,8 +1675,83 @@ main {
   padding: 1em 1em;
 }
 
-> > > .feedbackContent > textarea {
+/deep/ .feedbackContent > textarea {
   height: 6em;
+}
+
+.content-bottom {
+  width: 192px;
+  left: 24px;
+  bottom: 100px;
+  padding-bottom: 28px;
+  position: absolute;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.storage-wrapper {
+  position: fixed;
+}
+
+.usage-progress {
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  position: relative;
+}
+
+.text {
+  font-size: 12px;
+  line-height: 160%;
+  color: var(--context_primary);
+  margin-bottom: 12px;
+}
+
+.progress {
+  height: 6px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(99, 125, 255, 1);
+  border-radius: 100px;
+}
+
+.usage-progress::after {
+  content: "";
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(222, 223, 235, .5);
+  width: 100%;
+  height: 6px;
+  border-radius: 100px;
+}
+
+.sider-bottom {
+  height: 75px;
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  padding: 0 20px 0 24px;
+}
+
+.sider-bottom::before {
+  display: block;
+  content: "";
+  width: 100%;
+  height: 1px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, .05);
 }
 
 @media (max-width: 1024px) {
