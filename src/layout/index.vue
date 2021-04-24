@@ -207,7 +207,6 @@ import cookies from 'js-cookie'
 import uploader from '@/components/upload/uploader'
 import fileCard from '@/components/fileCard/fileCard'
 import {storageUnitConversion, formatDate} from '@/utils/utils'
-import {getEtag} from '@/utils/qetag'
 
 export default {
   name: 'layout',
@@ -1214,6 +1213,7 @@ export default {
             status: 'waiting',
             state: this.fileStatusText('waiting'),
             progress: this.progressStyle(0),
+            etagProgress: this.progressStyle(0),
             icon: this.fileCategory(file.name.split('.').pop().toLowerCase(), file.raw.type.split('/')[0])
           })
         }
@@ -1247,80 +1247,120 @@ export default {
      * el-upload 覆盖 element 原有的上传请求
      */
     uploadRequest: function (request) {
-      // 将文件状态重置为计算etag中
+      // 将文件状态重置为读取文件中
       this.uploadedFilesListFilter(request.file.uid, res => {
         res.status = 'etag'
         res.state = this.fileStatusText('etag')
         res.request = request
-        res.etagProgress = this.progressStyle(0)
       })
+
+      let partList = this.createChunks(request.file)
+      let sha1List = []
+      // 开启一个外部线程 ，用于etag的计算
+      this.worker = new Worker('/static/js/fileEtag.js')
+      // 给外部线程传递消息
+      this.worker.postMessage({
+        partList: partList,
+        fileReq: request,
+        status: 'block'
+      })
+      // 接收外部Worker回传的信息
+      this.worker.onmessage = e => {
+        const {percent, sha1Value, status, sha1, i, fileReq} = e.data
+        sha1List[i] = sha1Value
+        if (status === 'block') {
+          this.uploadedFilesListFilter(fileReq.file.uid, res => {
+            res.etagProgress = this.progressStyle(percent)
+          })
+        }
+        if (percent === 100 && status !== 'success') {
+          // 计算成功后 ，对计算结果进行合并处理
+          this.worker.postMessage({
+            partList: partList,
+            fileReq: fileReq,
+            status: 'merge',
+            sha1List: sha1List
+          })
+        }
+        if (status === 'success' && sha1 !== undefined) {
+          console.log('文件: ' + fileReq.file.name + ' ' + ' 计算结果为: ' + sha1)
+          // 执行上传程序
+          this.getFileUpToken(sha1, fileReq)
+        }
+      }
+    },
+    /**
+     * 创建文件所需要的块
+     * 将大文件进行分块读取
+     */
+    createChunks (file) {
+      const partList = []
+      // 以4M为单位分割
+      let blockSize = 4 * 1024 * 1024
+      let blockCount = Math.ceil(file.size / blockSize)
+      for (let i = 0; i < blockCount; i++) {
+        // 核心是对文件的 slice
+        const chunk = file.slice(i * blockSize, (i + 1) * blockSize)
+        partList.push({chunk, size: chunk.size})
+      }
+      return partList
+    },
+    /**
+     * 根据当前请求的文件，以及文件etag获取文件上传token
+     * 执行文件上传程序
+     */
+    getFileUpToken (etag, request) {
       // 获取当前目录id信息
       let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
-      // 开始计算当前文件的etag值
-      let reader = new FileReader()
-      reader.onload = () => {
-        getEtag(reader.result, progress => {
+      getToken({
+        ossFileEtag: etag,
+        ossFileSize: request.file.size,
+        userFileName: request.file.name,
+        userFileParentId: breadcrumbs.userFileId
+      }).then(response => {
+        // 根据返回码判断当前文件状态
+        if (response.code === '201') {
+          // 秒传成功 ，直接重置当前文件的状态
           this.uploadedFilesListFilter(request.file.uid, res => {
-            res.status = 'etag'
-            res.state = this.fileStatusText('etag')
+            // 调用el-upload的上传进度条事件
+            request.onProgress(100)
+            res.status = 'success'
+            res.state = this.fileStatusText('secondPass')
             res.request = request
-            res.etagProgress = this.progressStyle(progress * 100)
           })
-          console.log(progress * 100)
-        }, etag => {
-          console.log(etag)
-          getToken({
-            ossFileEtag: etag,
-            ossFileSize: request.file.size,
-            userFileName: request.file.name,
-            userFileParentId: breadcrumbs.userFileId
-          }).then(response => {
-            // 根据返回码判断当前文件状态
-            if (response.code === '201') {
-              // 秒传成功 ，直接重置当前文件的状态
-              this.uploadedFilesListFilter(request.file.uid, res => {
-                // 调用el-upload的上传进度条事件
-                request.onProgress(100)
-                res.status = 'success'
-                res.state = this.fileStatusText('secondPass')
-                res.request = request
-              })
-              response.data['diskUserFile']['select'] = false
-              this.fileList.unshift(response.data['diskUserFile'])
-              this.setUserCapacityInfo(response.data['diskUserFile']['ossFileSize'])
-            } else {
-              // 执行普通上传程序
-              const key = response.data.key
-              const token = response.data.token
-              // 构建七牛云上传
-              let qiNiUp = upload(token, key, request,
-                next => this.nextUpload(next, request.file.uid),
-                error => this.errorUpload(error, request.file.uid),
-                complete => this.completeUpload(complete, request.file.uid, request.file.size))
-              // 重置当前上传文件的状态
-              this.uploadedFilesListFilter(request.file.uid, res => {
-                res.status = 'uploading'
-                res.state = this.fileStatusText('uploading')
-                res.observable = qiNiUp.observable
-                res.subscription = qiNiUp.subscription
-                res.request = request
-                res.header = response.data
-              })
-            }
-          }).catch(err => {
-            console.log(err)
-            // 重置为上传失败
-            this.uploadedFilesListFilter(request.file.uid, res => {
-              res.status = 'error'
-              res.state = this.fileStatusText('error')
-              res.request = request
-              // 调用el-upload的上传失败事件
-              request.onError(err.message)
-            })
+          response.data['diskUserFile']['select'] = false
+          this.fileList.unshift(response.data['diskUserFile'])
+          this.setUserCapacityInfo(response.data['diskUserFile']['ossFileSize'])
+        } else {
+          // 执行普通上传程序
+          const key = response.data.key
+          const token = response.data.token
+          // 构建七牛云上传
+          let qiNiUp = upload(token, key, request,
+            next => this.nextUpload(next, request.file.uid),
+            error => this.errorUpload(error, request.file.uid),
+            complete => this.completeUpload(complete, request.file.uid, request.file.size))
+          // 重置当前上传文件的状态
+          this.uploadedFilesListFilter(request.file.uid, res => {
+            res.status = 'uploading'
+            res.state = this.fileStatusText('uploading')
+            res.observable = qiNiUp.observable
+            res.subscription = qiNiUp.subscription
+            res.request = request
+            res.header = response.data
           })
+        }
+      }).catch(err => {
+        console.log(err)
+        // 重置为上传失败
+        this.uploadedFilesListFilter(request.file.uid, res => {
+          res.status = 'error'
+          res.state = this.fileStatusText('error')
+          res.request = request
+          // 调用el-upload的上传失败事件
+          request.onError(err.message)
         })
-      }
-      reader.readAsArrayBuffer(request.file)
+      })
     },
     /**
      * 上传面板中的进度条动态样式
@@ -1378,7 +1418,7 @@ export default {
         uploading: '上传中',
         paused: '暂停',
         waiting: '等待',
-        etag: '校验etag',
+        etag: '校验MD5',
         secondPass: '秒传'
       }[status]
     },

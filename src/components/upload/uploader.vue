@@ -299,6 +299,7 @@ li {
   height: 3%;
   position: absolute;
   bottom: 1px;
+  transform: translateX(-100%);
   background: #637dff;
 }
 
