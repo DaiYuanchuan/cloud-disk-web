@@ -1021,7 +1021,6 @@ export default {
      * @param fileSize 文件大小(字节)
      */
     setUserCapacityInfo: function (fileSize) {
-      console.log(fileSize)
       // 获取cookie缓存中的用户信息
       let token = cookies.get('userInfo')
       if (token === undefined) {
@@ -1247,13 +1246,15 @@ export default {
      * el-upload 覆盖 element 原有的上传请求
      */
     uploadRequest: function (request) {
+      // 获取当前目录id信息
+      let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
       // 将文件状态重置为读取文件中
       this.uploadedFilesListFilter(request.file.uid, res => {
         res.status = 'etag'
         res.state = this.fileStatusText('etag')
         res.request = request
+        res.breadcrumbs = breadcrumbs
       })
-
       let partList = this.createChunks(request.file)
       let sha1List = []
       // 开启一个外部线程 ，用于etag的计算
@@ -1261,15 +1262,15 @@ export default {
       // 给外部线程传递消息
       this.worker.postMessage({
         partList: partList,
-        fileReq: request,
+        fileInfo: request.file.uid,
         status: 'block'
       })
       // 接收外部Worker回传的信息
       this.worker.onmessage = e => {
-        const {percent, sha1Value, status, sha1, i, fileReq} = e.data
+        const {percent, sha1Value, status, sha1, i, fileInfo} = e.data
         sha1List[i] = sha1Value
         if (status === 'block') {
-          this.uploadedFilesListFilter(fileReq.file.uid, res => {
+          this.uploadedFilesListFilter(fileInfo, res => {
             res.etagProgress = this.progressStyle(percent)
           })
         }
@@ -1277,15 +1278,17 @@ export default {
           // 计算成功后 ，对计算结果进行合并处理
           this.worker.postMessage({
             partList: partList,
-            fileReq: fileReq,
+            fileInfo: fileInfo,
             status: 'merge',
             sha1List: sha1List
           })
         }
         if (status === 'success' && sha1 !== undefined) {
-          console.log('文件: ' + fileReq.file.name + ' ' + ' 计算结果为: ' + sha1)
-          // 执行上传程序
-          this.getFileUpToken(sha1, fileReq)
+          // 将文件状态重置为读取文件中
+          this.uploadedFilesListFilter(fileInfo, res => {
+            // 执行上传程序
+            this.getFileUpToken(sha1, res.breadcrumbs, res.request)
+          })
         }
       }
     },
@@ -1309,9 +1312,8 @@ export default {
      * 根据当前请求的文件，以及文件etag获取文件上传token
      * 执行文件上传程序
      */
-    getFileUpToken (etag, request) {
-      // 获取当前目录id信息
-      let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
+    getFileUpToken (etag, breadcrumbs, request) {
+      console.log('文件: ' + request.file.name + ' ' + ' 计算结果为: ' + etag)
       getToken({
         ossFileEtag: etag,
         ossFileSize: request.file.size,

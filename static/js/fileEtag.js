@@ -3,7 +3,7 @@ self.importScripts('sha1.min.js')
 
 // 接收主线程传递的参数
 self.onmessage = event => {
-  let {partList, status, sha1List, fileReq} = event.data
+  let {partList, status, sha1List, fileInfo} = event.data
   let prefix = 0x16
   // sha1算法
   let shA1 = self.sha1.digest
@@ -14,7 +14,7 @@ self.onmessage = event => {
       if (!partList.length) {
         self.postMessage({
           status: 'success',
-          fileReq: fileReq,
+          fileInfo: fileInfo,
           sha1: 'Fto5o-5ea0sNMlW_75VgGJCv2AcJ'
         })
       }
@@ -30,7 +30,7 @@ self.onmessage = event => {
           self.postMessage({
             status: status,
             percent: Number(percent.toFixed(2)),
-            fileReq: fileReq,
+            fileInfo: fileInfo,
             sha1Value: shA1(reader.result),
             i: i
           })
@@ -49,7 +49,7 @@ self.onmessage = event => {
       sha1Buffer = concatArr2Uint8([[prefix], sha1Buffer])
       self.postMessage({
         status: 'success',
-        fileReq: fileReq,
+        fileInfo: fileInfo,
         sha1: Uint8ToBase64(sha1Buffer, true)
       })
       break
