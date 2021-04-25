@@ -1758,7 +1758,7 @@ main {
 }
 
 .content-bottom {
-  width: 145px;
+  width: 14em;
   left: 24px;
   bottom: 70px;
   padding-bottom: 28px;
@@ -1871,6 +1871,10 @@ main {
 
   .user-info-name {
     max-width: 55%;
+  }
+
+  .content-bottom {
+    width: 9em !important;
   }
 
   .el-aside, .sider-bottom {
