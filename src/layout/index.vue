@@ -83,10 +83,13 @@
           <div class="storage-wrapper">
             <div class="usage-progress">
               <div class="text">
+                <!-- 以用容量 -->
                 {{ storageUnitFormatting(userInfo.usedCapacity) }}
                 /
+                <!-- 总容量 -->
                 {{ storageUnitFormatting(userInfo.totalCapacity) }}
               </div>
+              <!-- 已用容量的百分比 -->
               <span class="progress" :style="userInfo.percentageCapacity"></span>
             </div>
           </div>
@@ -98,8 +101,8 @@
                          :src="userInfo.userAvatar">
                 <img src="/static/img/default.png" alt="username"/>
               </el-avatar>
-              <span class="user-info-name">{{ userInfo.username }}</span>
             </div>
+            <span class="user-info-name">{{ userInfo.username }}</span>
           </div>
         </div>
         <!-- main -->
@@ -184,6 +187,40 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="feedbackSubmit('feedback')">确 定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 文件详情的Dialog弹窗 -->
+    <el-dialog title="文件详情" :visible.sync="fileInfoDialog.show" class="fileInfoPopup">
+      <div class="fileInfoPopup">
+        <p class="fileInfoPopupBlock">
+          <strong>
+            <svg-icon icon-class="file-share" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
+            名称：
+          </strong>
+          <span class="fileInfoPopupBlockValue">文件</span>
+        </p>
+        <p class="fileInfoPopupBlock">
+          <strong>
+            <svg-icon icon-class="file-share" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
+            大小：
+          </strong>
+          <span class="fileInfoPopupBlockValue">1GB</span>
+        </p>
+        <p class="fileInfoPopupBlock">
+          <strong>
+            <svg-icon icon-class="file-share" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
+            创建时间：
+          </strong>
+          <span class="fileInfoPopupBlockValue">2021-04-25 12:12:13</span>
+        </p>
+        <p class="fileInfoPopupBlock">
+          <strong>
+            <svg-icon icon-class="file-share" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
+            修改时间：
+          </strong>
+          <span class="fileInfoPopupBlockValue">2021-04-25 12:12:13</span>
+        </p>
       </div>
     </el-dialog>
 
@@ -319,6 +356,9 @@ export default {
           userFileName: '/',
           userFileId: 0
         }]
+      },
+      fileInfoDialog: {
+        show: false
       },
       // 意见与反馈的对象
       feedback: {
@@ -585,15 +625,13 @@ export default {
         // 如果没有数据选中的 ，则不执行
         return
       }
+      this.fileInfoDialog.show = true
 
-      this.$alert(
-        `<p><strong>名称：</strong>${selectData[0]['userFileName']}</p>
-                  <p><strong>大小：</strong>${storageUnitConversion(selectData[0]['ossFileSize'])}</p>
-                  <p><strong>创建时间：</strong>${selectData[0]['createTime']}</p>
-                  <p><strong>修改时间：</strong>${selectData[0]['updateTime']}</p>`, '文件信息', {
-          dangerouslyUseHTMLString: true
-        }).catch(res => {
-      })
+      // this.$alert(
+      //   ``, '文件信息', {
+      //     dangerouslyUseHTMLString: true
+      //   }).catch(res => {
+      // })
     },
     /**
      * 关闭文件 复制、移动 时选择目标文件夹的面板
@@ -1053,9 +1091,7 @@ export default {
         remainingCapacity: userInfo['userRemainingCapacity'],
         // 已用容量的百分比
         percentageCapacity: {
-          width: ((userInfo['userUsedCapacity'] / userInfo['userTotalCapacity']) * 100) + '%',
-          transitionDuration: '0.274778s',
-          background: 'rgb(28, 175, 253)'
+          width: ((userInfo['userUsedCapacity'] / userInfo['userTotalCapacity']) * 100) + '%'
         }
       }
     },
@@ -1722,17 +1758,13 @@ main {
 }
 
 .content-bottom {
-  width: 192px;
+  width: 145px;
   left: 24px;
-  bottom: 100px;
+  bottom: 70px;
   padding-bottom: 28px;
-  position: absolute;
+  position: fixed;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
-}
-
-.storage-wrapper {
-  position: fixed;
 }
 
 .usage-progress {
@@ -1744,7 +1776,7 @@ main {
 }
 
 .text {
-  font-size: 12px;
+  font-size: 11px;
   line-height: 160%;
   color: var(--context_primary);
   margin-bottom: 12px;
@@ -1755,7 +1787,8 @@ main {
   position: absolute;
   bottom: 0;
   left: 0;
-  background-color: rgba(99, 125, 255, 1);
+  transition-duration: 0.274778s;
+  background-color: rgba(28, 175, 253, 1);
   border-radius: 100px;
 }
 
@@ -1773,7 +1806,7 @@ main {
 
 .sider-bottom {
   height: 75px;
-  width: 100%;
+  width: 16em;
   position: fixed;
   bottom: 0;
   display: -ms-flexbox;
@@ -1785,15 +1818,50 @@ main {
   padding: 0 20px 0 24px;
 }
 
-.sider-bottom::before {
-  display: block;
-  content: "";
+.el-avatar.el-avatar--circle {
+  float: left;
+}
+
+.user-info-name {
+  line-height: 35px;
+  margin-left: 16px;
+  max-width: 75%;
+  white-space: nowrap;
+  overflow: hidden;
+  display: inline-block;
+  text-overflow: ellipsis;
+}
+
+/deep/ .uploader-file {
+  height: 47px !important;
+}
+
+/deep/ .uploader-file-etag-progress {
+  height: 3px !important;
+  bottom: -1.5px !important;
+}
+
+.fileInfoPopupBlock {
+  margin-top: 12px;
+}
+
+.fileInfoPopupBlock strong {
+  display: inline-block;
   width: 100%;
-  height: 1px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, .05);
+  font-weight: 500;
+}
+
+.fileInfoPopupBlockValue {
+  padding-left: 23px;
+  color: #999;
+  margin-top: 5px;
+  display: inline-block;
+}
+
+.fileInfoPopupBlockSvg {
+  margin-right: 2px;
+  position: relative;
+  top: 2px;
 }
 
 @media (max-width: 1024px) {
@@ -1801,7 +1869,11 @@ main {
     width: calc(100% - 13em);
   }
 
-  .el-aside {
+  .user-info-name {
+    max-width: 55%;
+  }
+
+  .el-aside, .sider-bottom {
     width: 10em !important;
   }
 }
@@ -1819,7 +1891,7 @@ main {
   }
 
   .layout {
-    padding-bottom: 5em;
+    padding-bottom: 2em;
   }
 
   .el-aside {
@@ -1835,6 +1907,14 @@ main {
     left: -17em;
   }
 
+  .content-bottom {
+    display: none !important;
+  }
+
+  .sider-bottom {
+    display: none !important;
+  }
+
   #listing.list .item .size {
     display: none !important;
   }
@@ -1843,6 +1923,10 @@ main {
 @media (max-width: 450px) {
   /deep/ .el-dialog {
     width: 84%;
+  }
+
+  /deep/ .fileInfoPopup {
+    padding-bottom: 20px;
   }
 
   /deep/ .el-dialog__body {
