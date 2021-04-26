@@ -194,16 +194,16 @@
     <el-dialog title="文件详情" :visible.sync="fileInfoDialog.show"
                customClass="fileInfoPopup" width="18em" :before-close="documentDetailsClose">
       <div class="fileInfoPopup">
-        <div style="text-align: center;margin: 0 auto;width: 100px;height: 100px">
-          <img v-if="fileInfoDialog.fileType === 'image'" style="width: 50px;height: 50px"
+        <div class="fileInfoPopupPreview">
+          <img v-if="fileInfoDialog.fileType === 'image'" class="fileInfoPopupPreviewImg"
                :src="fileInfoDialog.userDynamicDownloadUrl" :alt="fileInfoDialog.fileName">
-          <audio v-else-if="fileInfoDialog.fileType === 'audio'" :src="fileInfoDialog.userDynamicDownloadUrl"></audio>
-          <svg-icon v-else :icon-class="fileInfoDialog.mimeTypes" width="6em" height="6em" color="#8ea1ff"></svg-icon>
+          <svg-icon v-else :icon-class="fileInfoDialog.mimeTypes" width="6em" height="6em" color="#8ea1ff"
+                    class="fileInfoPopupPreviewSvg"></svg-icon>
         </div>
         <p class="fileInfoPopupBlock">
-          <strong>
+          <strong style="display: flex;align-items: flex-start;">
             <svg-icon icon-class="file-info-name" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
-            {{ fileInfoDialog.fileName }}
+            <span class="fileInfoPopupBlockText">{{ fileInfoDialog.fileName }}</span>
           </strong>
           <span class="fileInfoPopupBlockValue">{{ fileInfoDialog.fileSize }}</span>
         </p>
@@ -1883,8 +1883,8 @@ main {
 
 .user-info-name {
   line-height: 35px;
-  margin-left: 16px;
-  max-width: 75%;
+  margin-left: 10px;
+  max-width: 77%;
   white-space: nowrap;
   overflow: hidden;
   display: inline-block;
@@ -1920,7 +1920,36 @@ main {
 .fileInfoPopupBlockSvg {
   margin-right: 2px;
   position: relative;
-  top: 2px;
+  top: 0;
+}
+
+/deep/ .fileInfoPopup > .el-dialog__body {
+  padding: 20px;
+}
+
+.fileInfoPopupPreview {
+  text-align: center;
+  margin: 0 auto 12%;
+  width: 140px;
+  height: 111px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fileInfoPopupPreviewImg {
+  max-height: 100%;
+}
+
+.fileInfoPopupPreviewSvg {
+  position: relative;
+  top: 6%;
+}
+
+.fileInfoPopupBlockText {
+  display: inline-block;
+  width: 85%;
+  margin-left: 2%;
 }
 
 @media (max-width: 1024px) {
@@ -1936,7 +1965,11 @@ main {
     width: 9em !important;
   }
 
-  .el-aside, .sider-bottom {
+  .sider-bottom {
+    width: 15em !important;
+  }
+
+  .el-aside {
     width: 10em !important;
   }
 }
@@ -1986,10 +2019,6 @@ main {
 @media (max-width: 450px) {
   /deep/ .el-dialog {
     width: 84%;
-  }
-
-  /deep/ .fileInfoPopup {
-    padding-bottom: 20px;
   }
 
   /deep/ .el-dialog__body {
