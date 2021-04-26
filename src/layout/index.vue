@@ -191,35 +191,35 @@
     </el-dialog>
 
     <!-- 文件详情的Dialog弹窗 -->
-    <el-dialog title="文件详情" :visible.sync="fileInfoDialog.show" class="fileInfoPopup">
+    <el-dialog title="文件详情" :visible.sync="fileInfoDialog.show"
+               customClass="fileInfoPopup" width="18em" :before-close="documentDetailsClose">
       <div class="fileInfoPopup">
+        <div style="text-align: center;margin: 0 auto;width: 100px;height: 100px">
+          <img v-if="fileInfoDialog.fileType === 'image'" style="width: 50px;height: 50px"
+               :src="fileInfoDialog.userDynamicDownloadUrl" :alt="fileInfoDialog.fileName">
+          <audio v-else-if="fileInfoDialog.fileType === 'audio'" :src="fileInfoDialog.userDynamicDownloadUrl"></audio>
+          <svg-icon v-else :icon-class="fileInfoDialog.mimeTypes" width="6em" height="6em" color="#8ea1ff"></svg-icon>
+        </div>
         <p class="fileInfoPopupBlock">
           <strong>
-            <svg-icon icon-class="file-share" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
-            名称：
+            <svg-icon icon-class="file-info-name" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
+            {{ fileInfoDialog.fileName }}
           </strong>
-          <span class="fileInfoPopupBlockValue">文件</span>
+          <span class="fileInfoPopupBlockValue">{{ fileInfoDialog.fileSize }}</span>
         </p>
         <p class="fileInfoPopupBlock">
           <strong>
-            <svg-icon icon-class="file-share" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
-            大小：
-          </strong>
-          <span class="fileInfoPopupBlockValue">1GB</span>
-        </p>
-        <p class="fileInfoPopupBlock">
-          <strong>
-            <svg-icon icon-class="file-share" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
+            <svg-icon icon-class="file-info-create" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
             创建时间：
           </strong>
-          <span class="fileInfoPopupBlockValue">2021-04-25 12:12:13</span>
+          <span class="fileInfoPopupBlockValue">{{ fileInfoDialog.create }}</span>
         </p>
         <p class="fileInfoPopupBlock">
           <strong>
-            <svg-icon icon-class="file-share" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
+            <svg-icon icon-class="file-info-update" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
             修改时间：
           </strong>
-          <span class="fileInfoPopupBlockValue">2021-04-25 12:12:13</span>
+          <span class="fileInfoPopupBlockValue">{{ fileInfoDialog.update }}</span>
         </p>
       </div>
     </el-dialog>
@@ -243,7 +243,7 @@ import {resetRouter} from '@/router/index'
 import cookies from 'js-cookie'
 import uploader from '@/components/upload/uploader'
 import fileCard from '@/components/fileCard/fileCard'
-import {storageUnitConversion, formatDate} from '@/utils/utils'
+import {storageUnitConversion, formatDate, fileCategory, mimeTypes} from '@/utils/utils'
 
 export default {
   name: 'layout',
@@ -357,8 +357,26 @@ export default {
           userFileId: 0
         }]
       },
+      // 文件详情Dialog弹窗对象
       fileInfoDialog: {
-        show: false
+        // 是否显示弹窗
+        show: false,
+        // 文件名称
+        fileName: '',
+        // 文件大小
+        fileSize: '',
+        // 创建时间
+        create: '',
+        // 更新时间
+        update: '',
+        // 是否为文件夹
+        fileFolder: '',
+        // 文件类型
+        fileType: '',
+        // 文件mime类型
+        mimeTypes: '',
+        // 动态url
+        userDynamicDownloadUrl: ''
       },
       // 意见与反馈的对象
       feedback: {
@@ -625,13 +643,54 @@ export default {
         // 如果没有数据选中的 ，则不执行
         return
       }
-      this.fileInfoDialog.show = true
 
-      // this.$alert(
-      //   ``, '文件信息', {
-      //     dangerouslyUseHTMLString: true
-      //   }).catch(res => {
-      // })
+      this.fileInfoDialog = {
+        // 是否显示弹窗
+        show: true,
+        // 文件名称
+        fileName: selectData[0]['userFileName'],
+        // 文件大小
+        fileSize: storageUnitConversion(selectData[0]['ossFileSize']),
+        // 创建时间
+        create: selectData[0]['createTime'],
+        // 更新时间
+        update: selectData[0]['updateTime'],
+        // 是否为文件夹
+        fileFolder: selectData[0]['fileFolder'],
+        // 文件类型
+        fileType: fileCategory(selectData[0]['ossFileMimeType']),
+        // 文件mime类型
+        mimeTypes: mimeTypes(selectData[0]['ossFileMimeType']),
+        // 动态url
+        userDynamicDownloadUrl: selectData[0]['userDynamicDownloadUrl']
+      }
+    },
+    /**
+     * 文件详情弹窗关闭前回调事件
+     */
+    documentDetailsClose: function (done) {
+      if (done !== false) {
+        this.fileInfoDialog = {
+          // 是否显示弹窗
+          show: false,
+          // 文件名称
+          fileName: '',
+          // 文件大小
+          fileSize: '',
+          // 创建时间
+          create: '',
+          // 更新时间
+          update: '',
+          // 是否为文件夹
+          fileFolder: '',
+          // 文件类型
+          fileType: '',
+          // 文件mime类型
+          mimeTypes: '',
+          // 动态url
+          userDynamicDownloadUrl: ''
+        }
+      }
     },
     /**
      * 关闭文件 复制、移动 时选择目标文件夹的面板
