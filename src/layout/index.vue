@@ -26,7 +26,7 @@
             :http-request="uploadRequest"
             :on-progress="progressChange"
             :on-change="handleChange"
-            action="https://upload.qiniup.com"
+            action="https://upload-z2.qiniup.com"
           >
             <button class="action">
               <i class="el-icon-upload material-icons"></i>
@@ -1349,19 +1349,21 @@ export default {
         res.state = this.fileStatusText('etag')
         res.request = request
         res.breadcrumbs = breadcrumbs
+        // 调用el-upload的上传进度条事件
+        request.onProgress(0)
       })
       let partList = this.createChunks(request.file)
       let sha1List = []
       // 开启一个外部线程 ，用于etag的计算
-      this.worker = new Worker('/static/js/fileEtag.js')
+      let worker = new Worker('/static/js/fileEtag.js')
       // 给外部线程传递消息
-      this.worker.postMessage({
+      worker.postMessage({
         partList: partList,
         fileInfo: request.file.uid,
         status: 'block'
       })
       // 接收外部Worker回传的信息
-      this.worker.onmessage = e => {
+      worker.onmessage = e => {
         const {percent, sha1Value, status, sha1, i, fileInfo} = e.data
         sha1List[i] = sha1Value
         if (status === 'block') {
@@ -1371,7 +1373,7 @@ export default {
         }
         if (percent === 100 && status !== 'success') {
           // 计算成功后 ，对计算结果进行合并处理
-          this.worker.postMessage({
+          worker.postMessage({
             partList: partList,
             fileInfo: fileInfo,
             status: 'merge',
@@ -1381,6 +1383,8 @@ export default {
         if (status === 'success' && sha1 !== undefined) {
           // 将文件状态重置为读取文件中
           this.uploadedFilesListFilter(fileInfo, res => {
+            // 关闭worker线程
+            worker.terminate()
             // 执行上传程序
             this.getFileUpToken(sha1, res.breadcrumbs, res.request)
           })

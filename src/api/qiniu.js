@@ -41,7 +41,8 @@ export const upload = (token, key, obj, next, error, complete) => {
     disableStatisticsReport: false,
     // 上传失败后重试次数
     retryCount: 6,
-    region: qiniu.region.z0
+    // 文件上传区域，华南为：qiniu.region.z2
+    region: qiniu.region.z2
   }
 
   let subObject = {
