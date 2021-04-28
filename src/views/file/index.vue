@@ -4,12 +4,12 @@
       <!-- 面包屑部分 -->
       <div class="breadcrumbs">
         <span v-for="(item, index) in breadcrumbsTruncation()" :key="index"
-              :aria-label="item.fileName" :title="index === 0 ? item.fileName : ''">
+              :aria-label="item.userFileName" :title="index === 0 ? item.userFileName : ''">
           <i :class="index === 0 ? 'shadow' : ''" class="material-icons" @click="$emit('previous', item, index)">
             <svg-icon :icon-class="index === 0 ? 'file-home' : 'breadcrumb-right'"></svg-icon>
           </i>
           <span v-if="index !== 0" class="breadcrumb-item shadow" @click="$emit('previous', item, index)">
-            {{ breadcrumbs.length &lt; 5 ? item.fileName : index === 1 ? '...' : item.fileName }}
+            {{ breadcrumbs.length &lt; 5 ? item.userFileName : index === 1 ? '...' : item.userFileName }}
           </span>
         </span>
       </div>
@@ -46,7 +46,7 @@
           <div role="button" tabindex="0" draggable="true"
                v-for="(item,index) in fileList" :key="index"
                @click="choose($event, item, index)" @dblclick="doubleClick(item)"
-               :data-dir="item['fileFolder']" :aria-label="item.fileName"
+               :data-dir="item['fileFolder']" :aria-label="item.userFileName"
                :aria-selected="!item.select ? 'false' : 'true'"
                class="item">
             <div>
@@ -55,9 +55,9 @@
               </i>
             </div>
             <div>
-              <p class="name">{{ item.fileName }}</p>
-              <p :data-order="item.fileSize === 0 ? -1 : storageUnitFormatting(item.fileSize)" class="size">
-                {{ storageUnitFormatting(item.fileSize) }}</p>
+              <p class="name">{{ item.userFileName }}</p>
+              <p :data-order="item.ossFileSize === 0 ? -1 : storageUnitFormatting(item.ossFileSize)" class="size">
+                {{ storageUnitFormatting(item.ossFileSize) }}</p>
               <p class="modified">
                 <time>{{ timeDifferenceCalculation(item) }}</time>
               </p>
@@ -92,7 +92,7 @@
 </template>
 
 <script>
-import {storageUnitConversion, timeDifference, mimeTypes, fileCategory} from '@/utils/utils'
+import {storageUnitConversion, timeDifference, mimeTypes, fileCategory, downloadByUrl} from '@/utils/utils'
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
 import previewVideo from 'vue-dplayer'
 import 'vue-dplayer/dist/vue-dplayer.css'
@@ -155,10 +155,10 @@ export default {
           volume: 1,
           playbackSpeed: [0.5, 1, 1.25, 1.5, 2, 2.5, 3, 4],
           contextmenu: [{
-            text: '新窗口打开',
+            text: '下载',
             click: (player) => {
-              // 默认新窗口打开
-              window.open(player.video.currentSrc, '_blank')
+              // 文件下载
+              downloadByUrl(player.video.currentSrc, '')
             }
           }],
           // 当前正在播放的视频url和hash值
@@ -203,18 +203,17 @@ export default {
         this.$emit('doubleClick', item)
         return
       }
-      // 设置重定向地址
-      let redirectionAddress = process.env.BASE_API + '/disk-file/resource/redirection?key='
-      switch (fileCategory(item['fileMimeType'])) {
+
+      switch (fileCategory(item['ossFileMimeType'])) {
         // 执行图片预览操作
         case 'image':
           // 大图预览时 取消 body 的滚动条
           document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
           // 实时筛选出当前文件中的所有图片类型的文件
-          this.elImageViewer.imagesList = this.fileList.filter(res => fileCategory(res['fileMimeType']) === 'image')
-            .map(res => redirectionAddress + res['fileKey'])
+          this.elImageViewer.imagesList = this.fileList.filter(res => fileCategory(res['ossFileMimeType']) === 'image')
+            .map(res => res['userDynamicDownloadUrl'])
           // 设置初始索引值
-          this.elImageViewer.initialIndex = this.elImageViewer.imagesList.findIndex(res => res === redirectionAddress + item['fileKey'])
+          this.elImageViewer.initialIndex = this.elImageViewer.imagesList.findIndex(res => res === item['userDynamicDownloadUrl'])
           // 显示 大图预览组件
           this.elImageViewer.show = true
           break
@@ -222,15 +221,15 @@ export default {
         case 'video':
           // 更新视频源
           this.$refs.previewVideo.dp.switchVideo({
-            url: redirectionAddress + item['fileKey']
+            url: item['userDynamicDownloadUrl']
           })
           document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
           // 从cookie中获取对应视频源播放时间
-          let playTime = cookies.get(`videoHash:${item['fileHash']}`)
+          let playTime = cookies.get(`videoHash:${item['ossFileEtag']}`)
           // 为当前播放赋值
           this.videoViewer.options.video = {
-            video: redirectionAddress + item['fileKey'],
-            hash: item['fileHash']
+            video: item['userDynamicDownloadUrl'],
+            hash: item['ossFileEtag']
           }
           // 播放视频
           this.$refs.previewVideo.dp.play()
@@ -240,8 +239,8 @@ export default {
           this.videoViewer.show = true
           break
         default:
-          // 默认新窗口打开
-          window.open(redirectionAddress + item['fileKey'], '_blank')
+          // 文件下载
+          downloadByUrl(item['userDynamicDownloadUrl'], item['userFileName'])
           break
       }
     },
@@ -310,7 +309,7 @@ export default {
         return
       }
       // 获取当前已经被选中的最小值的下标
-      let minIndex = this.fileList.map(item => item.fileId).indexOf(selectData[0].fileId) + 1
+      let minIndex = this.fileList.map(item => item.userFileId).indexOf(selectData[0].userFileId) + 1
       if (minIndex === index || item.select) {
         // 如果选中了它本身 或者的已经是选中状态的了
         item.select = !item.select
@@ -376,7 +375,7 @@ export default {
         return 'file-folder'
       }
       // 获取文件类型
-      return mimeTypes(item['fileMimeType'])
+      return mimeTypes(item['ossFileMimeType'])
     },
     /**
      * 面包屑breadcrumbs数组截断，第一位 + 后四位

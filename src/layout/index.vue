@@ -26,7 +26,7 @@
             :http-request="uploadRequest"
             :on-progress="progressChange"
             :on-change="handleChange"
-            action="https://upload.qiniup.com"
+            action="https://upload-z2.qiniup.com"
           >
             <button class="action">
               <i class="el-icon-upload material-icons"></i>
@@ -50,11 +50,19 @@
               </i>
               <span>新建文件夹</span>
             </el-button>
+          </div>
+          <div>
             <el-button aria-label="我的分享" title="我的分享" class="action" @click="fileShareList">
               <i class="material-icons">
                 <svg-icon icon-class="file-share"></svg-icon>
               </i>
               <span>我的分享</span>
+            </el-button>
+            <el-button aria-label="问题反馈" title="问题反馈" class="action" @click="feedbackBtn">
+              <i class="material-icons">
+                <svg-icon icon-class="file-feedback"></svg-icon>
+              </i>
+              <span>问题反馈</span>
             </el-button>
           </div>
           <el-button aria-label="设置" title="设置" class="action" @click="setting">
@@ -71,6 +79,32 @@
           </el-button>
           <p class="credits"><span><a @click="helpPanel">帮助</a></span></p>
         </el-aside>
+        <div class="content-bottom">
+          <div class="storage-wrapper">
+            <div class="usage-progress">
+              <div class="text">
+                <!-- 以用容量 -->
+                {{ storageUnitFormatting(userInfo.usedCapacity) }}
+                /
+                <!-- 总容量 -->
+                {{ storageUnitFormatting(userInfo.totalCapacity) }}
+              </div>
+              <!-- 已用容量的百分比 -->
+              <span class="progress" :style="userInfo.percentageCapacity"></span>
+            </div>
+          </div>
+        </div>
+        <div class="sider-bottom">
+          <div class="bottom-wrapper">
+            <div class="user-info">
+              <el-avatar :size="35" @error="true" :alt="userInfo.username"
+                         :src="userInfo.userAvatar">
+                <img src="/static/img/default.png" alt="username"/>
+              </el-avatar>
+            </div>
+            <span class="user-info-name">{{ userInfo.username }}</span>
+          </div>
+        </div>
         <!-- main -->
         <el-main>
           <router-view :breadcrumbs="breadcrumbs" :file-list="fileList"
@@ -136,6 +170,60 @@
       </div>
     </el-dialog>
 
+    <!-- 意见与反馈的表单对象 -->
+    <el-dialog title="意见与反馈" :visible.sync="feedback.show">
+      <el-form ref="feedback" :model="feedback.form" :rules="feedback.rules">
+        <el-form-item label="意见与问题" prop="feedbackContent">
+          <el-input type="textarea" v-model="feedback.form.feedbackContent" class="feedbackContent" maxlength="500"
+                    placeholder="您可以向我们提出您的疑问或者是一些建设性的意见"></el-input>
+        </el-form-item>
+        <el-form-item label="联系方式" prop="feedbackContact">
+          <el-input
+            type="text"
+            placeholder="请填写您的常用邮箱地址，便于我们与您联系。"
+            v-model="feedback.form.feedbackContact"
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="feedbackSubmit('feedback')">确 定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 文件详情的Dialog弹窗 -->
+    <el-dialog title="文件详情" :visible.sync="fileInfoDialog.show"
+               customClass="fileInfoPopup" width="18em" :before-close="documentDetailsClose">
+      <div class="fileInfoPopup">
+        <div class="fileInfoPopupPreview">
+          <img v-if="fileInfoDialog.fileType === 'image'" class="fileInfoPopupPreviewImg"
+               :src="fileInfoDialog.userDynamicDownloadUrl" :alt="fileInfoDialog.fileName">
+          <svg-icon v-else :icon-class="fileInfoDialog.mimeTypes" width="6em" height="6em" color="#8ea1ff"
+                    class="fileInfoPopupPreviewSvg"></svg-icon>
+        </div>
+        <p class="fileInfoPopupBlock">
+          <strong style="display: flex;align-items: flex-start;">
+            <svg-icon icon-class="file-info-name" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
+            <span class="fileInfoPopupBlockText">{{ fileInfoDialog.fileName }}</span>
+          </strong>
+          <span class="fileInfoPopupBlockValue">{{ fileInfoDialog.fileSize }}</span>
+        </p>
+        <p class="fileInfoPopupBlock">
+          <strong>
+            <svg-icon icon-class="file-info-create" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
+            创建时间：
+          </strong>
+          <span class="fileInfoPopupBlockValue">{{ fileInfoDialog.create }}</span>
+        </p>
+        <p class="fileInfoPopupBlock">
+          <strong>
+            <svg-icon icon-class="file-info-update" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
+            修改时间：
+          </strong>
+          <span class="fileInfoPopupBlockValue">{{ fileInfoDialog.update }}</span>
+        </p>
+      </div>
+    </el-dialog>
+
     <!-- 文件 复制、移动 时选择目标文件夹的面板 -->
     <file-card v-if="fileCard.show" :card-title="fileCard.title" :card-breadcrumbs="fileCard.cardBreadcrumbs"
                @card-close="cardClose" @card-confirm="cardConfirm"
@@ -147,17 +235,37 @@
 <script>
 import {logout} from '@/api/login'
 import {getToken, upload} from '@/api/qiniu'
+import {validEmail} from '@/utils/validate'
 import {search, insertFileFolder, deleteFile, renameFile, copyFile, moveFile} from '@/api/file'
 import {createShare} from '@/api/share'
+import {insertFeedback} from '@/api/feedback'
 import {resetRouter} from '@/router/index'
 import cookies from 'js-cookie'
 import uploader from '@/components/upload/uploader'
 import fileCard from '@/components/fileCard/fileCard'
-import {storageUnitConversion, formatDate} from '@/utils/utils'
+import {storageUnitConversion, formatDate, fileCategory, mimeTypes} from '@/utils/utils'
 
 export default {
   name: 'layout',
   data () {
+    // 邮箱校验
+    const validateEmail = (rule, value, callback) => {
+      if (validEmail(value)) {
+        callback()
+      } else {
+        callback(new Error('邮箱地址不规范'))
+      }
+    }
+    // 反馈内容的长度校验
+    const validateFeedbackContent = (rule, value, callback) => {
+      if (value.length === 0) {
+        callback(new Error('请填写您宝贵的意见，您的意见对我们真的很重要.'))
+      } else if (value.length <= 500) {
+        callback()
+      } else {
+        callback(new Error('请尽量精简您要反馈的内容'))
+      }
+    }
     return {
       // 右上角需要进行操作的按钮
       operateBtn: [{
@@ -193,8 +301,8 @@ export default {
       }],
       // 路径信息的面包屑导航(数组中的第一位元素为主页)
       breadcrumbs: [{
-        fileName: '主页',
-        fileId: 0
+        userFileName: '主页',
+        userFileId: 0
       }],
       // 初始化的分页信息(默认从第一页开始请求页面文件列表数据)
       page: 1,
@@ -220,6 +328,8 @@ export default {
         periodOfValidity: [{
           label: '1天', value: 86400
         }, {
+          label: '3天', value: 259200
+        }, {
           label: '7天', value: 604800
         }, {
           label: '永久有效', value: -1
@@ -243,9 +353,62 @@ export default {
         title: '',
         // 面板内的文件夹路径信息面包屑导航(数组中的第一位元素为主页)
         cardBreadcrumbs: [{
-          fileName: '/',
-          fileId: 0
+          userFileName: '/',
+          userFileId: 0
         }]
+      },
+      // 文件详情Dialog弹窗对象
+      fileInfoDialog: {
+        // 是否显示弹窗
+        show: false,
+        // 文件名称
+        fileName: '',
+        // 文件大小
+        fileSize: '',
+        // 创建时间
+        create: '',
+        // 更新时间
+        update: '',
+        // 是否为文件夹
+        fileFolder: '',
+        // 文件类型
+        fileType: '',
+        // 文件mime类型
+        mimeTypes: '',
+        // 动态url
+        userDynamicDownloadUrl: ''
+      },
+      // 意见与反馈的对象
+      feedback: {
+        // 是否显示表单
+        show: false,
+        // 表单
+        form: {
+          // 联系方式
+          feedbackContact: '',
+          // 反馈内容
+          feedbackContent: ''
+        },
+        // 表单验证，需要在 el-form-item 元素中增加 prop 属性
+        rules: {
+          feedbackContact: [{required: true, trigger: 'blur', validator: validateEmail}],
+          feedbackContent: [{required: true, trigger: 'blur', validator: validateFeedbackContent}]
+        }
+      },
+      // 当前登录的用户信息
+      userInfo: {
+        // 当前登录的用户名
+        username: '',
+        // 用户头像
+        userAvatar: '',
+        // 总容量
+        totalCapacity: '',
+        // 已用容量
+        usedCapacity: '',
+        // 剩余容量
+        remainingCapacity: '',
+        // 已用容量的百分比
+        percentageCapacity: {}
       }
     }
   },
@@ -285,6 +448,14 @@ export default {
   },
   // 钩子函数：页面加载完成后执行
   mounted: function () {
+    // 获取cookie缓存中的用户信息
+    let userInfo = cookies.get('userInfo')
+    if (userInfo === undefined) {
+      // 如果在未登录的情况下使用，则跳转登录页面
+      this.$router.push({name: 'login'})
+      return
+    }
+    this.setUserInfoCookies(JSON.parse(userInfo))
     // 自动获取文件列表的第一页
     this.getFileListInfo()
     // 监听全局粘贴事件 ，将粘贴事件绑定到 ctrlV 方法
@@ -343,7 +514,7 @@ export default {
       createShare({
         encrypt: encrypt[0].value,
         time: this.fileSharingForm.periodOfValiditySelectValue,
-        files: selectData.map(item => item.fileId)
+        files: selectData.map(item => item.userFileId)
       }).then((response) => {
         response.data['periodOfValidity'] = periodOfValidity[0].label
         response.data['encryptionRequired'] = encrypt[0].value
@@ -364,7 +535,7 @@ export default {
         return
       }
 
-      let character = selectData[0].fileName
+      let character = selectData[0].userFileName
       // 如果这个名字很长 ...
       if (character.length > 8) {
         character = character.slice(0, 8) + '...'
@@ -373,19 +544,20 @@ export default {
       this.$prompt(`请输入新名称，旧名称为:${character}`, '重命名', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        inputValue: selectData[0].fileName,
-        inputPattern: /^((?![\\/:*?<>|'%]).){1,50}$/,
-        inputErrorMessage: '50个字符以内，不包含特殊字符',
+        inputValue: selectData[0].userFileName,
+        inputPattern: /^((?![\\/:*?？^`~&<>|'%]).){1,50}$/,
+        inputErrorMessage: '50个字符以内，不能包含特殊字符',
         closeOnClickModal: false
       }).then(({value}) => {
         // 当前新名字 需与 旧名字 不相等 才能更改
-        if (value !== selectData[0].fileName) {
+        if (value !== selectData[0].userFileName) {
           renameFile({
-            fileId: selectData[0].fileId,
-            newFileName: value
+            userFileId: selectData[0].userFileId,
+            newUserFileName: value
           }).then((response) => {
-            selectData[0].fileName = response['data']
+            selectData[0].userFileName = response['data'].userFileName
             selectData[0].updateTime = formatDate(new Date(Date.now()), 'yyyy-MM-dd hh:mm:ss')
+            selectData[0].userDynamicDownloadUrl = response['data'].userDynamicDownloadUrl
             // 成功的提示框
             this.$message({
               type: 'success',
@@ -406,6 +578,11 @@ export default {
       // 打开文件夹面板时 取消 body 的滚动条
       document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
       this.fileCard.title = '复制'
+      // 重置卡片面包屑数据
+      this.fileCard.cardBreadcrumbs = [{
+        userFileName: '/',
+        userFileId: 0
+      }]
       this.fileCard.show = true
     },
     /**
@@ -415,6 +592,11 @@ export default {
       // 打开文件夹面板时 取消 body 的滚动条
       document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
       this.fileCard.title = '移动'
+      // 重置卡片面包屑数据
+      this.fileCard.cardBreadcrumbs = [{
+        userFileName: '/',
+        userFileId: 0
+      }]
       this.fileCard.show = true
     },
     /**
@@ -432,21 +614,21 @@ export default {
         closeOnClickModal: false,
         cancelButtonText: '取消'
       }).then(() => {
-        selectData.forEach(res => {
-          deleteFile({
-            fileId: res.fileId
-          }).then((response) => {
-            console.log(response)
-            // 删除成功的提示框
-            this.$message({
-              type: 'success',
-              message: '删除成功!'
-            })
+        deleteFile(selectData.map(item => item.userFileId)).then((response) => {
+          console.log(response)
+          // 重新对cookie中的用户信息赋值
+          this.setUserInfoCookies(response.data)
+          // 删除成功的提示框
+          this.$message({
+            type: 'success',
+            message: '删除成功!'
+          })
+          selectData.forEach(res => {
             // 删除文件列表中对应的文件数据
             this.fileList = this.fileList.filter(item => item !== res)
-          }).catch((err) => {
-            console.log(err)
           })
+        }).catch((err) => {
+          console.log(err)
         })
       }).catch(() => {
       })
@@ -462,17 +644,53 @@ export default {
         return
       }
 
-      this.$alert(
-        `<p><strong>名称：</strong>${selectData[0]['fileName']}</p>
-                  <p><strong>大小：</strong>${storageUnitConversion(selectData[0]['fileSize'])}</p>
-                  <p><strong>创建时间：</strong>${selectData[0]['createTime']}</p>
-                  <p><strong>引用地址：</strong>
-                  <code style="word-wrap: break-word;">
-                  <a>${process.env.BASE_API}/disk-file/resource/redirection?key=${selectData[0]['fileKey']}</a>
-                  </code></p>`, '文件信息', {
-          dangerouslyUseHTMLString: true
-        }).catch(res => {
-      })
+      this.fileInfoDialog = {
+        // 是否显示弹窗
+        show: true,
+        // 文件名称
+        fileName: selectData[0]['userFileName'],
+        // 文件大小
+        fileSize: storageUnitConversion(selectData[0]['ossFileSize']),
+        // 创建时间
+        create: selectData[0]['createTime'],
+        // 更新时间
+        update: selectData[0]['updateTime'],
+        // 是否为文件夹
+        fileFolder: selectData[0]['fileFolder'],
+        // 文件类型
+        fileType: fileCategory(selectData[0]['ossFileMimeType']),
+        // 文件mime类型
+        mimeTypes: mimeTypes(selectData[0]['ossFileMimeType']),
+        // 动态url
+        userDynamicDownloadUrl: selectData[0]['userDynamicDownloadUrl']
+      }
+    },
+    /**
+     * 文件详情弹窗关闭前回调事件
+     */
+    documentDetailsClose: function (done) {
+      if (done !== false) {
+        this.fileInfoDialog = {
+          // 是否显示弹窗
+          show: false,
+          // 文件名称
+          fileName: '',
+          // 文件大小
+          fileSize: '',
+          // 创建时间
+          create: '',
+          // 更新时间
+          update: '',
+          // 是否为文件夹
+          fileFolder: '',
+          // 文件类型
+          fileType: '',
+          // 文件mime类型
+          mimeTypes: '',
+          // 动态url
+          userDynamicDownloadUrl: ''
+        }
+      }
     },
     /**
      * 关闭文件 复制、移动 时选择目标文件夹的面板
@@ -494,62 +712,80 @@ export default {
         // 如果没有数据选中的 ，则不执行
         return
       }
+      let fileSize = 0
+      // 需要操作的用户文件标识集合信息
+      let operationFileInfo = []
+      selectData.forEach(res => {
+        fileSize += res.ossFileSize
+        operationFileInfo.push({
+          fromFileId: res.userFileId
+        })
+      })
       if (cardTitle === '复制') {
-        selectData.forEach(res => {
-          copyFile({
-            fromFileId: res.fileId,
-            targetFileId: currentlySelectedValue
-          }).then((response) => {
-            console.log(response)
-            // 复制成功的提示框
-            this.$message({
-              type: 'success',
-              message: '复制完成!'
-            })
-            // 如果目标文件夹与当前已经文件夹一致时，刷新当前文件夹
-            if (this.breadcrumbs[this.breadcrumbs.length - 1].fileId === currentlySelectedValue) {
-              // 在当前的文件列表中添加对应的文件数据
-              response.data['select'] = false
-              this.fileList.unshift(response.data)
-            }
-          }).catch((err) => {
-            console.log(err)
+        // 判断上传空间容量
+        if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - fileSize < 0) {
+          this.$message.error('存储空间不足')
+          return
+        }
+        copyFile({
+          copyFileInfo: operationFileInfo,
+          targetFileId: currentlySelectedValue
+        }).then((response) => {
+          console.log(response)
+          // 复制成功的提示框
+          this.$message({
+            type: 'success',
+            message: '复制完成!'
           })
+          // 如果目标文件夹与当前已经文件夹一致时，刷新当前文件夹
+          if (this.breadcrumbs[this.breadcrumbs.length - 1].userFileId === currentlySelectedValue) {
+            // 在当前的文件列表中添加对应的文件数据
+            response.data['fromUserFileList'].forEach(fromUserFileInfo => {
+              fromUserFileInfo['select'] = false
+              this.fileList.unshift(fromUserFileInfo)
+            })
+          }
+          // 重新对cookie中的用户信息赋值
+          this.setUserInfoCookies(response.data['userInfo'])
+        }).catch((err) => {
+          console.log(err)
         })
       } else {
-        selectData.forEach(res => {
-          moveFile({
-            fromFileId: res.fileId,
-            targetFileId: currentlySelectedValue
-          }).then((response) => {
-            console.log(response)
-            // 删除成功的提示框
-            this.$message({
-              type: 'success',
-              message: '剪切完成!'
+        moveFile({
+          moveFileInfo: operationFileInfo,
+          targetFileId: currentlySelectedValue
+        }).then((response) => {
+          console.log(response)
+          // 删除成功的提示框
+          this.$message({
+            type: 'success',
+            message: '剪切完成!'
+          })
+          // 如果目标文件夹与当前已经文件夹一致时，刷新当前文件夹
+          if (this.breadcrumbs[this.breadcrumbs.length - 1].userFileId === currentlySelectedValue) {
+            // 在当前的文件列表中添加对应的文件数据
+            response.data.forEach(fromUserFileInfo => {
+              fromUserFileInfo['select'] = false
+              this.fileList.unshift(fromUserFileInfo)
             })
-            // 如果目标文件夹与当前已经文件夹一致时，刷新当前文件夹
-            if (this.breadcrumbs[this.breadcrumbs.length - 1].fileId === currentlySelectedValue) {
-              // 在当前的文件列表中添加对应的文件数据
-              response.data['select'] = false
-              this.fileList.unshift(response.data)
-            }
+          }
+          selectData.forEach(res => {
             // 删除文件列表中对应的文件数据
             this.fileList = this.fileList.filter(item => item !== res)
-          }).catch((err) => {
-            console.log(err)
           })
+        }).catch((err) => {
+          console.log(err)
         })
       }
       this.cardClose()
     },
     /**
      * 复制、移动 时选择目标文件夹面板中返回上一级事件
-     * @param fileParentId 上一级文件夹id
+     * @param userFileParentId 上一级文件夹id
      */
-    cardFolderPrevious: function (fileParentId) {
+    cardFolderPrevious: function (userFileParentId) {
       this.fileCard.cardBreadcrumbs = this.fileCard.cardBreadcrumbs.slice(0, this.fileCard.cardBreadcrumbs
-        .findIndex(res => res.fileId === fileParentId) + 1)
+        .findIndex(res => res.userFileId === userFileParentId) + 1)
     },
     /**
      * 复制、移动 时选择目标文件夹面板中加载下一级事件
@@ -558,46 +794,46 @@ export default {
     cardFolderNext: function (item) {
       // 增加面包屑导航数据
       this.fileCard.cardBreadcrumbs.push({
-        fileId: item.fileId,
-        fileName: item.fileName
+        userFileId: item.userFileId,
+        userFileName: item.userFileName
       })
     },
     // ============================== 页面工具方法
     /**
      * 从服务器端获取文件列表信息
      * @param page 页码
-     * @param fileParentId 文件的上一级id
+     * @param userFileParentId 文件的上一级id
      * @param resetData 是否重置文件列表数据
      * @param callback 回调函数
      */
-    getFileListInfo: function (page, fileParentId, resetData, callback) {
+    getFileListInfo: function (page, userFileParentId, resetData, callback) {
       if (page === null || page === undefined) {
         // 默认第一页
         page = 1
       }
 
-      if (fileParentId === null || fileParentId === undefined) {
+      if (userFileParentId === null || userFileParentId === undefined) {
         // 默认从 路径信息的面包屑导航 数据中获取最后一位元素
-        fileParentId = this.breadcrumbs[this.breadcrumbs.length - 1].fileId
+        userFileParentId = this.breadcrumbs[this.breadcrumbs.length - 1].userFileId
       }
       search({
         page: page,
-        fileParentId: fileParentId
+        userFileParentId: userFileParentId
       }).then((response) => {
         // 重置文件列表数据
         if (resetData !== undefined && resetData) {
           this.fileList = []
         }
-        response.data['diskFile'].forEach(res => {
+        response.data['diskUserFile'].forEach(res => {
           res['select'] = false
           this.fileList.push(res)
         })
         // 判断是否进行下一次的分页请求
-        if (response.data['diskFile'].length < 100 || response.data['toTal'] < 100 ||
-          (response.data['diskFile'].length === 100 && response.data['toTal'] === 100)) {
+        if (response.data['diskUserFile'].length < 100 || response.data['toTal'] < 100 ||
+          (response.data['diskUserFile'].length === 100 && response.data['toTal'] === 100)) {
           // 数组长度小于 pageSize 不进行下一次分页请求
           this.pageBottomEvent = true
-        } else if (response.data['diskFile'].length === 100 && response.data['toTal'] > 100) {
+        } else if (response.data['diskUserFile'].length === 100 && response.data['toTal'] > 100) {
           this.pageBottomEvent = false
         }
         if (callback !== undefined) {
@@ -622,10 +858,10 @@ export default {
      */
     previous: function (item) {
       // 判断点击的是否是当前的目录(面包屑的最后一个元素为当前元素)
-      if (item.fileId !== this.breadcrumbs[this.breadcrumbs.length - 1].fileId) {
+      if (item.userFileId !== this.breadcrumbs[this.breadcrumbs.length - 1].userFileId) {
         this.page = 1
-        this.getFileListInfo(this.page, item.fileId, true, response => {
-          this.breadcrumbs = this.breadcrumbs.slice(0, this.breadcrumbs.findIndex(res => res.fileId === item.fileId) + 1)
+        this.getFileListInfo(this.page, item.userFileId, true, response => {
+          this.breadcrumbs = this.breadcrumbs.slice(0, this.breadcrumbs.findIndex(res => res.userFileId === item.userFileId) + 1)
         })
       }
     },
@@ -635,11 +871,11 @@ export default {
     doubleClick: function (item) {
       // 设置当前页码为1
       this.page = 1
-      this.getFileListInfo(this.page, item.fileId, true, res => {
+      this.getFileListInfo(this.page, item.userFileId, true, res => {
         // 增加面包屑导航数据
         this.breadcrumbs.push({
-          fileId: item.fileId,
-          fileName: item.fileName
+          userFileId: item.userFileId,
+          userFileName: item.userFileName
         })
       })
     },
@@ -650,26 +886,42 @@ export default {
       // 获取所有copy类型文件
       let copy = this.filePreprocessing.filter(res => res.type === 'copy')
       // 获取当前展开的目录的文件夹id
-      let fpId = this.breadcrumbs[this.breadcrumbs.length - 1].fileId
+      let fpId = this.breadcrumbs[this.breadcrumbs.length - 1].userFileId
       if (copy.length > 0) {
-        // 复制文件
+        let fileSize = 0
+        // 需要操作的用户文件标识集合信息
+        let operationFileInfo = []
         copy.forEach(res => {
-          copyFile({
-            fromFileId: res.file.fileId,
-            targetFileId: fpId
-          }).then((response) => {
-            console.log(response)
-            // 复制成功的提示框
-            this.$message({
-              type: 'success',
-              message: '复制完成!'
-            })
-            // 在当前的文件列表中添加对应的文件数据
-            response.data['select'] = false
-            this.fileList.unshift(response.data)
-          }).catch((err) => {
-            console.log(err)
+          fileSize += res.file.ossFileSize
+          operationFileInfo.push({
+            fromFileId: res.file.userFileId
           })
+        })
+        // 判断上传空间容量
+        if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - fileSize < 0) {
+          this.$message.error('存储空间不足')
+          return
+        }
+        // 复制文件
+        copyFile({
+          copyFileInfo: operationFileInfo,
+          targetFileId: fpId
+        }).then((response) => {
+          console.log(response)
+          // 复制成功的提示框
+          this.$message({
+            type: 'success',
+            message: '复制完成!'
+          })
+          // 在当前的文件列表中添加对应的文件数据
+          response.data['fromUserFileList'].forEach(fromUserFileInfo => {
+            fromUserFileInfo['select'] = false
+            this.fileList.unshift(fromUserFileInfo)
+          })
+          // 重新对cookie中的用户信息赋值
+          this.setUserInfoCookies(response.data['userInfo'])
+        }).catch((err) => {
+          console.log(err)
         })
         this.filePreprocessing = []
         return
@@ -677,24 +929,31 @@ export default {
       // 获取所有move类型文件
       let move = this.filePreprocessing.filter(res => res.type === 'move')
       if (move.length > 0) {
-        // 移动文件
+        // 需要操作的用户文件标识集合信息
+        let operationFileInfo = []
         move.forEach(res => {
-          moveFile({
-            fromFileId: res.file.fileId,
-            targetFileId: fpId
-          }).then((response) => {
-            console.log(response)
-            // 删除成功的提示框
-            this.$message({
-              type: 'success',
-              message: '剪切完成!'
-            })
-            // 在当前的文件列表中添加对应的文件数据
-            response.data['select'] = false
-            this.fileList.unshift(response.data)
-          }).catch((err) => {
-            console.log(err)
+          operationFileInfo.push({
+            fromFileId: res.file.userFileId
           })
+        })
+        // 移动文件
+        moveFile({
+          moveFileInfo: operationFileInfo,
+          targetFileId: fpId
+        }).then((response) => {
+          console.log(response)
+          // 删除成功的提示框
+          this.$message({
+            type: 'success',
+            message: '剪切完成!'
+          })
+          // 在当前的文件列表中添加对应的文件数据
+          response.data.forEach(fromUserFileInfo => {
+            fromUserFileInfo['select'] = false
+            this.fileList.unshift(fromUserFileInfo)
+          })
+        }).catch((err) => {
+          console.log(err)
         })
         this.filePreprocessing = []
         return
@@ -738,7 +997,7 @@ export default {
         this.$router.push({name: 'home'})
       } else {
         this.previous({
-          fileId: 0
+          userFileId: 0
         })
       }
     },
@@ -752,14 +1011,14 @@ export default {
       this.$prompt('请输入新目录的名称。', '新建目录', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        inputPattern: /^((?![\\/:*?<>|'%]).){1,50}$/,
-        inputErrorMessage: '50个字符以内，不包含特殊字符'
+        inputPattern: /^((?![\\/:*?？^`~&<>|'%]).){1,50}$/,
+        inputErrorMessage: '50个字符以内，不能包含特殊字符'
       }).then(({value}) => {
         // 如果是空的
         insertFileFolder({
-          fileId: 0,
-          fileName: value,
-          fileParentId: breadcrumbs.fileId
+          userFileId: 0,
+          userFileName: value,
+          userFileParentId: breadcrumbs.userFileId
         }).then((response) => {
           response.data['select'] = false
           this.fileList.unshift(response.data)
@@ -781,6 +1040,40 @@ export default {
       this.$message({
         showClose: true,
         message: '开发中，敬请期待！'
+      })
+    },
+    /**
+     * 页面左侧菜单栏-意见与反馈
+     */
+    feedbackBtn: function () {
+      // 用户联系方式 默认为当前账号绑定的邮箱地址
+      let userEmail = localStorage.getItem('userEmail')
+      if (this.feedback.form.feedbackContact === '' && userEmail != null) {
+        this.feedback.form.feedbackContact = userEmail
+      }
+      this.feedback.show = true
+    },
+    /**
+     * 意见与反馈 模态框的确认按钮
+     */
+    feedbackSubmit: function (formName) {
+      // 为表单绑定验证功能
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          insertFeedback({
+            feedbackContact: this.feedback.form.feedbackContact,
+            feedbackContent: this.feedback.form.feedbackContent
+          }).then(() => {
+            this.feedback.show = false
+            this.feedback.form.feedbackContent = ''
+            this.$message({
+              type: 'success',
+              message: '提交成功，我们会尽快给您答复'
+            })
+          }).catch((err) => {
+            console.log(err)
+          })
+        }
       })
     },
     /**
@@ -810,6 +1103,57 @@ export default {
         console.log(err)
       })
     },
+    /**
+     * 存储单位格式化
+     * @param size 字节数
+     */
+    storageUnitFormatting: function (size) {
+      if (size > 0) {
+        return storageUnitConversion(size)
+      }
+      return '0'
+    },
+    /**
+     * 上传成功后 增加当前已用容量信息
+     * @param fileSize 文件大小(字节)
+     */
+    setUserCapacityInfo: function (fileSize) {
+      // 获取cookie缓存中的用户信息
+      let token = cookies.get('userInfo')
+      if (token === undefined) {
+        // 如果在未登录的情况下使用，则跳转登录页面
+        this.$router.push({name: 'login'})
+        return
+      }
+      let userInfo = JSON.parse(token)
+      userInfo['userUsedCapacity'] = userInfo['userUsedCapacity'] + fileSize
+      userInfo['userRemainingCapacity'] = userInfo['userRemainingCapacity'] - fileSize
+      this.setUserInfoCookies(userInfo)
+    },
+    /**
+     * 重置cookie中的用户信息
+     * @param userInfo 最新的用户信息
+     */
+    setUserInfoCookies: function (userInfo) {
+      // 重新对cookie中的用户信息赋值
+      cookies.set('userInfo', userInfo)
+      this.userInfo = {
+        // 当前登录的用户名
+        username: userInfo.userName,
+        // 用户头像
+        userAvatar: userInfo.userAvatar,
+        // 总容量
+        totalCapacity: userInfo['userTotalCapacity'],
+        // 已用容量
+        usedCapacity: userInfo['userUsedCapacity'],
+        // 剩余容量
+        remainingCapacity: userInfo['userRemainingCapacity'],
+        // 已用容量的百分比
+        percentageCapacity: {
+          width: ((userInfo['userUsedCapacity'] / userInfo['userTotalCapacity']) * 100) + '%'
+        }
+      }
+    },
     // ============================== 文件上传部分方法
     /**
      * 上传暂停事件
@@ -823,13 +1167,17 @@ export default {
      * 上传开始事件
      */
     resume (file) {
-      file.status = 'uploading'
-      file.state = this.fileStatusText('uploading')
-      // 构建七牛云上传
-      file.subscription = file.observable.subscribe(
-        next => this.nextUpload(next, file.uid),
-        error => this.errorUpload(error, file.uid),
-        complete => this.completeUpload(complete, file.uid))
+      if (file.observable == null) {
+        this.uploadRequest(file.request)
+      } else {
+        file.status = 'uploading'
+        file.state = this.fileStatusText('uploading')
+        // 构建七牛云上传
+        file.subscription = file.observable.subscribe(
+          next => this.nextUpload(next, file.uid),
+          error => this.errorUpload(error, file.uid),
+          complete => this.completeUpload(complete, file.uid, file.size))
+      }
     },
     /**
      * 上传删除事件
@@ -894,7 +1242,7 @@ export default {
     /**
      * 上传成功时返回
      */
-    completeUpload (complete, uid) {
+    completeUpload (complete, uid, size) {
       // 请求成功时返回统一状态码
       if (complete.code !== '200') {
         this.$message({
@@ -909,6 +1257,7 @@ export default {
           res.state = this.fileStatusText('error')
         })
       } else {
+        this.setUserCapacityInfo(size)
         let uploadComplete = this.uploadedFilesList.filter(item => item.status === 'uploading')
         if (uploadComplete.length <= 0) {
           // 重新获取当前页面的数据
@@ -933,12 +1282,23 @@ export default {
     handleChange (file) {
       // 添加文件时
       if (file.status === 'ready') {
-        // 显示文件上传面板
-        if (!this.displayUploadPanel) {
-          this.displayUploadPanel = true
+        // 规定文件上传大小 最大为 20 GB
+        let maxFileSize = 20 * 1024 * 1024 * 1024
+        if (file.size > maxFileSize) {
+          this.$message.error('单文件最大上传20GB')
+          return
         }
-        let regular = /^((?![\\/:*?<>|'%]).){1,50}$/
+        // 判断上传空间容量
+        if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - file.size < 0) {
+          this.$message.error('存储空间不足')
+          return
+        }
+        let regular = /^((?![\\/:*?？^`~&<>|'%]).){1,50}$/
         if (regular.test(file.name)) {
+          // 显示文件上传面板
+          if (!this.displayUploadPanel) {
+            this.displayUploadPanel = true
+          }
           // 向上传面板中的文件列队添加新的文件数据
           this.uploadedFilesList.push({
             name: file.name,
@@ -947,6 +1307,7 @@ export default {
             status: 'waiting',
             state: this.fileStatusText('waiting'),
             progress: this.progressStyle(0),
+            etagProgress: this.progressStyle(0),
             icon: this.fileCategory(file.name.split('.').pop().toLowerCase(), file.raw.type.split('/')[0])
           })
         }
@@ -982,28 +1343,124 @@ export default {
     uploadRequest: function (request) {
       // 获取当前目录id信息
       let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
+      // 将文件状态重置为读取文件中
+      this.uploadedFilesListFilter(request.file.uid, res => {
+        res.status = 'etag'
+        res.state = this.fileStatusText('etag')
+        res.request = request
+        res.breadcrumbs = breadcrumbs
+        // 调用el-upload的上传进度条事件
+        request.onProgress(0)
+      })
+      let partList = this.createChunks(request.file)
+      let sha1List = []
+      // 开启一个外部线程 ，用于etag的计算
+      let worker = new Worker('/static/js/fileEtag.js')
+      // 给外部线程传递消息
+      worker.postMessage({
+        partList: partList,
+        fileInfo: request.file.uid,
+        status: 'block'
+      })
+      // 接收外部Worker回传的信息
+      worker.onmessage = e => {
+        const {percent, sha1Value, status, sha1, i, fileInfo} = e.data
+        sha1List[i] = sha1Value
+        if (status === 'block') {
+          this.uploadedFilesListFilter(fileInfo, res => {
+            res.etagProgress = this.progressStyle(percent)
+          })
+        }
+        if (percent === 100 && status !== 'success') {
+          // 计算成功后 ，对计算结果进行合并处理
+          worker.postMessage({
+            partList: partList,
+            fileInfo: fileInfo,
+            status: 'merge',
+            sha1List: sha1List
+          })
+        }
+        if (status === 'success' && sha1 !== undefined) {
+          // 将文件状态重置为读取文件中
+          this.uploadedFilesListFilter(fileInfo, res => {
+            // 关闭worker线程
+            worker.terminate()
+            // 执行上传程序
+            this.getFileUpToken(sha1, res.breadcrumbs, res.request)
+          })
+        }
+      }
+    },
+    /**
+     * 创建文件所需要的块
+     * 将大文件进行分块读取
+     */
+    createChunks (file) {
+      const partList = []
+      // 以4M为单位分割
+      let blockSize = 4 * 1024 * 1024
+      let blockCount = Math.ceil(file.size / blockSize)
+      for (let i = 0; i < blockCount; i++) {
+        // 核心是对文件的 slice
+        const chunk = file.slice(i * blockSize, (i + 1) * blockSize)
+        partList.push({chunk, size: chunk.size})
+      }
+      return partList
+    },
+    /**
+     * 根据当前请求的文件，以及文件etag获取文件上传token
+     * 执行文件上传程序
+     */
+    getFileUpToken (etag, breadcrumbs, request) {
+      console.log('文件: ' + request.file.name + ' ' + ' 计算结果为: ' + etag)
       getToken({
-        fileName: request.file.name,
-        fileParentId: breadcrumbs.fileId
+        ossFileEtag: etag,
+        ossFileSize: request.file.size,
+        userFileName: request.file.name,
+        userFileParentId: breadcrumbs.userFileId
       }).then(response => {
-        const key = response.data.key
-        const token = response.data.token
-        // 构建七牛云上传
-        let qiniup = upload(token, key, request,
-          next => this.nextUpload(next, request.file.uid),
-          error => this.errorUpload(error, request.file.uid),
-          complete => this.completeUpload(complete, request.file.uid))
-        // 重置当前上传文件的状态
-        this.uploadedFilesListFilter(request.file.uid, res => {
-          res.status = 'uploading'
-          res.state = this.fileStatusText('uploading')
-          res.observable = qiniup.observable
-          res.subscription = qiniup.subscription
-          res.request = request
-          res.header = response.data
-        })
+        // 根据返回码判断当前文件状态
+        if (response.code === '201') {
+          // 秒传成功 ，直接重置当前文件的状态
+          this.uploadedFilesListFilter(request.file.uid, res => {
+            // 调用el-upload的上传进度条事件
+            request.onProgress(100)
+            res.status = 'success'
+            res.state = this.fileStatusText('secondPass')
+            res.request = request
+          })
+          response.data['diskUserFile']['select'] = false
+          this.fileList.unshift(response.data['diskUserFile'])
+          this.setUserCapacityInfo(response.data['diskUserFile']['ossFileSize'])
+        } else {
+          // 执行普通上传程序
+          const key = response.data.key
+          const token = response.data.token
+          // 构建七牛云上传
+          let qiNiUp = upload(token, key, request,
+            next => this.nextUpload(next, request.file.uid),
+            error => this.errorUpload(error, request.file.uid),
+            complete => this.completeUpload(complete, request.file.uid, request.file.size))
+          // 重置当前上传文件的状态
+          this.uploadedFilesListFilter(request.file.uid, res => {
+            res.status = 'uploading'
+            res.state = this.fileStatusText('uploading')
+            res.observable = qiNiUp.observable
+            res.subscription = qiNiUp.subscription
+            res.request = request
+            res.header = response.data
+          })
+        }
       }).catch(err => {
         console.log(err)
+        // 重置为上传失败
+        this.uploadedFilesListFilter(request.file.uid, res => {
+          res.status = 'error'
+          res.state = this.fileStatusText('error')
+          res.request = request
+          // 调用el-upload的上传失败事件
+          request.onError(err.message)
+        })
       })
     },
     /**
@@ -1025,12 +1482,18 @@ export default {
      * 主要验证文件名是否包含特殊字符，并在50字符以内
      */
     beforeUpload: function (file) {
-      let regular = /^((?![\\/:*?<>|'%]).){1,50}$/
+      let regular = /^((?![\\/:*?？^`~&<>|'%]).){1,50}$/
       if (!regular.test(file.name)) {
-        this.$message.error('文件名50个字符以内，不包含特殊字符')
+        this.$message.error('文件名50个字符以内，不能包含特殊字符')
         return false
       }
-      return true
+      // 规定文件上传大小 最大为 20 GB
+      let maxFileSize = 20 * 1024 * 1024 * 1024
+      if (file.size > maxFileSize) {
+        return false
+      }
+      // 判断上传空间容量
+      return !(this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - file.size < 0)
     },
     /**
      * 文件上传队列过滤
@@ -1055,7 +1518,9 @@ export default {
         error: '失败',
         uploading: '上传中',
         paused: '暂停',
-        waiting: '等待'
+        waiting: '等待',
+        etag: '校验MD5',
+        secondPass: '秒传'
       }[status]
     },
     /**
@@ -1302,7 +1767,7 @@ a {
   vertical-align: middle;
 }
 
-.el-aside div:first-child {
+.el-aside div {
   border-bottom: 1px solid rgba(0, 0, 0, .05);
 }
 
@@ -1351,9 +1816,161 @@ main {
   padding: 1em 1em;
 }
 
+/deep/ .feedbackContent > textarea {
+  height: 6em;
+}
+
+.content-bottom {
+  width: 14em;
+  left: 24px;
+  bottom: 70px;
+  padding-bottom: 28px;
+  position: fixed;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.usage-progress {
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  position: relative;
+}
+
+.text {
+  font-size: 11px;
+  line-height: 160%;
+  color: var(--context_primary);
+  margin-bottom: 12px;
+}
+
+.progress {
+  height: 6px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  transition-duration: 0.274778s;
+  background-color: rgba(28, 175, 253, 1);
+  border-radius: 100px;
+}
+
+.usage-progress::after {
+  content: "";
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(222, 223, 235, .5);
+  width: 100%;
+  height: 6px;
+  border-radius: 100px;
+}
+
+.sider-bottom {
+  height: 75px;
+  width: 16em;
+  position: fixed;
+  bottom: 0;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  padding: 0 20px 0 24px;
+}
+
+.el-avatar.el-avatar--circle {
+  float: left;
+}
+
+.user-info-name {
+  line-height: 35px;
+  margin-left: 10px;
+  max-width: 77%;
+  white-space: nowrap;
+  overflow: hidden;
+  display: inline-block;
+  text-overflow: ellipsis;
+}
+
+/deep/ .uploader-file {
+  height: 47px !important;
+}
+
+/deep/ .uploader-file-etag-progress {
+  height: 3px !important;
+  bottom: -1.5px !important;
+}
+
+.fileInfoPopupBlock {
+  margin-top: 12px;
+}
+
+.fileInfoPopupBlock strong {
+  display: inline-block;
+  width: 100%;
+  font-weight: 500;
+}
+
+.fileInfoPopupBlockValue {
+  padding-left: 23px;
+  color: #999;
+  margin-top: 5px;
+  display: inline-block;
+}
+
+.fileInfoPopupBlockSvg {
+  margin-right: 2px;
+  position: relative;
+  top: 0;
+}
+
+/deep/ .fileInfoPopup > .el-dialog__body {
+  padding: 20px;
+}
+
+.fileInfoPopupPreview {
+  text-align: center;
+  margin: 0 auto 12%;
+  width: 140px;
+  height: 111px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fileInfoPopupPreviewImg {
+  max-height: 100%;
+}
+
+.fileInfoPopupPreviewSvg {
+  position: relative;
+  top: 6%;
+}
+
+.fileInfoPopupBlockText {
+  display: inline-block;
+  width: 85%;
+  margin-left: 2%;
+}
+
 @media (max-width: 1024px) {
   main {
     width: calc(100% - 13em);
+  }
+
+  .user-info-name {
+    max-width: 55%;
+  }
+
+  .content-bottom {
+    width: 9em !important;
+  }
+
+  .sider-bottom {
+    width: 15em !important;
   }
 
   .el-aside {
@@ -1374,7 +1991,7 @@ main {
   }
 
   .layout {
-    padding-bottom: 5em;
+    padding-bottom: 2em;
   }
 
   .el-aside {
@@ -1388,6 +2005,14 @@ main {
     -webkit-transition: left .1s ease;
     transition: left .1s ease;
     left: -17em;
+  }
+
+  .content-bottom {
+    display: none !important;
+  }
+
+  .sider-bottom {
+    display: none !important;
   }
 
   #listing.list .item .size {

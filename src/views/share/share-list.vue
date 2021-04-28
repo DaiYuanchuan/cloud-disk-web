@@ -93,8 +93,8 @@ export default {
     return {
       // 路径信息的面包屑导航(数组中的第一位元素为主页)
       breadcrumbs: [{
-        fileName: '主页',
-        fileId: 0
+        userFileName: '主页',
+        userFileId: 0
       }],
       // 初始化的分页信息(默认从第一页开始请求页面文件列表数据)
       page: 1,
@@ -110,8 +110,8 @@ export default {
         title: '',
         // 面板内的文件夹路径信息面包屑导航(数组中的第一位元素为主页)
         cardBreadcrumbs: [{
-          fileName: '/',
-          fileId: 0
+          userFileName: '/',
+          userFileId: 0
         }]
       }
     }
@@ -125,12 +125,12 @@ export default {
     /**
      * 从服务器端获取文件列表信息
      * @param page 页码
-     * @param fileParentId 文件的上一级id
+     * @param userFileParentId 文件的上一级id
      * @param shareKey 分享的文件夹key值
      * @param resetData 是否重置文件列表数据
      * @param callback 回调函数
      */
-    getFileListInfo: function (page, fileParentId, shareKey, resetData, callback) {
+    getFileListInfo: function (page, userFileParentId, shareKey, resetData, callback) {
       if (page === null || page === undefined) {
         // 默认第一页
         page = 1
@@ -138,9 +138,9 @@ export default {
 
       // 获取面包屑最后一位元素
       let lastElement = this.breadcrumbs[this.breadcrumbs.length - 1]
-      if (fileParentId === null || fileParentId === undefined) {
+      if (userFileParentId === null || userFileParentId === undefined) {
         // 默认从 路径信息的面包屑导航 数据中获取最后一位元素
-        fileParentId = lastElement.fileId
+        userFileParentId = lastElement.userFileId
       }
 
       if (shareKey === null || shareKey === undefined) {
@@ -149,7 +149,7 @@ export default {
       }
 
       // 如果点击的是主页，不用请求 ，直接返回根目录 rootList (根目录、最后一位元素的fileId为0)
-      if (fileParentId === 0) {
+      if (userFileParentId === 0) {
         this.fileList = this.rootList
         if (callback !== undefined) {
           callback()
@@ -158,7 +158,7 @@ export default {
         search({
           code: this.code,
           page: page,
-          fileParentId: fileParentId,
+          userFileParentId: userFileParentId,
           shareShort: this.$route.params.short,
           shareKey: shareKey
         }).then((response) => {
@@ -166,16 +166,16 @@ export default {
           if (resetData !== undefined && resetData) {
             this.fileList = []
           }
-          response.data['diskFile'].forEach(res => {
+          response.data['diskUserFile'].forEach(res => {
             res['select'] = false
             this.fileList.push(res)
           })
           // 判断是否进行下一次的分页请求
-          if (response.data['diskFile'].length < 100 || response.data['toTal'] < 100 ||
-            (response.data['diskFile'].length === 100 && response.data['toTal'] === 100)) {
+          if (response.data['diskUserFile'].length < 100 || response.data['toTal'] < 100 ||
+            (response.data['diskUserFile'].length === 100 && response.data['toTal'] === 100)) {
             // 数组长度小于 pageSize 不进行下一次分页请求
             this.pageBottomEvent = true
-          } else if (response.data['diskFile'].length === 100 && response.data['toTal'] > 100) {
+          } else if (response.data['diskUserFile'].length === 100 && response.data['toTal'] > 100) {
             this.pageBottomEvent = false
           }
           if (callback !== undefined) {
@@ -191,10 +191,10 @@ export default {
      */
     previous: function (item) {
       // 判断点击的是否是当前的目录(面包屑的最后一个元素为当前元素)
-      if (item.fileId !== this.breadcrumbs[this.breadcrumbs.length - 1].fileId) {
+      if (item.userFileId !== this.breadcrumbs[this.breadcrumbs.length - 1].userFileId) {
         this.page = 1
-        this.getFileListInfo(this.page, item.fileId, item.shareKey, true, response => {
-          this.breadcrumbs = this.breadcrumbs.slice(0, this.breadcrumbs.findIndex(res => res.fileId === item.fileId) + 1)
+        this.getFileListInfo(this.page, item.userFileId, item.shareKey, true, response => {
+          this.breadcrumbs = this.breadcrumbs.slice(0, this.breadcrumbs.findIndex(res => res.userFileId === item.userFileId) + 1)
         })
       }
     },
@@ -204,11 +204,11 @@ export default {
     doubleClick: function (item) {
       // 设置当前页码为1
       this.page = 1
-      this.getFileListInfo(this.page, item.fileId, item.shareKey, true, res => {
+      this.getFileListInfo(this.page, item.userFileId, item.shareKey, true, res => {
         // 增加面包屑导航数据
         this.breadcrumbs.push({
-          fileId: item.fileId,
-          fileName: item.fileName,
+          userFileId: item.userFileId,
+          userFileName: item.userFileName,
           shareKey: item.shareKey
         })
       })
@@ -243,34 +243,57 @@ export default {
         selectData = this.fileList
       }
 
-      // 保存至我的文件夹
+      // 获取cookie中缓存的用户信息
+      let token = cookies.get('userInfo')
+      if (token === undefined) {
+        // 如果在未登录的情况下使用，则跳转登录页面
+        this.$router.push({name: 'login'})
+        return
+      }
+
+      let fileSize = 0
+      let copyFileInfo = []
       selectData.forEach(res => {
-        copyFile({
-          code: this.code,
-          shareShort: this.$route.params.short,
-          shareKey: res.shareKey,
-          fromFileId: res.fileId,
-          targetFileId: currentlySelectedValue
-        }).then((response) => {
-          console.log(response)
-          // 复制成功的提示框
-          this.$message({
-            type: 'success',
-            message: '保存成功!'
-          })
-        }).catch((err) => {
-          console.log(err)
+        fileSize += res.ossFileSize
+        copyFileInfo.push({
+          fromFileId: res.userFileId,
+          shareKey: res.shareKey
         })
+      })
+
+      let userInfo = JSON.parse(token)
+
+      // 判断上传空间容量
+      if (userInfo.userRemainingCapacity <= 0 || userInfo.userRemainingCapacity - fileSize < 0) {
+        this.$message.error('存储空间不足')
+        return
+      }
+
+      // 保存至我的文件夹
+      copyFile({
+        code: this.code,
+        shareShort: this.$route.params.short,
+        targetFileId: currentlySelectedValue,
+        copyFileInfo: copyFileInfo
+      }).then((response) => {
+        console.log(response)
+        // 复制成功的提示框
+        this.$message({
+          type: 'success',
+          message: '保存成功!'
+        })
+      }).catch((err) => {
+        console.log(err)
       })
       this.cardClose()
     },
     /**
      * 复制、移动 时选择目标文件夹面板中返回上一级事件
-     * @param fileParentId 上一级文件夹id
+     * @param userFileParentId 上一级文件夹id
      */
-    cardFolderPrevious: function (fileParentId) {
+    cardFolderPrevious: function (userFileParentId) {
       this.fileCard.cardBreadcrumbs = this.fileCard.cardBreadcrumbs.slice(0, this.fileCard.cardBreadcrumbs
-        .findIndex(res => res.fileId === fileParentId) + 1)
+        .findIndex(res => res.userFileId === userFileParentId) + 1)
     },
     /**
      * 复制、移动 时选择目标文件夹面板中加载下一级事件
@@ -279,8 +302,8 @@ export default {
     cardFolderNext: function (item) {
       // 增加面包屑导航数据
       this.fileCard.cardBreadcrumbs.push({
-        fileId: item.fileId,
-        fileName: item.fileName
+        userFileId: item.userFileId,
+        userFileName: item.userFileName
       })
     },
     /**
@@ -299,6 +322,11 @@ export default {
       document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
       this.fileCard.title = '保存'
       this.fileCard.show = true
+      // 重置卡片面包屑数据
+      this.fileCard.cardBreadcrumbs = [{
+        userFileName: '/',
+        userFileId: 0
+      }]
     }
   }
 }

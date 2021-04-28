@@ -18,16 +18,20 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    loading = Loading.service({
-      lock: true,
-      text: '加载中……',
-      background: 'rgba(0, 0, 0, 0.7)'
-    })
+    if (config['loading'] === undefined || config['loading'] === true) {
+      loading = Loading.service({
+        lock: true,
+        text: '玩命加载中……',
+        background: 'rgba(0, 0, 0, 0.7)'
+      })
+    }
     return config
   },
   // 请求错误怎么办
   error => {
-    loading.close()
+    if (loading !== undefined) {
+      loading.close()
+    }
     // 调试命令
     console.log(error)
     Message({
@@ -44,7 +48,9 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   response => {
     const res = response.data
-    loading.close()
+    if (loading !== undefined) {
+      loading.close()
+    }
     switch (res.code) {
       case '1':
         // 接口参数校验失败时
@@ -126,7 +132,9 @@ service.interceptors.response.use(
     }
   },
   error => {
-    loading.close()
+    if (loading !== undefined) {
+      loading.close()
+    }
     console.log('err' + error) // for debug
     Message({
       message: error.message,

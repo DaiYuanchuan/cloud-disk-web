@@ -191,7 +191,7 @@ export default {
     sendSecurityCode () {
       if (validEmail(this.form.userEmail)) {
         // 发送验证码
-        sendSecurityCode(this.form.userEmail, false).then((response) => {
+        sendSecurityCode(this.form.userEmail, false).then(() => {
           this.$message({
             showClose: true,
             message: '验证码已发送',

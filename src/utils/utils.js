@@ -1,13 +1,23 @@
 /**
  * 存储单元转换
- * @param {Long} bytes 字节数
+ * @param {*} bytes 字节数
  */
 export function storageUnitConversion (bytes) {
-  if (bytes === 0) return '0 B'
-  let k = 1024
-  let sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-  let i = Math.floor(Math.log(bytes) / Math.log(k))
-  return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i]
+  if (isNaN(bytes)) {
+    return ''
+  }
+  let symbols = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+  let exp = Math.floor(Math.log(bytes) / Math.log(2))
+  if (exp < 1) {
+    exp = 0
+  }
+  let i = Math.floor(exp / 10)
+  bytes = bytes / Math.pow(2, 10 * i)
+
+  if (bytes.toString().length > bytes.toFixed(2).toString().length) {
+    bytes = bytes.toFixed(2)
+  }
+  return bytes + ' ' + symbols[i]
 }
 
 /**
@@ -365,4 +375,30 @@ export function randomString (length) {
     character += baseString.charAt(number)
   }
   return character
+}
+
+/**
+ * 通过Url下载文件
+ * @param {String} link 链接
+ * @param {String} name 下载的文件名
+ */
+export function downloadByUrl (link, name) {
+  if (typeof link !== 'string' || link.length <= 0) return
+  let f = document.createElement('a')
+  f.id = 'download-' + new Date().getTime()
+  f.href = link
+  f.download = name || '下载'
+  f.style.opacity = '0'
+  f.style.height = '1px'
+  f.style.width = '1px'
+  f.style.overflow = 'hidden'
+  f.style.position = 'fixed'
+  f.style.top = '-1'
+  f.style.left = '-1'
+  f.style.zIndex = '-1'
+  f.style.display = 'none'
+  f.target = '_blank'
+  document.body.appendChild(f)
+  document.querySelector('#' + f.id).click()
+  document.body.removeChild(document.getElementById(f.id))
 }
