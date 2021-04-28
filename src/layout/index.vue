@@ -166,7 +166,7 @@
         </p>
       </span>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="createFileShare">确 定</el-button>
+        <el-button type="primary" @click="createFileShare">{{ fileSharingForm.fileSharingBtnText }}</el-button>
       </div>
     </el-dialog>
 
@@ -243,7 +243,7 @@ import {resetRouter} from '@/router/index'
 import cookies from 'js-cookie'
 import uploader from '@/components/upload/uploader'
 import fileCard from '@/components/fileCard/fileCard'
-import {storageUnitConversion, formatDate, fileCategory, mimeTypes} from '@/utils/utils'
+import {storageUnitConversion, formatDate, fileCategory, mimeTypes, clipboard} from '@/utils/utils'
 
 export default {
   name: 'layout',
@@ -342,6 +342,8 @@ export default {
         }, {
           label: '否', value: false
         }],
+        // 文件分享按钮显示文字
+        fileSharingBtnText: '确 定',
         // 文件分享api请求结果
         fileSharingRequestResults: {}
       },
@@ -477,6 +479,7 @@ export default {
      * 右上角-文件分享 按钮
      */
     fileSharingBtn: function () {
+      this.fileSharingForm.fileSharingBtnText = '确 定'
       this.showFileSharingDialog = true
     },
     /**
@@ -495,10 +498,19 @@ export default {
      * 创建文件分享链接
      */
     createFileShare: function () {
-      console.log(this.showFileSharingRequestResults)
       if (this.showFileSharingRequestResults) {
         this.showFileSharingDialog = false
         this.showFileSharingRequestResults = false
+        let response = this.fileSharingForm.fileSharingRequestResults
+        // 向剪切板复制分享链接
+        clipboard(this.userInfo.username + '向您分享了' + response['shareFileName'] + '，您打开链接后可以享受不限速下载' +
+          '\n链接：' + response['shareShortUrl'] +
+          '\n有效期：' + response['periodOfValidity'] + (response['shareCode'] === '' ? '' : '\n提取码：' + response['shareCode']))
+        // 复制成功的提示框
+        this.$message({
+          type: 'success',
+          message: '复制到剪切板了，粘贴给您的朋友吧~'
+        })
         return
       }
       let encrypt = this.fileSharingForm.encryptionRequired.filter(res => res.label === this.fileSharingForm.encrypt)
@@ -519,6 +531,7 @@ export default {
         response.data['periodOfValidity'] = periodOfValidity[0].label
         response.data['encryptionRequired'] = encrypt[0].value
         this.fileSharingForm.fileSharingRequestResults = response.data
+        this.fileSharingForm.fileSharingBtnText = '复 制'
         this.showFileSharingRequestResults = true
       }).catch((err) => {
         console.log(err)
