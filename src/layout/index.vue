@@ -26,7 +26,7 @@
             :http-request="uploadRequest"
             :on-progress="progressChange"
             :on-change="handleChange"
-            action="https://upload.qiniup.com"
+            action="https://upload-z2.qiniup.com"
           >
             <button class="action">
               <i class="el-icon-upload material-icons"></i>
@@ -83,10 +83,13 @@
           <div class="storage-wrapper">
             <div class="usage-progress">
               <div class="text">
+                <!-- 以用容量 -->
                 {{ storageUnitFormatting(userInfo.usedCapacity) }}
                 /
+                <!-- 总容量 -->
                 {{ storageUnitFormatting(userInfo.totalCapacity) }}
               </div>
+              <!-- 已用容量的百分比 -->
               <span class="progress" :style="userInfo.percentageCapacity"></span>
             </div>
           </div>
@@ -98,8 +101,8 @@
                          :src="userInfo.userAvatar">
                 <img src="/static/img/default.png" alt="username"/>
               </el-avatar>
-              <span class="user-info-name">{{ userInfo.username }}</span>
             </div>
+            <span class="user-info-name">{{ userInfo.username }}</span>
           </div>
         </div>
         <!-- main -->
@@ -187,6 +190,40 @@
       </div>
     </el-dialog>
 
+    <!-- 文件详情的Dialog弹窗 -->
+    <el-dialog title="文件详情" :visible.sync="fileInfoDialog.show"
+               customClass="fileInfoPopup" width="18em" :before-close="documentDetailsClose">
+      <div class="fileInfoPopup">
+        <div class="fileInfoPopupPreview">
+          <img v-if="fileInfoDialog.fileType === 'image'" class="fileInfoPopupPreviewImg"
+               :src="fileInfoDialog.userDynamicDownloadUrl" :alt="fileInfoDialog.fileName">
+          <svg-icon v-else :icon-class="fileInfoDialog.mimeTypes" width="6em" height="6em" color="#8ea1ff"
+                    class="fileInfoPopupPreviewSvg"></svg-icon>
+        </div>
+        <p class="fileInfoPopupBlock">
+          <strong style="display: flex;align-items: flex-start;">
+            <svg-icon icon-class="file-info-name" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
+            <span class="fileInfoPopupBlockText">{{ fileInfoDialog.fileName }}</span>
+          </strong>
+          <span class="fileInfoPopupBlockValue">{{ fileInfoDialog.fileSize }}</span>
+        </p>
+        <p class="fileInfoPopupBlock">
+          <strong>
+            <svg-icon icon-class="file-info-create" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
+            创建时间：
+          </strong>
+          <span class="fileInfoPopupBlockValue">{{ fileInfoDialog.create }}</span>
+        </p>
+        <p class="fileInfoPopupBlock">
+          <strong>
+            <svg-icon icon-class="file-info-update" width="18" height="18" className="fileInfoPopupBlockSvg"></svg-icon>
+            修改时间：
+          </strong>
+          <span class="fileInfoPopupBlockValue">{{ fileInfoDialog.update }}</span>
+        </p>
+      </div>
+    </el-dialog>
+
     <!-- 文件 复制、移动 时选择目标文件夹的面板 -->
     <file-card v-if="fileCard.show" :card-title="fileCard.title" :card-breadcrumbs="fileCard.cardBreadcrumbs"
                @card-close="cardClose" @card-confirm="cardConfirm"
@@ -206,7 +243,7 @@ import {resetRouter} from '@/router/index'
 import cookies from 'js-cookie'
 import uploader from '@/components/upload/uploader'
 import fileCard from '@/components/fileCard/fileCard'
-import {storageUnitConversion, formatDate} from '@/utils/utils'
+import {storageUnitConversion, formatDate, fileCategory, mimeTypes} from '@/utils/utils'
 
 export default {
   name: 'layout',
@@ -319,6 +356,27 @@ export default {
           userFileName: '/',
           userFileId: 0
         }]
+      },
+      // 文件详情Dialog弹窗对象
+      fileInfoDialog: {
+        // 是否显示弹窗
+        show: false,
+        // 文件名称
+        fileName: '',
+        // 文件大小
+        fileSize: '',
+        // 创建时间
+        create: '',
+        // 更新时间
+        update: '',
+        // 是否为文件夹
+        fileFolder: '',
+        // 文件类型
+        fileType: '',
+        // 文件mime类型
+        mimeTypes: '',
+        // 动态url
+        userDynamicDownloadUrl: ''
       },
       // 意见与反馈的对象
       feedback: {
@@ -586,14 +644,53 @@ export default {
         return
       }
 
-      this.$alert(
-        `<p><strong>名称：</strong>${selectData[0]['userFileName']}</p>
-                  <p><strong>大小：</strong>${storageUnitConversion(selectData[0]['ossFileSize'])}</p>
-                  <p><strong>创建时间：</strong>${selectData[0]['createTime']}</p>
-                  <p><strong>修改时间：</strong>${selectData[0]['updateTime']}</p>`, '文件信息', {
-          dangerouslyUseHTMLString: true
-        }).catch(res => {
-      })
+      this.fileInfoDialog = {
+        // 是否显示弹窗
+        show: true,
+        // 文件名称
+        fileName: selectData[0]['userFileName'],
+        // 文件大小
+        fileSize: storageUnitConversion(selectData[0]['ossFileSize']),
+        // 创建时间
+        create: selectData[0]['createTime'],
+        // 更新时间
+        update: selectData[0]['updateTime'],
+        // 是否为文件夹
+        fileFolder: selectData[0]['fileFolder'],
+        // 文件类型
+        fileType: fileCategory(selectData[0]['ossFileMimeType']),
+        // 文件mime类型
+        mimeTypes: mimeTypes(selectData[0]['ossFileMimeType']),
+        // 动态url
+        userDynamicDownloadUrl: selectData[0]['userDynamicDownloadUrl']
+      }
+    },
+    /**
+     * 文件详情弹窗关闭前回调事件
+     */
+    documentDetailsClose: function (done) {
+      if (done !== false) {
+        this.fileInfoDialog = {
+          // 是否显示弹窗
+          show: false,
+          // 文件名称
+          fileName: '',
+          // 文件大小
+          fileSize: '',
+          // 创建时间
+          create: '',
+          // 更新时间
+          update: '',
+          // 是否为文件夹
+          fileFolder: '',
+          // 文件类型
+          fileType: '',
+          // 文件mime类型
+          mimeTypes: '',
+          // 动态url
+          userDynamicDownloadUrl: ''
+        }
+      }
     },
     /**
      * 关闭文件 复制、移动 时选择目标文件夹的面板
@@ -1053,9 +1150,7 @@ export default {
         remainingCapacity: userInfo['userRemainingCapacity'],
         // 已用容量的百分比
         percentageCapacity: {
-          width: ((userInfo['userUsedCapacity'] / userInfo['userTotalCapacity']) * 100) + '%',
-          transitionDuration: '0.274778s',
-          background: 'rgb(28, 175, 253)'
+          width: ((userInfo['userUsedCapacity'] / userInfo['userTotalCapacity']) * 100) + '%'
         }
       }
     },
@@ -1254,19 +1349,21 @@ export default {
         res.state = this.fileStatusText('etag')
         res.request = request
         res.breadcrumbs = breadcrumbs
+        // 调用el-upload的上传进度条事件
+        request.onProgress(0)
       })
       let partList = this.createChunks(request.file)
       let sha1List = []
       // 开启一个外部线程 ，用于etag的计算
-      this.worker = new Worker('/static/js/fileEtag.js')
+      let worker = new Worker('/static/js/fileEtag.js')
       // 给外部线程传递消息
-      this.worker.postMessage({
+      worker.postMessage({
         partList: partList,
         fileInfo: request.file.uid,
         status: 'block'
       })
       // 接收外部Worker回传的信息
-      this.worker.onmessage = e => {
+      worker.onmessage = e => {
         const {percent, sha1Value, status, sha1, i, fileInfo} = e.data
         sha1List[i] = sha1Value
         if (status === 'block') {
@@ -1276,7 +1373,7 @@ export default {
         }
         if (percent === 100 && status !== 'success') {
           // 计算成功后 ，对计算结果进行合并处理
-          this.worker.postMessage({
+          worker.postMessage({
             partList: partList,
             fileInfo: fileInfo,
             status: 'merge',
@@ -1286,6 +1383,8 @@ export default {
         if (status === 'success' && sha1 !== undefined) {
           // 将文件状态重置为读取文件中
           this.uploadedFilesListFilter(fileInfo, res => {
+            // 关闭worker线程
+            worker.terminate()
             // 执行上传程序
             this.getFileUpToken(sha1, res.breadcrumbs, res.request)
           })
@@ -1722,17 +1821,13 @@ main {
 }
 
 .content-bottom {
-  width: 192px;
+  width: 14em;
   left: 24px;
-  bottom: 100px;
+  bottom: 70px;
   padding-bottom: 28px;
-  position: absolute;
+  position: fixed;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
-}
-
-.storage-wrapper {
-  position: fixed;
 }
 
 .usage-progress {
@@ -1744,7 +1839,7 @@ main {
 }
 
 .text {
-  font-size: 12px;
+  font-size: 11px;
   line-height: 160%;
   color: var(--context_primary);
   margin-bottom: 12px;
@@ -1755,7 +1850,8 @@ main {
   position: absolute;
   bottom: 0;
   left: 0;
-  background-color: rgba(99, 125, 255, 1);
+  transition-duration: 0.274778s;
+  background-color: rgba(28, 175, 253, 1);
   border-radius: 100px;
 }
 
@@ -1773,7 +1869,7 @@ main {
 
 .sider-bottom {
   height: 75px;
-  width: 100%;
+  width: 16em;
   position: fixed;
   bottom: 0;
   display: -ms-flexbox;
@@ -1785,20 +1881,96 @@ main {
   padding: 0 20px 0 24px;
 }
 
-.sider-bottom::before {
-  display: block;
-  content: "";
+.el-avatar.el-avatar--circle {
+  float: left;
+}
+
+.user-info-name {
+  line-height: 35px;
+  margin-left: 10px;
+  max-width: 77%;
+  white-space: nowrap;
+  overflow: hidden;
+  display: inline-block;
+  text-overflow: ellipsis;
+}
+
+/deep/ .uploader-file {
+  height: 47px !important;
+}
+
+/deep/ .uploader-file-etag-progress {
+  height: 3px !important;
+  bottom: -1.5px !important;
+}
+
+.fileInfoPopupBlock {
+  margin-top: 12px;
+}
+
+.fileInfoPopupBlock strong {
+  display: inline-block;
   width: 100%;
-  height: 1px;
-  position: absolute;
+  font-weight: 500;
+}
+
+.fileInfoPopupBlockValue {
+  padding-left: 23px;
+  color: #999;
+  margin-top: 5px;
+  display: inline-block;
+}
+
+.fileInfoPopupBlockSvg {
+  margin-right: 2px;
+  position: relative;
   top: 0;
-  left: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, .05);
+}
+
+/deep/ .fileInfoPopup > .el-dialog__body {
+  padding: 20px;
+}
+
+.fileInfoPopupPreview {
+  text-align: center;
+  margin: 0 auto 12%;
+  width: 140px;
+  height: 111px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fileInfoPopupPreviewImg {
+  max-height: 100%;
+}
+
+.fileInfoPopupPreviewSvg {
+  position: relative;
+  top: 6%;
+}
+
+.fileInfoPopupBlockText {
+  display: inline-block;
+  width: 85%;
+  margin-left: 2%;
 }
 
 @media (max-width: 1024px) {
   main {
     width: calc(100% - 13em);
+  }
+
+  .user-info-name {
+    max-width: 55%;
+  }
+
+  .content-bottom {
+    width: 9em !important;
+  }
+
+  .sider-bottom {
+    width: 15em !important;
   }
 
   .el-aside {
@@ -1819,7 +1991,7 @@ main {
   }
 
   .layout {
-    padding-bottom: 5em;
+    padding-bottom: 2em;
   }
 
   .el-aside {
@@ -1833,6 +2005,14 @@ main {
     -webkit-transition: left .1s ease;
     transition: left .1s ease;
     left: -17em;
+  }
+
+  .content-bottom {
+    display: none !important;
+  }
+
+  .sider-bottom {
+    display: none !important;
   }
 
   #listing.list .item .size {
