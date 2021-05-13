@@ -288,7 +288,7 @@
         </div>
         <h3 class="pay-modal-content-title">扫描成功</h3>
         <p class="pay-modal-content-desc">请在支付宝上完成支付</p>
-        <a class="pay-modal-content-btn">重新选择</a>
+        <a class="pay-modal-content-btn" @click="reselect">重新选择</a>
       </div>
       <div v-else-if="payment.state === 2" class="pay-modal-content">
         <!-- 支付成功后的model -->
@@ -1923,6 +1923,14 @@ export default {
       let currentDate = new Date()
       currentDate.setMonth(currentDate.getMonth() + this.payment.form.defaultValue)
       return `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`
+    },
+    /**
+     * 扫码成功后的重新选择
+     */
+    reselect: function () {
+      this.payment.state = 0
+      // 重新获取一个token
+      this.paymentTokenRequest()
     }
   }
 }
