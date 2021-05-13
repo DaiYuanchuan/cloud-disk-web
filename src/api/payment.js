@@ -5,7 +5,7 @@
  * @returns {string} 返回构建支付扫码的地址
  */
 export function paymentAddress (token) {
-  return process.env.BASE_API + 'pay/redirection-payment/' + token
+  return process.env.BASE_API + '/pay/redirection-payment/' + token
 }
 
 /**
@@ -14,5 +14,5 @@ export function paymentAddress (token) {
  * @returns {string} 返回支付宝手机支付跳转链接
  */
 export function alipayWap (token) {
-  return process.env.BASE_API + 'pay/alipay-wap/' + token
+  return process.env.BASE_API + '/pay/alipay-wap/' + token
 }

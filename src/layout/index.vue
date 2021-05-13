@@ -261,7 +261,7 @@
             </el-form-item>
             <el-form-item v-else label="支付方式">
               <div class="pay-qrCode">
-                <img src="http://oss.jiugell.com/toolBox/qrCode.png" alt="支付二维码">
+                <vue-qr :correctLevel="0" :autoColor="false" :text="payment.redirectionPayment" :size="95" :margin="0" :logoMargin="0"></vue-qr>
               </div>
               <div class="pay-method-detail">
                 <p class="pay-method-detail-title">使用支付宝扫码支付</p>
@@ -293,11 +293,13 @@
 import {logout} from '@/api/login'
 import {getToken, upload} from '@/api/qiniu'
 import {resourcePackSearch, resourcePackToken, resourcePackTokenState} from '@/api/pack'
+import {paymentAddress, alipayWap} from '@/api/payment'
 import {validEmail} from '@/utils/validate'
 import {search, insertFileFolder, deleteFile, renameFile, copyFile, moveFile} from '@/api/file'
 import {createShare} from '@/api/share'
 import {insertFeedback} from '@/api/feedback'
 import {resetRouter} from '@/router/index'
+import VueQr from 'vue-qr'
 import cookies from 'js-cookie'
 import uploader from '@/components/upload/uploader'
 import fileCard from '@/components/fileCard/fileCard'
@@ -478,6 +480,10 @@ export default {
         mobile: false,
         // 当前选中的资源包所对应的token信息(5分钟有效期)
         token: '',
+        // 根据当前token构建二维码的地址
+        redirectionPayment: '',
+        // 根据当前token构建的支付宝手机支付跳转的链接
+        alipayWap: '',
         // 当前token所属状态
         state: 0,
         // 当前执行的timeout对象
@@ -497,7 +503,7 @@ export default {
     }
   },
   components: {
-    uploader, fileCard
+    uploader, fileCard, VueQr
   },
   // 钩子函数: 数据监听
   watch: {
@@ -1707,6 +1713,10 @@ export default {
           mobile: response.data.mobile,
           // 当前选中的资源包所对应的token信息(5分钟有效期)
           token: response.data.token,
+          // 根据当前token构建二维码的地址
+          redirectionPayment: paymentAddress(response.data.token),
+          // 根据当前token构建的支付宝手机支付跳转的链接
+          alipayWap: alipayWap(response.data.token),
           // 当前token所属状态
           state: 0,
           // 当前执行的timeout对象
@@ -1744,6 +1754,10 @@ export default {
           mobile: false,
           // 当前选中的资源包所对应的token信息(5分钟有效期)
           token: '',
+          // 根据当前token构建二维码的地址
+          redirectionPayment: '',
+          // 根据当前token构建的支付宝手机支付跳转的链接
+          alipayWap: '',
           // 当前token所属状态
           state: 0,
           // 当前执行的timeout对象
@@ -1776,6 +1790,10 @@ export default {
         }).then(response => {
           console.log(response)
           this.payment.token = response.data.token
+          // 根据当前token构建二维码的地址
+          this.payment.redirectionPayment = paymentAddress(response.data.token)
+          // 根据当前token构建的支付宝手机支付跳转的链接
+          this.payment.alipayWap = alipayWap(response.data.token)
           this.payment.state = response.data.state
           // 获取当前资源包的状态
           this.getResourcePackTokenState()
