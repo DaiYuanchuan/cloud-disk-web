@@ -88,6 +88,9 @@
                 /
                 <!-- 总容量 -->
                 {{ storageUnitFormatting(userInfo.totalCapacity) }}
+                <span class="expansion">
+                  <a @click="getResourcePacksInfo">扩容</a>
+                </span>
               </div>
               <!-- 已用容量的百分比 -->
               <span class="progress" :style="userInfo.percentageCapacity"></span>
@@ -224,6 +227,60 @@
       </div>
     </el-dialog>
 
+    <!-- 支付的表单对象 -->
+    <el-dialog title="资源包购买" customClass="pay-dialog" :visible.sync="payment.show"
+               :before-close="resourcePacksDialogClose">
+      <div class="pay-scene-card">
+        <section class="pay-section pay-product">
+          <ul class="pay-product-list">
+            <li v-for="(item, index) in payment.resourcePack" :key="index"
+                :class="item.active ? 'pay-product-item pay-active' : 'pay-product-item'"
+                @click="payProductClick(item)">
+              <div v-if="item['packLabel'] !== ''" class="pay-product-item-corner">{{ item['packLabel'] }}</div>
+              <div class="pay-product-item-month">{{ item['packName'] }}</div>
+              <div class="pay-product-item-origin">
+                <span class="pay-product-item-origin-label">￥</span>
+                <span class="pay-product-item-origin-final-price">{{ item['packPrice'] / 100 }}</span>
+              </div>
+              <div class="pay-product-item-desc">
+                <div>{{ item['packDesc'] }}</div>
+              </div>
+            </li>
+          </ul>
+        </section>
+        <section class="pay-section pay-form">
+          <el-form ref="form" :model="payment.form" label-width="80px">
+            <el-form-item label="开通时长">
+              <el-input-number v-model="payment.form.defaultValue" @change="paymentOpeningTimeChange" :min="1"
+                               :max="1000"
+                               :step="payment.form.defaultSelfIncrement" step-strictly></el-input-number>
+              <span class="pay-opening-time-text">月</span>
+            </el-form-item>
+            <el-form-item v-if="payment.mobile" class="pay-method-form-item">
+              <el-button class="pay-method-mobile-btn">支付宝支付</el-button>
+            </el-form-item>
+            <el-form-item v-else label="支付方式">
+              <div class="pay-qrCode">
+                <img src="http://oss.jiugell.com/toolBox/qrCode.png" alt="支付二维码">
+              </div>
+              <div class="pay-method-detail">
+                <p class="pay-method-detail-title">使用支付宝扫码支付</p>
+                <div class="pay-method-detail-svg">
+                  <svg-icon width="30" height="30" icon-class="pay-method-alipay"
+                            className="pay-method-alipay"></svg-icon>
+                </div>
+                <div class="pay-method-detail-body">
+                  <span class="pay-method-detail-origin-price">
+                    {{ (payment.form.defaultValue * payment.form.itemPack['packPrice']) / 100 }}
+                  </span>元
+                </div>
+              </div>
+            </el-form-item>
+          </el-form>
+        </section>
+      </div>
+    </el-dialog>
+
     <!-- 文件 复制、移动 时选择目标文件夹的面板 -->
     <file-card v-if="fileCard.show" :card-title="fileCard.title" :card-breadcrumbs="fileCard.cardBreadcrumbs"
                @card-close="cardClose" @card-confirm="cardConfirm"
@@ -235,6 +292,7 @@
 <script>
 import {logout} from '@/api/login'
 import {getToken, upload} from '@/api/qiniu'
+import {resourcePackSearch, resourcePackToken, resourcePackTokenState} from '@/api/pack'
 import {validEmail} from '@/utils/validate'
 import {search, insertFileFolder, deleteFile, renameFile, copyFile, moveFile} from '@/api/file'
 import {createShare} from '@/api/share'
@@ -411,6 +469,30 @@ export default {
         remainingCapacity: '',
         // 已用容量的百分比
         percentageCapacity: {}
+      },
+      // 购买资源包dialog对象信息
+      payment: {
+        // 是否显示当前dialog弹窗对象
+        show: false,
+        // 当前发起请求的对象是否为手机
+        mobile: false,
+        // 当前选中的资源包所对应的token信息(5分钟有效期)
+        token: '',
+        // 当前token所属状态
+        state: 0,
+        // 当前执行的timeout对象
+        timeout: null,
+        // 购买资源包时的表单
+        form: {
+          // 当前选中的资源包对象
+          itemPack: {},
+          // 开通时长默认值
+          defaultValue: 1,
+          // 开通时长默认自增值
+          defaultSelfIncrement: 1
+        },
+        // 资源包对象
+        resourcePack: []
       }
     }
   },
@@ -446,6 +528,11 @@ export default {
       },
       // 深度监听
       deep: true
+    },
+    'payment.token': {
+      handler: function () {
+        console.log('token属性发生变更: ', this.payment.token)
+      }
     }
   },
   // 钩子函数：页面加载完成后执行
@@ -1596,6 +1683,177 @@ export default {
         }
       }
       upload.submit()
+    },
+    // ============================== 支付块 ==============================
+    /**
+     * 获取资源包信息
+     */
+    getResourcePacksInfo: function () {
+      // 获取后台配置的资源包信息
+      resourcePackSearch({
+        page: 1,
+        pageSize: 100
+      }).then(response => {
+        let resourcePack = []
+        response.data['diskResourcePack'].forEach((res, index) => {
+          res.active = index === 0
+          resourcePack.push(res)
+        })
+
+        this.payment = {
+          // 是否显示当前dialog弹窗对象
+          show: true,
+          // 当前发起请求的对象是否为手机
+          mobile: response.data.mobile,
+          // 当前选中的资源包所对应的token信息(5分钟有效期)
+          token: response.data.token,
+          // 当前token所属状态
+          state: 0,
+          // 当前执行的timeout对象
+          timeout: null,
+          // 购买资源包时的表单
+          form: {
+            // 当前选中的资源包对象
+            itemPack: resourcePack[0],
+            // 开通时长默认值
+            defaultValue: resourcePack[0]['packMonth'],
+            // 开通时长默认自增值
+            defaultSelfIncrement: resourcePack[0]['packMonth']
+          },
+          // 资源包对象
+          resourcePack: resourcePack
+        }
+        // 获取当前资源包的状态
+        this.getResourcePackTokenState()
+      }).catch((err) => {
+        console.log(err)
+      })
+    },
+    /**
+     * 资源包Dialog弹窗关闭事件
+     * @param done
+     */
+    resourcePacksDialogClose: function (done) {
+      if (done !== false) {
+        this.$emit('update:visible', false)
+        this.$emit('close')
+        this.payment = {
+          // 是否显示当前dialog弹窗对象
+          show: false,
+          // 当前发起请求的对象是否为手机
+          mobile: false,
+          // 当前选中的资源包所对应的token信息(5分钟有效期)
+          token: '',
+          // 当前token所属状态
+          state: 0,
+          // 当前执行的timeout对象
+          timeout: null,
+          // 资源包对象
+          resourcePack: [],
+          form: {
+            // 当前选中的资源包对象
+            itemPack: {},
+            // 开通时长默认值
+            defaultValue: 1,
+            // 开通时长默认自增值
+            defaultSelfIncrement: 1
+          }
+        }
+      }
+    },
+    /**
+     * 获取一个新的资源包支付token
+     * 重置用于支付的token
+     */
+    paymentTokenRequest: function () {
+      if (!this.payment.show) {
+        return
+      }
+      if (this.payment.state === 0 || this.payment.state === 3) {
+        resourcePackToken({
+          packId: this.payment.form.itemPack.packId,
+          number: this.payment.form.defaultValue
+        }).then(response => {
+          console.log(response)
+          this.payment.token = response.data.token
+          this.payment.state = response.data.state
+          // 获取当前资源包的状态
+          this.getResourcePackTokenState()
+        }).catch((err) => {
+          console.log(err)
+        })
+      }
+    },
+    /**
+     * 用于字符的资源被点击时执行的事件
+     * @param {Object} item 被点击的对象
+     */
+    payProductClick: function (item) {
+      let that = this
+
+      // 获取到当前已经被选中的对象
+      let selectData = that.payment.resourcePack.filter(res => res.active)[0]
+      if (selectData === undefined || selectData === null) {
+        return
+      }
+
+      // 判断当前选中的与被点击的是否为同一个对象，同时当前状态是被选中的状态
+      if (selectData.packId === item.packId && (selectData.active && item.active)) {
+        return
+      }
+
+      that.payment.resourcePack.forEach(res => {
+        if (res.packId === item.packId) {
+          res.active = true
+          // 当前选中的资源包对象
+          that.payment.form = {
+            // 当前选中的资源包对象
+            itemPack: res,
+            // 开通时长默认值
+            defaultValue: res['packMonth'],
+            // 开通时长默认自增值
+            defaultSelfIncrement: res['packMonth']
+          }
+        } else {
+          res.active = false
+        }
+      })
+      this.paymentTokenRequest()
+    },
+    /**
+     * 资源包表单-开通时长 input change 绑定值被改变时触发事件
+     * @param newVal 新值
+     * @param oldVal 旧值
+     */
+    paymentOpeningTimeChange: function (newVal, oldVal) {
+      this.paymentTokenRequest()
+    },
+    /**
+     * 获取当前资源包的状态
+     */
+    getResourcePackTokenState: function () {
+      if (this.payment.timeout !== null) {
+        clearTimeout(this.payment.timeout)
+      }
+      this.payment.timeout = setTimeout(() => {
+        if (this.payment.token === '' || this.payment.token === undefined) {
+          return
+        }
+        // 当前token的状态等于 0 或者 1 的时候，持续的去获取当前token状态(0:初始状态 1:扫码成功)
+        if (this.payment.state === 0 || this.payment.state === 1) {
+          resourcePackTokenState(this.payment.token).then(response => {
+            this.payment.state = response.data.state
+            if (response.data.state === 3) {
+              this.paymentTokenRequest()
+              return
+            }
+            // 递归回调自己
+            this.getResourcePackTokenState()
+          }).catch((err) => {
+            console.log(err)
+          })
+        }
+      }, 2000)
     }
   }
 }
@@ -1825,6 +2083,200 @@ main {
   cursor: pointer;
 }
 
+.expansion {
+  -moz-user-select: none; /*火狐*/
+  -webkit-user-select: none; /*webkit浏览器*/
+  -ms-user-select: none; /*IE10*/
+  -khtml-user-select: none; /*早期浏览器*/
+  user-select: none;
+  color: #09AAFF;
+  text-align: right;
+  float: right;
+}
+
+/deep/ .pay-dialog {
+  width: 800px;
+}
+
+.pay-product-item-desc {
+}
+
+.pay-product-item-desc div {
+  display: inline-block;
+  width: 90%;
+}
+
+.expansion a, .expansion a:hover {
+  color: inherit;
+  cursor: pointer;
+  text-align: right;
+  border: 0;
+}
+
+.pay-scene-card {
+  -moz-user-select: none; /*火狐*/
+  -webkit-user-select: none; /*webkit浏览器*/
+  -ms-user-select: none; /*IE10*/
+  -khtml-user-select: none; /*早期浏览器*/
+  user-select: none;
+}
+
+.pay-product-list {
+  display: flex;
+  padding: 0 15px;
+}
+
+.pay-product-list .pay-product-item.pay-active {
+  border-color: rgba(255, 58, 58, .75);
+}
+
+.pay-product-list .pay-product-item {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  border: 2px solid #eee;
+  border-radius: 10px;
+  height: 148px;
+  margin: 0 5px;
+  position: relative;
+  box-shadow: 0 2px 10px 0 rgba(0, 0, 0, .08);
+}
+
+.pay-product-item {
+  padding: 0;
+  list-style: none;
+}
+
+.pay-product-list .pay-product-item.pay-active .pay-product-item-corner {
+  left: -2px;
+}
+
+.pay-product-list .pay-product-item-corner {
+  position: absolute;
+  left: 0;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pay-product-list .pay-product-item-corner {
+  background-image: -webkit-linear-gradient(left, #ff5a4c, #ff1d12);
+  background-image: linear-gradient(90deg, #ff5a4c, #ff1d12);
+  border-radius: 10px 10px 10px 0;
+  top: -8px;
+  color: #fff;
+  line-height: 26px;
+  height: 26px;
+  padding: 0 8px;
+  max-width: 85%;
+  box-sizing: border-box;
+}
+
+.pay-product-list .pay-product-item-origin {
+  color: #ff3a3a;
+  text-align: center;
+  vertical-align: text-bottom;
+  line-height: 36px;
+}
+
+.pay-product-list .pay-product-item-origin-label {
+  font-size: 20px;
+}
+
+.pay-product-list .pay-product-item-origin {
+  color: #ff3a3a;
+  text-align: center;
+  vertical-align: text-bottom;
+  line-height: 36px;
+}
+
+.pay-product-list .pay-product-item-origin-final-price {
+  font-size: 30px;
+  font-weight: 500;
+}
+
+.pay-product-list .pay-product-item-origin {
+  color: #ff3a3a;
+  text-align: center;
+  vertical-align: text-bottom;
+  line-height: 36px;
+}
+
+.pay-product-list .pay-product-item-month {
+  text-align: center;
+  width: 100%;
+  padding-top: 29px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.pay-product-list .pay-product-item-desc {
+  font-size: 14px;
+  color: #999;
+  text-align: center;
+  max-width: 80%;
+  margin: 0 auto;
+}
+
+.pay-opening-time-text {
+  margin: 7px;
+}
+
+.pay-qrCode {
+  display: inline-block;
+  position: absolute;
+  width: 100px;
+  height: 100px;
+}
+
+.pay-qrCode img {
+  width: 100%;
+  max-width: 100%;
+  border: 0;
+}
+
+.pay-method-detail {
+  display: inline-block;
+  padding-left: 120px;
+  width: 100%;
+  font-size: 14px;
+  vertical-align: top;
+  height: 100px;
+}
+
+.pay-method-detail .pay-method-detail-title {
+  font-size: 14px;
+  line-height: 14px;
+  color: #333;
+  padding: 0;
+  margin: 0;
+}
+
+.pay-method-detail .pay-method-detail-svg {
+  margin-top: 10px;
+  height: 18px;
+}
+
+.pay-method-detail .pay-method-alipay {
+  display: inline-block;
+  height: 100%;
+  max-width: 100%;
+  border: 0;
+  margin-right: 10px;
+}
+
+.pay-method-detail .pay-method-detail-body {
+  margin-top: 18px;
+  color: #333;
+}
+
+.pay-method-detail .pay-method-detail-body .pay-method-detail-origin-price {
+  font-size: 44px;
+  line-height: 44px;
+}
+
 .card > div {
   padding: 1em 1em;
 }
@@ -2040,6 +2492,57 @@ main {
 
   /deep/ .el-dialog__body {
     padding: 20px 20px 0 20px;
+  }
+
+  /deep/ .pay-dialog .el-dialog__body {
+    padding: 20px 0;
+  }
+  /deep/ .pay-dialog .el-dialog__body .pay-scene-card {
+    padding: 0 10px;
+  }
+  .pay-product-list {
+    padding: 0;
+  }
+
+  .pay-section.pay-product {
+    width: 99%;
+    overflow-x: scroll;
+  }
+
+  .pay-product-list {
+    display: flex;
+    justify-content: space-between;
+    width: calc(200px * 4);
+  }
+
+  .pay-product-list .pay-product-item {
+    width: 50%;
+    flex: auto;
+    height: 100px;
+  }
+
+  .pay-product-list .pay-product-item-month {
+    padding-top: 10px;
+  }
+
+  /deep/ .el-input-number {
+    width: 135px;
+  }
+
+  .pay-section.pay-form {
+    margin-top: 10px;
+  }
+
+  /deep/ .pay-method-form-item .el-form-item__content {
+    margin-left: 5% !important;
+    width: 90%;
+  }
+
+  .pay-method-mobile-btn {
+    width: 100%;
+    background: rgb(68, 123, 252);
+    color: #fff;
+    border: none;
   }
 }
 
