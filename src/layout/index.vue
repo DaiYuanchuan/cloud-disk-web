@@ -230,7 +230,8 @@
     <!-- 支付的表单对象 -->
     <el-dialog title="资源包购买" customClass="pay-dialog" :visible.sync="payment.show"
                :before-close="resourcePacksDialogClose">
-      <div class="pay-scene-card">
+      <div v-if="payment.state === 0" class="pay-scene-card">
+        <!-- 卡片内容 -->
         <section class="pay-section pay-product">
           <ul class="pay-product-list">
             <li v-for="(item, index) in payment.resourcePack" :key="index"
@@ -257,11 +258,12 @@
               <span class="pay-opening-time-text">月</span>
             </el-form-item>
             <el-form-item v-if="payment.mobile" class="pay-method-form-item">
-              <el-button class="pay-method-mobile-btn">支付宝支付</el-button>
+              <el-button class="pay-method-mobile-btn" @click="payMethodMobileBtnClick">支付宝支付</el-button>
             </el-form-item>
             <el-form-item v-else label="支付方式">
               <div class="pay-qrCode">
-                <vue-qr :correctLevel="0" :autoColor="false" :text="payment.redirectionPayment" :size="95" :margin="0" :logoMargin="0"></vue-qr>
+                <vue-qr :correctLevel="0" :autoColor="false" :text="payment.redirectionPayment" :size="95" :margin="0"
+                        :logoMargin="0"></vue-qr>
               </div>
               <div class="pay-method-detail">
                 <p class="pay-method-detail-title">使用支付宝扫码支付</p>
@@ -278,6 +280,31 @@
             </el-form-item>
           </el-form>
         </section>
+      </div>
+      <div v-else-if="payment.state === 1" class="pay-modal-content">
+        <!-- 扫码成功后的model -->
+        <div class="pay-modal-content-icon">
+          <svg-icon icon-class="pay-success" width="80" height="80" className="paySuccess"></svg-icon>
+        </div>
+        <h3 class="pay-modal-content-title">扫描成功</h3>
+        <p class="pay-modal-content-desc">请在支付宝上完成支付</p>
+        <a class="pay-modal-content-btn">重新选择</a>
+      </div>
+      <div v-else-if="payment.state === 2" class="pay-modal-content">
+        <!-- 支付成功后的model -->
+        <div class="pay-modal-content-icon">
+          <svg-icon icon-class="pay-success" width="80" height="80" className="paySuccess"></svg-icon>
+        </div>
+        <h3 class="pay-modal-content-title">支付成功</h3>
+        <div class="pay-modal-content-box">
+          <p class="pay-modal-content-desc">付款金额：{{
+              (payment.form.defaultValue * payment.form.itemPack['packPrice']) / 100
+            }}元</p>
+          <p class="pay-modal-content-desc">商品信息：{{
+              `${payment.form.itemPack['packName']} · ${payment.form.defaultValue}个月`
+            }}</p>
+          <p class="pay-modal-content-desc">到期时间：{{ estimatedExpirationTime() }}</p>
+        </div>
       </div>
     </el-dialog>
 
@@ -1747,32 +1774,35 @@ export default {
       if (done !== false) {
         this.$emit('update:visible', false)
         this.$emit('close')
-        this.payment = {
-          // 是否显示当前dialog弹窗对象
-          show: false,
-          // 当前发起请求的对象是否为手机
-          mobile: false,
-          // 当前选中的资源包所对应的token信息(5分钟有效期)
-          token: '',
-          // 根据当前token构建二维码的地址
-          redirectionPayment: '',
-          // 根据当前token构建的支付宝手机支付跳转的链接
-          alipayWap: '',
-          // 当前token所属状态
-          state: 0,
-          // 当前执行的timeout对象
-          timeout: null,
-          // 资源包对象
-          resourcePack: [],
-          form: {
-            // 当前选中的资源包对象
-            itemPack: {},
-            // 开通时长默认值
-            defaultValue: 1,
-            // 开通时长默认自增值
-            defaultSelfIncrement: 1
+        this.payment.show = false
+        setTimeout(() => {
+          this.payment = {
+            // 是否显示当前dialog弹窗对象
+            show: false,
+            // 当前发起请求的对象是否为手机
+            mobile: false,
+            // 当前选中的资源包所对应的token信息(5分钟有效期)
+            token: '',
+            // 根据当前token构建二维码的地址
+            redirectionPayment: '',
+            // 根据当前token构建的支付宝手机支付跳转的链接
+            alipayWap: '',
+            // 当前token所属状态
+            state: 0,
+            // 当前执行的timeout对象
+            timeout: null,
+            // 资源包对象
+            resourcePack: [],
+            form: {
+              // 当前选中的资源包对象
+              itemPack: {},
+              // 开通时长默认值
+              defaultValue: 1,
+              // 开通时长默认自增值
+              defaultSelfIncrement: 1
+            }
           }
-        }
+        }, 200)
       }
     },
     /**
@@ -1861,8 +1891,14 @@ export default {
         if (this.payment.state === 0 || this.payment.state === 1) {
           resourcePackTokenState(this.payment.token).then(response => {
             this.payment.state = response.data.state
+            // token不存咋
             if (response.data.state === 3) {
               this.paymentTokenRequest()
+              return
+            }
+            // 订单支付成功
+            if (response.data.state === 2) {
+              this.setUserInfoCookies(response.data.userInfo)
               return
             }
             // 递归回调自己
@@ -1872,6 +1908,21 @@ export default {
           })
         }
       }, 2000)
+    },
+    /**
+     * 手机支付时支付按钮的点击事件
+     */
+    payMethodMobileBtnClick: function () {
+      window.location.href = this.payment.alipayWap
+    },
+    /**
+     * 预计的用户资源包过期时间
+     * @returns {string} 返回一个过期时间
+     */
+    estimatedExpirationTime: function () {
+      let currentDate = new Date()
+      currentDate.setMonth(currentDate.getMonth() + this.payment.form.defaultValue)
+      return `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`
     }
   }
 }
@@ -2295,6 +2346,75 @@ main {
   line-height: 44px;
 }
 
+.pay-modal-content {
+  font-size: 12px;
+  color: #333;
+  padding-bottom: 40px;
+}
+
+.pay-modal-content .pay-modal-content-icon {
+  padding-top: 40px;
+  padding-bottom: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: #333;
+}
+
+.pay-modal-content .pay-modal-content-icon img {
+  width: 48px;
+  text-align: center;
+  font-size: 12px;
+  color: #333;
+  max-width: 100%;
+  border: 0;
+}
+
+.pay-modal-content .pay-modal-content-title {
+  font-size: 23px;
+  color: #333;
+  text-align: center;
+  font-weight: 400;
+  padding: 0;
+  margin: 6px 0;
+}
+
+.pay-modal-content .pay-modal-content-desc {
+  font-size: 12px;
+  color: #333;
+  text-align: center;
+  margin-top: 10px;
+  padding: 0;
+}
+
+.pay-modal-content .pay-modal-content-btn {
+  background-image: linear-gradient(-133deg, #fb5758, #ff8063);
+  border-radius: 80px;
+  color: #fff;
+  text-align: center;
+  padding: 9px 45px;
+  display: block;
+  width: 31%;
+  margin: 40px auto 0;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.pay-modal-content-box {
+  width: 200px;
+  margin-top: 20px;
+  margin-left: 334px;
+}
+
+.pay-modal-content-box p {
+  text-align: left;
+}
+
+.pay-modal-content .pay-modal-content-box .pay-modal-content-desc {
+  text-align: left;
+  font-size: 13px;
+  color: #666;
+}
+
 .card > div {
   padding: 1em 1em;
 }
@@ -2528,15 +2648,36 @@ main {
   }
 
   .pay-product-list {
-    display: flex;
+    display: block;
     justify-content: space-between;
     width: calc(200px * 4);
   }
 
   .pay-product-list .pay-product-item {
-    width: 50%;
+    width: 160px;
+    float: left;
     flex: auto;
     height: 100px;
+  }
+
+  .pay-product-list .pay-product-item-desc {
+    max-width: 90%;
+  }
+
+  .pay-modal-content {
+    padding-bottom: 0
+  }
+
+  .pay-modal-content .pay-modal-content-btn {
+    width: 68%;
+  }
+
+  .pay-modal-content-box {
+    margin-left: 83px;
+  }
+
+  .pay-modal-content .pay-modal-content-icon {
+    padding-top: 0px;
   }
 
   .pay-product-list .pay-product-item-month {
