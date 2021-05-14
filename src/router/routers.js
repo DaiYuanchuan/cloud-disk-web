@@ -60,7 +60,7 @@ export const asyncRoutes = [
         name: 'home',
         component: () => import('@/views/file/index'),
         meta: {
-          title: '文档管理器',
+          title: '兜兜网盘',
           icon: 'theme'
         }
       },

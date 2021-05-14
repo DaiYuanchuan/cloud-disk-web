@@ -44,11 +44,11 @@
       id="code"
     >
       <img
-        src="/static/svg/logo.svg"
+        src="/static/img/logo.png"
         class="logo"
-        alt="File Browser"
+        alt="兜兜网盘"
       />
-      <h1>文档管理器</h1>
+      <h1>兜兜网盘</h1>
       <el-form
         ref="codeForm"
         :model="form"

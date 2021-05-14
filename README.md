@@ -1,6 +1,6 @@
 # cloud-disk
 
-> 一个 vue 网盘项目
+> 兜兜网盘 ，一个 vue 网盘项目
 
 基于 [vue](https://github.com/vuejs/vue) 和 [element-ui](https://github.com/ElemeFE/element) 实现的个人文件存储项目，文件存储的底层基于七牛云实现。
 

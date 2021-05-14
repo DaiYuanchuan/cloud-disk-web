@@ -1,10 +1,10 @@
 <template>
   <div id="login">
     <img
-      src="/static/svg/logo.svg"
-      alt="File Browser"
+      src="/static/img/logo.png"
+      alt="兜兜网盘"
     />
-    <h1>文档管理器</h1>
+    <h1>兜兜网盘</h1>
     <el-form
       ref="loginForm"
       :model="form"

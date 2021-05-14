@@ -4,7 +4,7 @@
       <!-- 头部 -->
       <el-header height="65px">
         <div class="right-logo">
-          <img src="/static/svg/logo.svg" alt="cloud-disk">
+          <img src="/static/img/logo.png" alt="cloud-disk">
         </div>
         <div class="left-operate">
           <div class="operate-btn">
