@@ -43,6 +43,9 @@
 #### 文件分享页面
 ![文件分享页面](https://images.gitee.com/uploads/images/2021/0324/142339_00ba63b5_1882312.png "文件分享页面")
 
+#### 资源包支付页面(动态获取支付二维码)
+![支付页](https://images.gitee.com/uploads/images/2021/0514/101807_90b119b3_1882312.png "支付页")
+
 ## Build Setup
 
 ```bash
