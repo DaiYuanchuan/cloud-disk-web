@@ -1283,7 +1283,8 @@ export default {
         remainingCapacity: userInfo['userRemainingCapacity'],
         // 已用容量的百分比
         percentageCapacity: {
-          width: ((userInfo['userUsedCapacity'] / userInfo['userTotalCapacity']) * 100) + '%'
+          width: ((userInfo['userUsedCapacity'] / userInfo['userTotalCapacity']) * 100) + '%',
+          maxWidth: '100%'
         }
       }
     },
