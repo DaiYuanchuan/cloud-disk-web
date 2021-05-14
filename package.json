@@ -25,6 +25,7 @@
     "vue": "^2.5.2",
     "vue-axios": "^3.2.4",
     "vue-dplayer": "0.0.10",
+    "vue-qr": "^2.4.0",
     "vue-router": "^3.0.1",
     "vue-video-player": "^5.0.2"
   },
