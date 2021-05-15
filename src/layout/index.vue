@@ -1172,7 +1172,7 @@ export default {
       console.log('我的分享列表')
       this.$message({
         showClose: true,
-        message: '开发中，敬请期待！'
+        message: '功能升级中，敬请期待！'
       })
     },
     /**
@@ -1216,7 +1216,7 @@ export default {
       console.log('用户设置')
       this.$message({
         showClose: true,
-        message: '开发中，敬请期待！'
+        message: '功能升级中，敬请期待！'
       })
     },
     /**
@@ -1776,34 +1776,6 @@ export default {
         this.$emit('update:visible', false)
         this.$emit('close')
         this.payment.show = false
-        setTimeout(() => {
-          this.payment = {
-            // 是否显示当前dialog弹窗对象
-            show: false,
-            // 当前发起请求的对象是否为手机
-            mobile: false,
-            // 当前选中的资源包所对应的token信息(5分钟有效期)
-            token: '',
-            // 根据当前token构建二维码的地址
-            redirectionPayment: '',
-            // 根据当前token构建的支付宝手机支付跳转的链接
-            alipayWap: '',
-            // 当前token所属状态
-            state: 0,
-            // 当前执行的timeout对象
-            timeout: null,
-            // 资源包对象
-            resourcePack: [],
-            form: {
-              // 当前选中的资源包对象
-              itemPack: {},
-              // 开通时长默认值
-              defaultValue: 1,
-              // 开通时长默认自增值
-              defaultSelfIncrement: 1
-            }
-          }
-        }, 200)
       }
     },
     /**
