@@ -4,7 +4,10 @@
       <!-- 头部 -->
       <el-header height="65px">
         <div class="right-logo">
-          <img src="/static/img/logo.png" alt="cloud-disk">
+          <button aria-label="切换侧边栏" title="切换侧边栏" class="action" @click="toggleSidebar">
+            <i class="el-icon-more material-icons"></i>
+          </button>
+          <img src="/static/img/logo.png" alt="兜兜网盘">
         </div>
         <div class="left-operate">
           <div class="operate-btn">
@@ -34,7 +37,7 @@
           </el-upload>
         </div>
       </el-header>
-      <el-container>
+      <el-container :class="toggleSidebarClick ? 'active' : ''">
         <!-- 左边菜单栏 -->
         <el-aside width="16em">
           <div>
@@ -313,6 +316,9 @@
                @card-close="cardClose" @card-confirm="cardConfirm"
                @card-folder-previous="cardFolderPrevious" @card-folder-next="cardFolderNext"></file-card>
 
+    <!-- 手机模式下 切换左边菜单栏按钮点击时的model -->
+    <div v-if="toggleSidebarClick" class="el-image-viewer__mask" style="z-index: 1000" @click="toggleSidebar"></div>
+
   </div>
 </template>
 
@@ -407,6 +413,8 @@ export default {
       showFileSharingDialog: false,
       // 是否显示文件分享的请求结果
       showFileSharingRequestResults: false,
+      // 切换侧边栏的点击动作标识
+      toggleSidebarClick: false,
       // 文件分享表单
       fileSharingForm: {
         // 链接有效期的表单选中值
@@ -1126,6 +1134,7 @@ export default {
      * 页面左侧菜单栏-我的文件
      */
     myFile: function () {
+      this.toggleSidebarClick = false
       if (this.$route.path !== '/home') {
         this.$router.push({name: 'home'})
       } else {
@@ -1138,6 +1147,7 @@ export default {
      * 页面左侧菜单栏-新建文件夹
      */
     insertFileFolder: function () {
+      this.toggleSidebarClick = false
       // 获取当前目录id信息
       let breadcrumbs = this.breadcrumbs[this.breadcrumbs.length - 1]
       // 获取当前路径
@@ -1169,6 +1179,7 @@ export default {
      * 页面左侧菜单栏-我的分享列表
      */
     fileShareList: function () {
+      this.toggleSidebarClick = false
       console.log('我的分享列表')
       this.$message({
         showClose: true,
@@ -1179,6 +1190,7 @@ export default {
      * 页面左侧菜单栏-意见与反馈
      */
     feedbackBtn: function () {
+      this.toggleSidebarClick = false
       // 用户联系方式 默认为当前账号绑定的邮箱地址
       let userEmail = localStorage.getItem('userEmail')
       if (this.feedback.form.feedbackContact === '' && userEmail != null) {
@@ -1213,6 +1225,7 @@ export default {
      * 页面左侧菜单栏-设置
      */
     setting: function () {
+      this.toggleSidebarClick = false
       console.log('用户设置')
       this.$message({
         showClose: true,
@@ -1223,6 +1236,7 @@ export default {
      * 页面左侧菜单栏-退出登录
      */
     logout: function () {
+      this.toggleSidebarClick = false
       this.$confirm('确认退出吗?', '提示').then(() => {
         logout().then(() => {
           // 重置路由
@@ -1235,6 +1249,12 @@ export default {
       }).catch((err) => {
         console.log(err)
       })
+    },
+    /**
+     * 手机端切换侧边栏
+     */
+    toggleSidebar: function () {
+      this.toggleSidebarClick = !this.toggleSidebarClick
     },
     /**
      * 存储单位格式化
@@ -1661,6 +1681,7 @@ export default {
      * 帮助面板
      */
     helpPanel: function () {
+      this.toggleSidebarClick = false
       this.$alert(
         `<div class="card-content">
                     <ul>
@@ -1723,6 +1744,7 @@ export default {
      * 获取资源包信息
      */
     getResourcePacksInfo: function () {
+      this.toggleSidebarClick = false
       // 获取后台配置的资源包信息
       resourcePackSearch({
         page: 1,
@@ -2540,6 +2562,29 @@ main {
   margin-left: 2%;
 }
 
+header > div:first-child > .action {
+  display: none;
+}
+
+header > div:first-child > .action, header img {
+  margin-right: 1em;
+}
+
+.active > aside {
+  left: 0;
+  width: 16em !important;
+}
+
+.active > .content-bottom {
+  left: 24px;
+  z-index: 100000;
+}
+
+.active > .sider-bottom {
+  left: 0;
+  z-index: 100000;
+}
+
 @media (max-width: 1024px) {
   main {
     width: calc(100% - 13em);
@@ -2578,6 +2623,14 @@ main {
     padding-bottom: 2em;
   }
 
+  .right-logo img {
+    display: none;
+  }
+
+  header > div:first-child > .action {
+    display: inherit;
+  }
+
   .el-aside {
     top: 0;
     z-index: 99999;
@@ -2592,11 +2645,11 @@ main {
   }
 
   .content-bottom {
-    display: none !important;
+    left: -17em;
   }
 
   .sider-bottom {
-    display: none !important;
+    left: -17em;
   }
 
   #listing.list .item .size {
