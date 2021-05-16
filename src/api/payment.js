@@ -1,3 +1,5 @@
+import request from '@/utils/request'
+
 /**
  * 获取支付页地址，也是构建二维码的地址
  *
@@ -14,5 +16,8 @@ export function paymentAddress (token) {
  * @returns {string} 返回支付宝手机支付跳转链接
  */
 export function alipayWap (token) {
-  return process.env.BASE_API + '/pay/alipay-wap/' + token
+  return request({
+    url: '/pay/alipay-wap/' + token,
+    method: 'get'
+  })
 }

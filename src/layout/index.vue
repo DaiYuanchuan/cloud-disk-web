@@ -517,8 +517,6 @@ export default {
         token: '',
         // 根据当前token构建二维码的地址
         redirectionPayment: '',
-        // 根据当前token构建的支付宝手机支付跳转的链接
-        alipayWap: '',
         // 当前token所属状态
         state: 0,
         // 当前执行的timeout对象
@@ -1765,8 +1763,6 @@ export default {
           token: response.data.token,
           // 根据当前token构建二维码的地址
           redirectionPayment: paymentAddress(response.data.token),
-          // 根据当前token构建的支付宝手机支付跳转的链接
-          alipayWap: alipayWap(response.data.token),
           // 当前token所属状态
           state: 0,
           // 当前执行的timeout对象
@@ -1817,8 +1813,6 @@ export default {
           this.payment.token = response.data.token
           // 根据当前token构建二维码的地址
           this.payment.redirectionPayment = paymentAddress(response.data.token)
-          // 根据当前token构建的支付宝手机支付跳转的链接
-          this.payment.alipayWap = alipayWap(response.data.token)
           this.payment.state = response.data.state
           // 获取当前资源包的状态
           this.getResourcePackTokenState()
@@ -1908,7 +1902,11 @@ export default {
      * 手机支付时支付按钮的点击事件
      */
     payMethodMobileBtnClick: function () {
-      window.location.href = this.payment.alipayWap
+      alipayWap(this.payment.token).then(response => {
+        window.location.href = response.data['paymentRequestUrl']
+      }).catch((err) => {
+        console.log(err)
+      })
     },
     /**
      * 预计的用户资源包过期时间
@@ -2684,7 +2682,7 @@ header > div:first-child > .action, header img {
   .pay-product-list {
     display: block;
     justify-content: space-between;
-    width: calc(200px * 4);
+    width: calc(680px);
   }
 
   .pay-product-list .pay-product-item {
