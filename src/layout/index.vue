@@ -577,6 +577,14 @@ export default {
   },
   // 钩子函数：页面加载完成后执行
   mounted: function () {
+    // 获取cookie缓存中的用户信息
+    let userInfo = cookies.get('userInfo')
+    if (userInfo === undefined) {
+      // 如果在未登录的情况下使用，则跳转登录页面
+      this.$router.push({name: 'login'})
+      return
+    }
+    this.setUserInfoCookies(JSON.parse(userInfo))
     // 从缓存中获取当前登录的用户信息
     getDiskUserToSession().then((response) => {
       this.setUserInfoCookies(response.data.data.userInfo)
