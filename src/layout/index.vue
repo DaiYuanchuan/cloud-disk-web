@@ -325,6 +325,7 @@
 <script>
 import {logout} from '@/api/login'
 import {getToken, upload} from '@/api/qiniu'
+import {getDiskUserToSession} from '@/api/user'
 import {resourcePackSearch, resourcePackToken, resourcePackTokenState} from '@/api/pack'
 import {paymentAddress, alipayWap} from '@/api/payment'
 import {validEmail} from '@/utils/validate'
@@ -576,14 +577,12 @@ export default {
   },
   // 钩子函数：页面加载完成后执行
   mounted: function () {
-    // 获取cookie缓存中的用户信息
-    let userInfo = cookies.get('userInfo')
-    if (userInfo === undefined) {
-      // 如果在未登录的情况下使用，则跳转登录页面
-      this.$router.push({name: 'login'})
-      return
-    }
-    this.setUserInfoCookies(JSON.parse(userInfo))
+    // 从缓存中获取当前登录的用户信息
+    getDiskUserToSession().then((response) => {
+      this.setUserInfoCookies(response.data.data.userInfo)
+    }).catch((err) => {
+      console.log(err)
+    })
     // 自动获取文件列表的第一页
     this.getFileListInfo()
     // 监听全局粘贴事件 ，将粘贴事件绑定到 ctrlV 方法
