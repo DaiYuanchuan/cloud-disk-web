@@ -202,7 +202,7 @@
       <div class="fileInfoPopup">
         <div class="fileInfoPopupPreview">
           <img v-if="fileInfoDialog.fileType === 'image'" class="fileInfoPopupPreviewImg"
-               :src="fileInfoDialog.userDynamicDownloadUrl" :alt="fileInfoDialog.fileName">
+               :src="fileInfoDialog.userDynamicPreviewUrl" :alt="fileInfoDialog.fileName">
           <svg-icon v-else :icon-class="fileInfoDialog.mimeTypes" width="6em" height="6em" color="#8ea1ff"
                     class="fileInfoPopupPreviewSvg"></svg-icon>
         </div>
@@ -325,6 +325,7 @@
 <script>
 import {logout} from '@/api/login'
 import {getToken, upload} from '@/api/qiniu'
+import {getDiskUserToSession} from '@/api/user'
 import {resourcePackSearch, resourcePackToken, resourcePackTokenState} from '@/api/pack'
 import {paymentAddress, alipayWap} from '@/api/payment'
 import {validEmail} from '@/utils/validate'
@@ -473,7 +474,7 @@ export default {
         // 文件mime类型
         mimeTypes: '',
         // 动态url
-        userDynamicDownloadUrl: ''
+        userDynamicPreviewUrl: ''
       },
       // 意见与反馈的对象
       feedback: {
@@ -517,8 +518,6 @@ export default {
         token: '',
         // 根据当前token构建二维码的地址
         redirectionPayment: '',
-        // 根据当前token构建的支付宝手机支付跳转的链接
-        alipayWap: '',
         // 当前token所属状态
         state: 0,
         // 当前执行的timeout对象
@@ -586,6 +585,12 @@ export default {
       return
     }
     this.setUserInfoCookies(JSON.parse(userInfo))
+    // 从缓存中获取当前登录的用户信息
+    getDiskUserToSession().then((response) => {
+      this.setUserInfoCookies(response.data.data.userInfo)
+    }).catch((err) => {
+      console.log(err)
+    })
     // 自动获取文件列表的第一页
     this.getFileListInfo()
     // 监听全局粘贴事件 ，将粘贴事件绑定到 ctrlV 方法
@@ -699,6 +704,7 @@ export default {
             selectData[0].userFileName = response['data'].userFileName
             selectData[0].updateTime = formatDate(new Date(Date.now()), 'yyyy-MM-dd hh:mm:ss')
             selectData[0].userDynamicDownloadUrl = response['data'].userDynamicDownloadUrl
+            selectData[0].userDynamicPreviewUrl = response['data'].userDynamicPreviewUrl
             // 成功的提示框
             this.$message({
               type: 'success',
@@ -803,7 +809,7 @@ export default {
         // 文件mime类型
         mimeTypes: mimeTypes(selectData[0]['ossFileMimeType']),
         // 动态url
-        userDynamicDownloadUrl: selectData[0]['userDynamicDownloadUrl']
+        userDynamicPreviewUrl: selectData[0]['userDynamicPreviewUrl']
       }
     },
     /**
@@ -829,7 +835,7 @@ export default {
           // 文件mime类型
           mimeTypes: '',
           // 动态url
-          userDynamicDownloadUrl: ''
+          userDynamicPreviewUrl: ''
         }
       }
     },
@@ -1765,8 +1771,6 @@ export default {
           token: response.data.token,
           // 根据当前token构建二维码的地址
           redirectionPayment: paymentAddress(response.data.token),
-          // 根据当前token构建的支付宝手机支付跳转的链接
-          alipayWap: alipayWap(response.data.token),
           // 当前token所属状态
           state: 0,
           // 当前执行的timeout对象
@@ -1817,8 +1821,6 @@ export default {
           this.payment.token = response.data.token
           // 根据当前token构建二维码的地址
           this.payment.redirectionPayment = paymentAddress(response.data.token)
-          // 根据当前token构建的支付宝手机支付跳转的链接
-          this.payment.alipayWap = alipayWap(response.data.token)
           this.payment.state = response.data.state
           // 获取当前资源包的状态
           this.getResourcePackTokenState()
@@ -1908,7 +1910,11 @@ export default {
      * 手机支付时支付按钮的点击事件
      */
     payMethodMobileBtnClick: function () {
-      window.location.href = this.payment.alipayWap
+      alipayWap(this.payment.token).then(response => {
+        window.location.href = response.data['paymentRequestUrl']
+      }).catch((err) => {
+        console.log(err)
+      })
     },
     /**
      * 预计的用户资源包过期时间
@@ -2684,7 +2690,7 @@ header > div:first-child > .action, header img {
   .pay-product-list {
     display: block;
     justify-content: space-between;
-    width: calc(200px * 4);
+    width: calc(680px);
   }
 
   .pay-product-list .pay-product-item {

@@ -153,14 +153,7 @@ export default {
           lang: 'zh-cn',
           preload: 'auto',
           volume: 1,
-          playbackSpeed: [0.5, 1, 1.25, 1.5, 2, 2.5, 3, 4],
-          contextmenu: [{
-            text: '下载',
-            click: (player) => {
-              // 文件下载
-              downloadByUrl(player.video.currentSrc, '')
-            }
-          }],
+          playbackSpeed: [0.5, 1, 1.5, 2, 2.5, 3, 4],
           // 当前正在播放的视频url和hash值
           video: {
             // 文件url
@@ -211,9 +204,9 @@ export default {
           document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
           // 实时筛选出当前文件中的所有图片类型的文件
           this.elImageViewer.imagesList = this.fileList.filter(res => fileCategory(res['ossFileMimeType']) === 'image')
-            .map(res => res['userDynamicDownloadUrl'])
+            .map(res => res['userDynamicPreviewUrl'])
           // 设置初始索引值
-          this.elImageViewer.initialIndex = this.elImageViewer.imagesList.findIndex(res => res === item['userDynamicDownloadUrl'])
+          this.elImageViewer.initialIndex = this.elImageViewer.imagesList.findIndex(res => res === item['userDynamicPreviewUrl'])
           // 显示 大图预览组件
           this.elImageViewer.show = true
           break
@@ -221,14 +214,14 @@ export default {
         case 'video':
           // 更新视频源
           this.$refs.previewVideo.dp.switchVideo({
-            url: item['userDynamicDownloadUrl']
+            url: item['userDynamicPreviewUrl']
           })
           document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
           // 从cookie中获取对应视频源播放时间
           let playTime = cookies.get(`videoHash:${item['ossFileEtag']}`)
           // 为当前播放赋值
           this.videoViewer.options.video = {
-            video: item['userDynamicDownloadUrl'],
+            video: item['userDynamicPreviewUrl'],
             hash: item['ossFileEtag']
           }
           // 播放视频
