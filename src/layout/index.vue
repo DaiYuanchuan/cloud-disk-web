@@ -202,7 +202,7 @@
       <div class="fileInfoPopup">
         <div class="fileInfoPopupPreview">
           <img v-if="fileInfoDialog.fileType === 'image'" class="fileInfoPopupPreviewImg"
-               :src="fileInfoDialog.userDynamicDownloadUrl" :alt="fileInfoDialog.fileName">
+               :src="fileInfoDialog.userDynamicPreviewUrl" :alt="fileInfoDialog.fileName">
           <svg-icon v-else :icon-class="fileInfoDialog.mimeTypes" width="6em" height="6em" color="#8ea1ff"
                     class="fileInfoPopupPreviewSvg"></svg-icon>
         </div>
@@ -474,7 +474,7 @@ export default {
         // 文件mime类型
         mimeTypes: '',
         // 动态url
-        userDynamicDownloadUrl: ''
+        userDynamicPreviewUrl: ''
       },
       // 意见与反馈的对象
       feedback: {
@@ -704,6 +704,7 @@ export default {
             selectData[0].userFileName = response['data'].userFileName
             selectData[0].updateTime = formatDate(new Date(Date.now()), 'yyyy-MM-dd hh:mm:ss')
             selectData[0].userDynamicDownloadUrl = response['data'].userDynamicDownloadUrl
+            selectData[0].userDynamicPreviewUrl = response['data'].userDynamicPreviewUrl
             // 成功的提示框
             this.$message({
               type: 'success',
@@ -808,7 +809,7 @@ export default {
         // 文件mime类型
         mimeTypes: mimeTypes(selectData[0]['ossFileMimeType']),
         // 动态url
-        userDynamicDownloadUrl: selectData[0]['userDynamicDownloadUrl']
+        userDynamicPreviewUrl: selectData[0]['userDynamicPreviewUrl']
       }
     },
     /**
@@ -834,7 +835,7 @@ export default {
           // 文件mime类型
           mimeTypes: '',
           // 动态url
-          userDynamicDownloadUrl: ''
+          userDynamicPreviewUrl: ''
         }
       }
     },
