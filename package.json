@@ -21,7 +21,7 @@
     "js-sha1": "^0.6.0",
     "nprogress": "^0.2.0",
     "qiniu": "^7.3.2",
-    "qiniu-js": "^3.1.1",
+    "qiniu-js": "^3.2.0",
     "vue": "^2.5.2",
     "vue-axios": "^3.2.4",
     "vue-dplayer": "0.0.10",
