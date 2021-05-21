@@ -68,11 +68,11 @@
               <span>问题反馈</span>
             </el-button>
           </div>
-          <el-button aria-label="设置" title="设置" class="action" @click="setting">
+          <el-button aria-label="个人中心" title="个人中心" class="action" @click="setting">
             <i class="material-icons">
               <svg-icon icon-class="setting"></svg-icon>
             </i>
-            <span>设置</span>
+            <span>个人中心</span>
           </el-button>
           <el-button aria-label="退出登录" title="退出登录" class="action" @click="logout">
             <i class="material-icons">
@@ -256,7 +256,7 @@
           <el-form ref="form" :model="payment.form" label-width="80px">
             <el-form-item label="开通时长">
               <el-input-number v-model="payment.form.defaultValue" @change="paymentOpeningTimeChange" :min="1"
-                               :max="1000"
+                               :max="9999"
                                :step="payment.form.defaultSelfIncrement" step-strictly></el-input-number>
               <span class="pay-opening-time-text">月</span>
             </el-form-item>
@@ -568,11 +568,6 @@ export default {
       },
       // 深度监听
       deep: true
-    },
-    'payment.token': {
-      handler: function () {
-        console.log('token属性发生变更: ', this.payment.token)
-      }
     }
   },
   // 钩子函数：页面加载完成后执行
@@ -1232,11 +1227,9 @@ export default {
      */
     setting: function () {
       this.toggleSidebarClick = false
-      console.log('用户设置')
-      this.$message({
-        showClose: true,
-        message: '功能升级中，敬请期待！'
-      })
+      if (this.$route.path !== '/setting') {
+        this.$router.push({name: 'setting'})
+      }
     },
     /**
      * 页面左侧菜单栏-退出登录
