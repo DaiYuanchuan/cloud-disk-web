@@ -154,12 +154,21 @@ export default {
           preload: 'auto',
           volume: 1,
           playbackSpeed: [0.5, 1, 1.5, 2, 2.5, 3, 4],
+          contextmenu: [{
+            text: '视频下载',
+            click: (player) => {
+              // 文件下载
+              downloadByUrl(this.videoViewer.options.video.downloadUrl, '')
+            }
+          }],
           // 当前正在播放的视频url和hash值
           video: {
             // 文件url
             url: '',
             // 文件hash值
-            hash: ''
+            hash: '',
+            // 下载专用链接
+            downloadUrl: ''
           }
         }
       }
@@ -222,7 +231,8 @@ export default {
           // 为当前播放赋值
           this.videoViewer.options.video = {
             video: item['userDynamicPreviewUrl'],
-            hash: item['ossFileEtag']
+            hash: item['ossFileEtag'],
+            downloadUrl: item['userDynamicDownloadUrl']
           }
           // 播放视频
           this.$refs.previewVideo.dp.play()
@@ -410,7 +420,8 @@ export default {
       // 为当前播放赋值
       this.videoViewer.options.video = {
         video: '',
-        hash: ''
+        hash: '',
+        downloadUrl: ''
       }
       document.body.setAttribute('style', 'margin: 0; background: #fafafa;')
       // 关闭视频预览控件
