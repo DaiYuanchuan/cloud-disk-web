@@ -1844,6 +1844,9 @@ export default {
         this.$emit('update:visible', false)
         this.$emit('close')
         this.payment.show = false
+        if (this.payment.timeout !== null) {
+          clearTimeout(this.payment.timeout)
+        }
       }
     },
     /**
@@ -2759,7 +2762,7 @@ header > div:first-child > .action, header img {
   }
 
   .pay-modal-content .pay-modal-content-icon {
-    padding-top: 0px;
+    padding-top: 0;
   }
 
   .pay-product-list .pay-product-item-month {
