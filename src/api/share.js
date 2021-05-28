@@ -30,10 +30,12 @@ export function createShare (params) {
  * 我的分享记录列表
  *
  * @param {object} params 包含页码等参数
+ * @param {Boolean} loading 是否需要加载loading面板
  */
-export function share (params) {
+export function share (params, loading) {
   return request({
     url: '/disk-share/search',
+    loading: loading,
     method: 'get',
     params
   })

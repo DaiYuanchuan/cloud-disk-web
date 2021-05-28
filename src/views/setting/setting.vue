@@ -1,7 +1,7 @@
 <template>
   <div class="setting-panel">
     <!-- 修改用户头像 -->
-    <el-card class="box-card" shadow="always">
+    <el-card class="setting-panel-avatar box-card" shadow="always">
       <div slot="header" class="clearfix">
         <span>修改头像</span>
       </div>
@@ -40,19 +40,19 @@
       </div>
     </el-card>
     <!-- 修改用户密码 -->
-    <el-card class="box-card" shadow="always">
+    <el-card class="setting-panel-password box-card" shadow="always">
       <div slot="header" class="clearfix">
         <span>重置密码</span>
       </div>
       <el-form :model="userForm" status-icon :rules="rules" ref="changePassword" label-width="100px">
         <el-form-item label="原密码" prop="sourcePassword">
-          <el-input type="password" v-model="userForm.sourcePassword" autocomplete="off"></el-input>
+          <el-input type="password" placeholder="原始密码" v-model="userForm.sourcePassword" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="新密码" prop="userPwd">
-          <el-input type="password" v-model="userForm.userPwd" autocomplete="off"></el-input>
+          <el-input type="password" placeholder="新密码" v-model="userForm.userPwd" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="确认密码" prop="reUserPwd">
-          <el-input type="password" v-model="userForm.reUserPwd" autocomplete="off"></el-input>
+          <el-input type="password" placeholder="确认密码" v-model="userForm.reUserPwd" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="submitUpdatePasswordForm('changePassword')">提交</el-button>
@@ -60,13 +60,13 @@
       </el-form>
     </el-card>
     <!-- 修改用户邮箱 -->
-    <el-card class="box-card" shadow="always">
+    <el-card class="setting-panel-email box-card" shadow="always">
       <div slot="header" class="clearfix">
         <span>重置邮箱</span>
       </div>
       <el-form :model="userForm" status-icon :rules="rules" ref="changeEmail" label-width="100px">
         <el-form-item label="新的邮箱" prop="userEmail">
-          <el-input type="text" placeholder="请输入需要变更的邮箱地址" v-model="userForm.userEmail" autocomplete="off"></el-input>
+          <el-input type="text" placeholder="请输入新的邮箱地址" v-model="userForm.userEmail" autocomplete="off"></el-input>
           <el-button
             @click="sendSecurityCode()"
             :disabled="!disabled"
@@ -77,16 +77,18 @@
         <el-form-item label="验证码" prop="securityCode">
           <el-input type="text" placeholder="请输入邮箱验证码" v-model="userForm.securityCode" autocomplete="off"/>
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="submitUpdateEmailForm('changeEmail')">提交</el-button>
+        <el-form-item class="setting-email-submit-form">
+          <el-button class="setting-email-submit-btn" type="primary"
+                     @click="submitUpdateEmailForm('changeEmail')">提交
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
-    <el-card class="box-card" shadow="always">
+    <el-card class="setting-panel-order box-card" shadow="always">
       <div slot="header" class="clearfix">
         <span>支付订单信息</span>
       </div>
-      <el-form ref="form" :model="paymentOrderSearchForm" label-width="80px">
+      <el-form ref="form" :model="paymentOrderSearchForm" label-width="80px" class="setting-panel-order-top-form">
         <el-select v-model="paymentOrderSearchForm.fieldSelectValue" placeholder="需要搜索的字段"
                    @change="paymentOrderSearchFormSelectChange">
           <el-option v-for="(item, index) in paymentOrderSearchForm.field"
@@ -96,6 +98,7 @@
                   type="text" placeholder="请输入需要查询的值"
                   v-model="paymentOrderSearchForm.fieldSelectInputValue"></el-input>
         <el-select v-show="paymentOrderSearchForm.fieldSelectValue === 'orderTradeState'"
+                   class="setting-select-order-trade-state"
                    v-model="paymentOrderSearchForm.orderTradeStateSelectValue" placeholder="请选择对应的状态">
           <el-option v-for="(item, index) in paymentOrderSearchForm.orderTradeStateSelect"
                      :key="index" :label="item.label" :value="item.value"></el-option>
@@ -108,7 +111,7 @@
           end-placeholder="结束日期"
           value-format="yyyy-MM-dd">
         </el-date-picker>
-        <el-form-item>
+        <el-form-item class="payment-order-search-form">
           <el-button type="primary" @click="paymentOrderSearchBtn">查询</el-button>
         </el-form-item>
       </el-form>
@@ -126,12 +129,21 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="orderSuccessTime" label="支付时间" width="170"></el-table-column>
-        <el-table-column prop="createTime" label="下单时间" width="170"></el-table-column>
+        <el-table-column prop="orderSuccessTime" label="支付时间" width="185"></el-table-column>
+        <el-table-column prop="createTime" label="下单时间" width="185"></el-table-column>
       </el-table>
       <el-pagination
-        background
+        class="pagination-pc" background
         layout="sizes, prev, pager, next, ->, total"
+        @size-change="paymentOrderSizeChange"
+        @current-change="paymentOrderCurrentChange"
+        :total="paymentOrderPagingInfo.toTal"
+        :page-size="paymentOrderPagingInfo.pageSize"
+        :current-page="paymentOrderPagingInfo.currentChange">
+      </el-pagination>
+      <el-pagination
+        class="pagination-mobile" small
+        layout="prev, pager, next"
         @size-change="paymentOrderSizeChange"
         @current-change="paymentOrderCurrentChange"
         :total="paymentOrderPagingInfo.toTal"
@@ -368,7 +380,7 @@ export default {
 
         let URL = window.URL || window.webkitURL
         this.avatarUploader.previewImage = URL.createObjectURL(file.raw)
-        console.log(file)
+        console.log(file, this.avatarUploader.previewImage)
       }
     },
     /**
@@ -509,7 +521,7 @@ export default {
         params.startTime = this.paymentOrderSearchForm.time[0]
         params.endTime = this.paymentOrderSearchForm.time[1]
       }
-      // 发送验证码
+      // 获取订单列表详情
       paymentOrderSearch(params, loading).then(response => {
         this.paymentOrderPagingInfo.toTal = response.data.toTal
         console.log(response)
@@ -561,6 +573,8 @@ export default {
      */
     paymentOrderSizeChange: function (size) {
       this.paymentOrderPagingInfo.pageSize = size
+      // 重置当前页为第一页
+      this.paymentOrderPagingInfo.currentChange = 1
       // 重置表格数据
       this.getPaymentOrderSearch(true)
     },
@@ -714,10 +728,15 @@ img {
   vertical-align: middle;
 }
 
+.setting-panel {
+  display: flex;
+  flex-wrap: wrap;
+}
+
 .image-uploader__overlay {
   transition: opacity .2s, bottom .2s;
   background: #f1f1f2;
-  padding: 2rem;
+  padding: 1.4rem 2rem;
   text-align: center;
   z-index: 2;
   position: absolute;
@@ -730,11 +749,60 @@ img {
   bottom: -2rem
 }
 
+.setting-panel-avatar {
+  width: 30%;
+  margin-top: 1%;
+}
+
+.setting-select-order-trade-state {
+  margin-right: 1%;
+  margin-left: 1%;
+  width: 30%;
+}
+
+.setting-panel-order-top-form {
+  display: flex;
+}
+
+.setting-panel-order-top-form .el-input {
+  width: 30%;
+  margin-right: 1%;
+  margin-left: 1%;
+}
+
+.setting-panel-password {
+  width: 30%;
+  margin-left: 1.2%;
+  margin-top: 1%;
+}
+
+.setting-panel-email {
+  width: 37%;
+  margin-left: 1.2%;
+  margin-top: 1%;
+  position: relative;
+
+}
+
+.setting-panel-order {
+  width: 100%;
+}
+
+.setting-email-submit-form {
+  position: absolute;
+  bottom: 5%;
+  right: 5%;
+}
+
+/deep/ .el-form-item__content {
+  text-align: right;
+}
+
 .image-uploader__dnd {
-  font-size: 1.6rem;
+  font-size: 1.3rem;
   display: none;
   font-weight: bold;
-  margin-bottom: 1.6rem
+  margin-bottom: 1.2rem
 }
 
 .text {
@@ -745,16 +813,75 @@ img {
   padding: 18px 0;
 }
 
+/deep/ .el-table--fit {
+  margin-bottom: 15px;
+}
+
+.setting-panel-order {
+  margin-top: 1%;
+}
+
+@media screen and (max-width: 1350px) {
+
+  .setting-panel-avatar {
+    width: 100%;
+    margin-bottom: 1.5%;
+    margin-top: 1%;
+  }
+
+  .setting-panel-password {
+    width: 49%;
+    margin-left: 0;
+  }
+
+  .setting-panel-email {
+    width: 49%;
+    margin-left: 1.5%;
+  }
+
+  .setting-panel-order {
+    margin-top: 1.5%;
+  }
+}
+
+@media screen and (max-width: 1120px) {
+
+  .setting-panel-avatar {
+    width: 100%;
+  }
+
+  .setting-panel-password {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .setting-panel-email {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 1.5%;
+  }
+
+  .setting-email-submit-form {
+    position: relative;
+    bottom: 0;
+    right: 0;
+  }
+}
+
 @media screen and (min-width: 1150px) {
   .image-uploader__or, .image-uploader__dnd {
     display: block
   }
+
+  /deep/ .el-input {
+    width: 96%;
+  }
 }
 
 .image-uploader__or {
-  font-size: 1.4rem;
+  font-size: 1rem;
   display: none;
-  margin-bottom: 1.6rem
+  margin-bottom: 1.1rem
 }
 
 @media screen and (min-width: 1150px) {
@@ -785,7 +912,7 @@ img {
   justify-content: center;
   font-size: 13px;
   width: 100%;
-  height: 2em;
+  height: 2.2em;
   margin: .5em 0;
   padding: 0 1em;
   border: 0;
@@ -808,11 +935,74 @@ img {
   vertical-align: bottom;
 }
 
+.pagination-mobile {
+  display: none;
+}
+
 @media screen and (min-width: 768px) {
   .browse {
     width: auto;
     margin-left: 0;
     margin-right: 0;
+  }
+}
+
+@media screen and (max-width: 736px) {
+  .pagination-pc {
+    display: none;
+  }
+
+  .pagination-mobile {
+    display: block;
+  }
+
+  /deep/ .el-form-item__label {
+    display: none;
+  }
+
+  /deep/ .el-form-item__content {
+    margin-left: 0 !important;
+  }
+
+  .setting-panel-order-top-form {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .setting-panel-order-top-form .el-input {
+    margin-bottom: 15px;
+    width: 100%;
+  }
+
+  /deep/ .setting-panel-order-top-form .el-input input {
+    width: calc(100% + 6px);
+    margin-left: -3px;
+  }
+
+  /deep/ .setting-panel-order-top-form .el-input.el-input--suffix .el-input__inner {
+    width: calc(100% + 0px);
+    margin-left: 0;
+  }
+
+  .el-select {
+    width: 100%;
+  }
+
+  /deep/ .el-select > .el-input {
+    margin-bottom: 15px;
+  }
+
+  /deep/ .el-range-editor.el-input__inner {
+    display: none;
+  }
+
+  .image-uploader__overlay {
+    padding: 1.4rem 0;
+  }
+
+  .browse {
+    width: 50%;
+    min-width: 100px;
   }
 }
 
