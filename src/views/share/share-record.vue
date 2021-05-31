@@ -19,8 +19,8 @@
         </div>
         <!-- title -->
         <el-table :data="shareList" style="width: 100%" @selection-change="handleSelectionChange">
-          <el-table-column type="selection" width="35" fixed="left"></el-table-column>
-          <el-table-column prop="shareFileName" label="分享文件" width="350">
+          <el-table-column type="selection" min-width="35"></el-table-column>
+          <el-table-column prop="shareFileName" label="分享文件" min-width="350">
             <template slot-scope="scope">
               <el-button type="text" @click="newWindow(scope.$index, scope.row)">{{
                   scope.row.shareFileName
@@ -28,15 +28,15 @@
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column prop="shareCode" label="提取码" width="100"></el-table-column>
-          <el-table-column prop="shareExpirationTimeFormat" label="有效期" width="100">
+          <el-table-column prop="shareCode" label="提取码" min-width="80"></el-table-column>
+          <el-table-column prop="shareExpirationTimeFormat" label="有效期" min-width="80">
             <template slot-scope="scope">
               {{ scope.row.expiration ? '已过期' : scope.row.shareExpirationTimeFormat }}
             </template>
           </el-table-column>
-          <el-table-column prop="shareViewCount" label="浏览量" width="80"></el-table-column>
-          <el-table-column prop="createTime" label="分享时间" width="180"></el-table-column>
-          <el-table-column label="操作" width="230">
+          <el-table-column prop="shareViewCount" label="浏览量" min-width="80"></el-table-column>
+          <el-table-column prop="createTime" label="分享时间" min-width="180"></el-table-column>
+          <el-table-column label="操作" min-width="230">
             <template slot-scope="scope">
               <el-button
                 size="mini"
