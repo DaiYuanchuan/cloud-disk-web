@@ -28,7 +28,7 @@
                    :src="avatarUploader.previewImage"
                    alt="username">
               <div class="image-uploader__overlay">
-                <span class="image-uploader__dnd">拖拽 &amp; 粘贴</span>
+                <span class="image-uploader__dnd">拖拽</span>
                 <span class="image-uploader__or">或</span>
                 <span class="browse image-uploader-button img-item">
                   <div>浏览</div>
@@ -542,17 +542,17 @@ export default {
         // 创建时间转成的Date对象
         let endTime = new Date(res['createTime'].replace(new RegExp('-', 'gm'), '/'))
         // 月份 + (资源包的月份 * 数量)
-        endTime.setMonth(endTime.getMonth() + (res['packMonth'] * res['orderQuantity']))
+        endTime.setMonth((endTime.getMonth() + (res['packMonth'] * res['orderQuantity'])) - 1)
         let createTime = new Date(res['createTime'].replace(new RegExp('-', 'gm'), '/'))
         if (endTime.getFullYear() - createTime.getFullYear() > 0) {
           effectiveDuration = `${endTime.getFullYear() - createTime.getFullYear()}`
           if (endTime.getMonth() - createTime.getMonth() > 0) {
-            effectiveDuration = `${effectiveDuration}.${endTime.getMonth() - createTime.getMonth()}年`
+            effectiveDuration = `${effectiveDuration}.${(endTime.getMonth() - createTime.getMonth()) + 1}年`
           } else {
             effectiveDuration = effectiveDuration + '年'
           }
         } else {
-          effectiveDuration = `${endTime.getMonth() - createTime.getMonth()}个月`
+          effectiveDuration = `${(endTime.getMonth() - createTime.getMonth()) + 1}个月`
         }
 
         res['orderSubject'] = res['packName'] + '资源扩容包'

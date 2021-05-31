@@ -317,7 +317,7 @@
                @card-folder-previous="cardFolderPrevious" @card-folder-next="cardFolderNext"></file-card>
 
     <!-- 手机模式下 切换左边菜单栏按钮点击时的model -->
-    <div v-if="toggleSidebarClick" class="el-image-viewer__mask" style="z-index: 1000" @click="toggleSidebar"></div>
+    <div v-if="toggleSidebarClick" class="el-image-viewer__mask" style="z-index: 1000;position: fixed;" @click="toggleSidebar"></div>
 
   </div>
 </template>
@@ -1197,9 +1197,11 @@ export default {
      */
     fileShareList: function () {
       this.toggleSidebarClick = false
-      if (this.$route.path !== '/share-record') {
-        this.$router.push({name: 'share-record'})
-      }
+      console.log('我的分享列表')
+      this.$message({
+        showClose: true,
+        message: '功能升级中，敬请期待！'
+      })
     },
     /**
      * 页面左侧菜单栏-意见与反馈
