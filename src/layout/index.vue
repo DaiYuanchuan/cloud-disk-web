@@ -1197,11 +1197,9 @@ export default {
      */
     fileShareList: function () {
       this.toggleSidebarClick = false
-      console.log('我的分享列表')
-      this.$message({
-        showClose: true,
-        message: '功能升级中，敬请期待！'
-      })
+      if (this.$route.path !== '/share-record') {
+        this.$router.push({name: 'share-record'})
+      }
     },
     /**
      * 页面左侧菜单栏-意见与反馈

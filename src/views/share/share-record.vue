@@ -3,119 +3,279 @@
 
     <!-- 文件列表部分 -->
     <div id="listing" class="list">
-
-      <!-- 取消分享按钮部分 -->
-      <div class="breadcrumbs">
-        <span class="breadcrumb-item shadow">
-          <i class="shadow material-icons">
-            <svg-icon icon-class="file-home"></svg-icon>
-          </i>
-        </span>
+      <div class="action-btn">
+        <el-button :disabled="handleSelectionValue.length !== 1" type="primary" round @click="copyMyShareUrl">
+          <i class="el-icon-link"></i>
+          复制链接
+        </el-button>
+        <el-button :disabled="!handleSelectionValue.length" type="primary" round @click="cancelShareBatch">
+          <i class="el-icon-remove-outline"></i>
+          取消分享
+        </el-button>
       </div>
-
-      <div v-if="!shareList.length">
-        <h2 class="message">
-          <i class="material-icons">
-            <svg-icon icon-class="file-crying-face"></svg-icon>
-          </i>
-          <span>你还没有进行分享...</span>
-        </h2>
-      </div>
-
-      <!-- title -->
-      <div v-else class="list-title">
-        <div class="item header">
-          <div></div>
-          <div>
-            <p role="button" tabindex="0" title="分享文件" aria-label="分享文件" class="name">
-              <span>分享文件</span>
-            </p>
-            <p role="button" tabindex="0" title="分享链接" aria-label="分享链接" class="shareLink">
-              <span>分享链接</span>
-            </p>
-            <p role="button" tabindex="0" title="提取码" aria-label="提取码" class="code">
-              <span>提取码</span>
-            </p>
-            <p role="button" tabindex="0" title="有效期" aria-label="有效期" class="code">
-              <span>有效期</span>
-            </p>
-            <p role="button" tabindex="0" title="浏览次数" aria-label="浏览次数" class="code">
-              <span>浏览次数</span>
-            </p>
-            <p role="button" tabindex="0" title="分享时间" aria-label="分享时间" class="code">
-              <span>分享时间</span>
-            </p>
-          </div>
+      <el-card class="box-card" shadow="always">
+        <div slot="header" class="clearfix">
+          <span>分享列表信息</span>
         </div>
-      </div>
-
-      <div class="list-file">
-        <div role="button" tabindex="0" draggable="true" data-dir="true" aria-label="cloud.api.novelweb.cn"
-             class="item">
-          <div>
-            <i class="material-icons">
-              <svg-icon icon-class="file"></svg-icon>
-            </i>
-          </div>
-          <div><p class="name">cloud.api.novelweb.cn</p>
-            <p data-order="-1" class="size">—</p>
-            <p class="modified">
-              <time>26 分钟前</time>
-            </p>
-          </div>
-        </div>
-      </div>
-
+        <!-- title -->
+        <el-table :data="shareList" style="width: 100%" @selection-change="handleSelectionChange">
+          <el-table-column type="selection" width="35" fixed="left"></el-table-column>
+          <el-table-column prop="shareFileName" label="分享文件" width="350">
+            <template slot-scope="scope">
+              <el-button type="text" @click="newWindow(scope.$index, scope.row)">{{
+                  scope.row.shareFileName
+                }}
+              </el-button>
+            </template>
+          </el-table-column>
+          <el-table-column prop="shareCode" label="提取码" width="100"></el-table-column>
+          <el-table-column prop="shareExpirationTimeFormat" label="有效期" width="100">
+            <template slot-scope="scope">
+              {{ scope.row.expiration ? '已过期' : scope.row.shareExpirationTimeFormat }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="shareViewCount" label="浏览量" width="80"></el-table-column>
+          <el-table-column prop="createTime" label="分享时间" width="180"></el-table-column>
+          <el-table-column label="操作" width="230">
+            <template slot-scope="scope">
+              <el-button
+                size="mini"
+                type="primary" plain
+                @click="rowCopyMyShareUrl(scope.$index, scope.row)">
+                <i class="el-icon-link"></i>
+                复制链接
+              </el-button>
+              <el-button
+                size="mini"
+                type="danger"
+                @click="rowCancelMyShare(scope.$index, scope.row)">
+                <i class="el-icon-remove-outline"></i>
+                取消分享
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-pagination
+          class="pagination-pc" background
+          layout="sizes, prev, pager, next, ->, total"
+          @size-change="myShareListSizeChange"
+          @current-change="myShareListCurrentChange"
+          :total="shareListPagingInfo.toTal"
+          :page-size="shareListPagingInfo.pageSize"
+          :current-page="shareListPagingInfo.currentChange">
+        </el-pagination>
+        <el-pagination
+          class="pagination-mobile" small
+          layout="prev, pager, next"
+          @size-change="myShareListSizeChange"
+          @current-change="myShareListCurrentChange"
+          :total="shareListPagingInfo.toTal"
+          :page-size="shareListPagingInfo.pageSize"
+          :current-page="shareListPagingInfo.currentChange">
+        </el-pagination>
+      </el-card>
     </div>
 
   </div>
 </template>
 
 <script>
+import {share, cancelShare} from '@/api/share'
+import {clipboard} from '@/utils/utils'
+import cookies from 'js-cookie'
+
 export default {
   name: 'share-record',
+  props: {
+    // 路径信息的面包屑导航(数组中的第一位元素为主页)
+    breadcrumbs: {
+      type: Array,
+      default () {
+        return []
+      }
+    },
+    // 文件列表(用来渲染的文件列表数据)
+    fileList: {
+      type: Array,
+      default () {
+        return []
+      }
+    }
+  },
   data () {
     return {
       // 我的分享列表
-      shareList: [
-        {
-          'shareId': 63,
-          'shareUserId': 13,
-          'shareFileIds': '4989,4988,4987',
-          'shareFileName': 'w',
-          'shareShortUrl': 'http://localhost:9527/#/s/07DC4EB8B11542238DDDAC6B12837C9B',
-          'shareShort': '07DC4EB8B11542238DDDAC6B12837C9B',
-          'shareCode': 'i1l2',
-          'shareViewCount': 0,
-          'shareSaveCount': 0,
-          'shareDownloadCount': 0,
-          'shareExpirationTime': 86400,
-          'shareExpirationTimeFormat': '1天',
-          'expiration': false,
-          'includeFolder': true,
-          'createTime': '2021-03-30 14:58:37'
-        },
-        {
-          'shareId': 62,
-          'shareUserId': 13,
-          'shareFileIds': '4988,4987',
-          'shareFileName': '猫和老鼠.mp4',
-          'shareShortUrl': 'http://localhost:9527/#/s/CEEB839650B049BAB3DEEB4FCE2C9544',
-          'shareShort': 'CEEB839650B049BAB3DEEB4FCE2C9544',
-          'shareCode': 'ra7p',
-          'shareViewCount': 0,
-          'shareSaveCount': 0,
-          'shareDownloadCount': 0,
-          'shareExpirationTime': 86400,
-          'shareExpirationTimeFormat': '1天',
-          'expiration': false,
-          'includeFolder': false,
-          'createTime': '2021-03-30 14:58:19'
-        }
-      ]
+      shareList: [],
+      // 当前登录的用户对象信息
+      userInfo: {},
+      // 表格中被选中的值
+      handleSelectionValue: [],
+      // 我的分享表格的分页信息
+      shareListPagingInfo: {
+        // 总数
+        toTal: 0,
+        // 每页显示个数
+        pageSize: 10,
+        // 当前页码
+        currentChange: 1
+      }
     }
   },
-  methods: {}
+  // 钩子函数：页面加载完成后执行
+  mounted: function () {
+    // 获取cookie缓存中的用户信息
+    let userInfo = cookies.get('userInfo')
+    if (userInfo === undefined) {
+      // 如果在未登录的情况下使用，则跳转登录页面
+      this.$router.push({name: 'login'})
+      return
+    }
+    this.userInfo = JSON.parse(userInfo)
+    // 获取当前用户的分享列表
+    this.getMyShareList(false)
+  },
+  methods: {
+    /**
+     * 获取我的分享文件列表
+     * @param {Boolean} loading 是否需要加载loading面板
+     */
+    getMyShareList: function (loading) {
+      share({
+        page: this.shareListPagingInfo.currentChange,
+        pageSize: this.shareListPagingInfo.pageSize
+      }, loading).then(response => {
+        this.shareListPagingInfo.toTal = response.data.toTal
+        console.log(response)
+        this.shareList = response.data['diskShare']
+      }).catch((err) => {
+        console.log(err)
+      })
+    },
+    /**
+     * pageSize 改变时会触发
+     * @param size 每页条数
+     */
+    myShareListSizeChange: function (size) {
+      this.shareListPagingInfo.pageSize = size
+      // 重置当前页为第一页
+      this.shareListPagingInfo.currentChange = 1
+      // 重置表格数据
+      this.getMyShareList(true)
+    },
+    /**
+     * currentPage 改变时会触发
+     * @param current 当前页
+     */
+    myShareListCurrentChange: function (current) {
+      this.shareListPagingInfo.currentChange = current
+      // 重置表格数据
+      this.getMyShareList(true)
+    },
+    /**
+     * 表格选择更改的change
+     * @param val 被选中的值
+     */
+    handleSelectionChange: function (val) {
+      this.handleSelectionValue = val
+    },
+    /**
+     * 复制我的分享文件链接地址(表格中...)
+     * @param index 下标
+     * @param row 当前选中的行
+     */
+    rowCopyMyShareUrl: function (index, row) {
+      // 向剪切板复制分享链接
+      clipboard(this.userInfo.userName + '向您分享了' + row['shareFileName'] + '，您打开链接后可以享受不限速下载' +
+        '\n链接：' + row['shareShortUrl'] +
+        '\n有效期：' + row['shareExpirationTimeFormat'] + (row['shareCode'] === '' ? '' : '\n提取码：' + row['shareCode']))
+      // 复制成功的提示框
+      this.$message({
+        showClose: true,
+        type: 'success',
+        message: '复制到剪切板了，粘贴给您的朋友吧~'
+      })
+    },
+    /**
+     * 取消我的分享链接(表格中...)
+     * @param index 下标
+     * @param row 当前选中的行
+     */
+    rowCancelMyShare: function (index, row) {
+      this.$confirm('取消分享后，该条分享记录将被删除，您确认要取消分享吗？',
+        '确认取消分享').then(() => {
+        cancelShare({
+          shareId: [row['shareId']]
+        }).then(() => {
+          // 取消外链分享成功的提示框
+          this.$message({
+            showClose: true,
+            type: 'success',
+            message: '取消外链分享成功!'
+          })
+          let toTal = this.shareListPagingInfo.toTal - 1
+          this.shareListPagingInfo.toTal = toTal <= 0 ? 0 : toTal
+          // 删除文件列表中对应的文件数据
+          this.shareList = this.shareList.filter(item => item !== row)
+        }).catch((err) => {
+          console.log(err)
+        })
+      }).catch((err) => {
+        console.log(err)
+      })
+    },
+    /**
+     * 复制我的分享文件链接地址
+     */
+    copyMyShareUrl: function () {
+      // 获取当前被选中的数据
+      if (this.handleSelectionValue[0] !== undefined) {
+        this.rowCopyMyShareUrl(0, this.handleSelectionValue[0])
+      }
+    },
+    /**
+     * 批量取消分享
+     */
+    cancelShareBatch: function () {
+      let handleSelectionValue = this.handleSelectionValue
+      // 获取当前被选中的数据
+      if (!handleSelectionValue) {
+        // 如果没有数据选中的 ，则不执行
+        return
+      }
+      this.$confirm('取消分享后，该条分享记录将被删除，您确认要取消分享吗？',
+        '确认取消分享').then(() => {
+        cancelShare({
+          shareId: handleSelectionValue.map(item => item.shareId)
+        }).then(() => {
+          // 取消外链分享成功的提示框
+          this.$message({
+            showClose: true,
+            type: 'success',
+            message: '取消外链分享成功!'
+          })
+          handleSelectionValue.forEach(res => {
+            // 删除文件列表中对应的文件数据
+            this.shareList = this.shareList.filter(item => item !== res)
+          })
+          // 重置分页的总数
+          let toTal = this.shareListPagingInfo.toTal - handleSelectionValue.length
+          this.shareListPagingInfo.toTal = toTal <= 0 ? 0 : toTal
+        }).catch((err) => {
+          console.log(err)
+        })
+      }).catch((err) => {
+        console.log(err)
+      })
+    },
+    /**
+     * 跳转新窗口
+     * @param index 下标
+     * @param row 当前选中的行
+     */
+    newWindow: function (index, row) {
+      window.open(row['shareShortUrl'], '_blank')
+    }
+  }
 }
 </script>
 
@@ -131,39 +291,17 @@ export default {
   user-select: none;
 }
 
-.breadcrumbs, .breadcrumbs span {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-  color: #6f6f6f;
+.action-btn {
+  margin-top: 10px;
 }
 
-.breadcrumbs {
-  height: 3em;
-  border-bottom: 1px solid rgba(0, 0, 0, .05);
+.box-card {
+  margin-top: 10px;
 }
 
 a {
   text-decoration: none;
   background-color: transparent;
-}
-
-.breadcrumbs .shadow {
-  color: inherit;
-  -webkit-transition: .1s ease-in;
-  transition: .1s ease-in;
-  border-radius: .125em;
-}
-
-.breadcrumbs .shadow:hover {
-  background-color: rgba(0, 0, 0, .05);
-}
-
-.breadcrumb-item {
-  padding: .2em;
 }
 
 .material-icons {
@@ -201,186 +339,22 @@ a {
   display: block;
 }
 
-#listing.list {
-  -webkit-box-orient: vertical;
-  -webkit-box-direction: normal;
-  -ms-flex-direction: column;
-  flex-direction: column;
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-}
-
-#listing .item.header {
-  display: none !important;
-  background-color: #ccc;
-}
-
-#listing.list .item.header {
-  display: -webkit-box !important;
-  display: -ms-flexbox !important;
-  display: flex !important;
-  background: #fafafa;
-  z-index: 999;
-  padding: .85em;
-  border: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, .1);
-}
-
-#listing.list .item {
-  width: 100%;
-  margin: 0;
-  border: 1px solid rgba(0, 0, 0, .1);
-  padding: 1em;
-  border-top: 0;
-}
-
-#listing .item {
-  background-color: #fff;
-  position: relative;
-  -ms-flex-wrap: nowrap;
-  flex-wrap: nowrap;
-  color: #6f6f6f;
-  -webkit-transition: background .1s ease, opacity .1s ease;
-  transition: background .1s ease, opacity .1s ease;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-}
-
-#listing.list .item.header > div:first-child {
-  width: 0;
-}
-
-#listing.list .item div:first-of-type {
-  width: 3em;
-}
-
-#listing.list .item div:last-of-type {
-  width: calc(100% - 3em);
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-}
-
-#listing .item div:last-of-type {
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-#listing.list .item.header .active {
-  font-weight: 700;
-}
-
-#listing.list .item.header .name {
-  margin-right: 3em;
-}
-
-#listing.list .item .name {
-  width: 50%;
-}
-
-#listing .item div:last-of-type * {
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-#listing.list .name {
-  outline: 0;
-  font-weight: 400;
-}
-
-#listing .item p {
-  margin: 0;
+.pagination-mobile {
+  display: none;
 }
 
 p {
   display: block;
   margin-block-start: 1em;
   margin-block-end: 1em;
-  margin-inline-start: 0px;
-  margin-inline-end: 0px;
-}
-
-#listing.list .header span {
-  vertical-align: middle;
-}
-
-#listing.list .header .active i, #listing.list .header p:hover i {
-  opacity: 1;
-}
-
-#listing.list .header i {
-  opacity: 0;
-  -webkit-transition: all .1s ease;
-  transition: all .1s ease;
-}
-
-#listing.list .header i {
-  font-size: 1.5em;
-  vertical-align: middle;
-  margin-left: .2em;
-}
-
-#listing.list .item .shareLink {
-  width: 25%;
-}
-
-#listing .item .code, #listing .item .shareLink {
-  font-size: .9em;
-  outline: 0;
-}
-
-#listing .item, #listing > div {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-}
-
-#listing > div {
-  -ms-flex-wrap: wrap;
-  flex-wrap: wrap;
-  -webkit-box-pack: start;
-  -ms-flex-pack: start;
-  justify-content: flex-start;
-}
-
-#listing.list .item div:first-of-type i {
-  font-size: 2em;
-}
-
-#listing .item i {
-  font-size: 4em;
-}
-
-#listing .item i, #listing .item img {
-  margin-right: .1em;
-  vertical-align: bottom;
-}
-
-#listing .item[aria-selected=true] {
-  background: #2196f3 !important;
-  color: #fff !important;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
 }
 
 .el-image-viewer__canvas {
   max-height: 83%;
   max-width: 85%;
   margin: 0 auto;
-}
-
-#previewVideo {
-  top: 10%;
-}
-
-@media (max-width: 769px) {
-  #listing.list .item .name {
-    width: 17em;
-  }
 }
 
 @media (min-width: 736px) {
@@ -395,36 +369,12 @@ p {
 }
 
 @media (max-width: 736px) {
-  #listing.list .item .shareLink {
-    display: none !important;
-  }
-}
-
-@media (max-width: 451px) {
-  #listing.list .item .code {
-    display: none !important;
+  .pagination-pc {
+    display: none;
   }
 
-  #listing.list .item .name {
-    width: 15em;
-  }
-}
-
-@media (max-width: 415px) {
-  #listing.list .item .name {
-    width: 17em;
-  }
-}
-
-@media (max-width: 376px) {
-  #listing.list .item .name {
-    width: 14em;
-  }
-}
-
-@media (max-width: 331px) {
-  #listing.list .item .name {
-    width: 10em;
+  .pagination-mobile {
+    display: block;
   }
 }
 </style>
