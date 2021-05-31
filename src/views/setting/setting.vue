@@ -116,12 +116,12 @@
         </el-form-item>
       </el-form>
       <el-table :data="paymentOrderInfo" style="width: 100%">
-        <el-table-column prop="orderNumber" label="订单编号" width="250"></el-table-column>
-        <el-table-column prop="orderSubject" label="订单标题" width="180"></el-table-column>
-        <el-table-column prop="effectiveDuration" label="有效期" width="100"></el-table-column>
-        <el-table-column prop="orderPaymentType" label="支付方式" width="90"></el-table-column>
-        <el-table-column prop="orderTotalAmount" label="总金额" width="90"></el-table-column>
-        <el-table-column prop="success" label="状态" width="90">
+        <el-table-column prop="orderNumber" label="订单编号" min-width="240"></el-table-column>
+        <el-table-column prop="orderSubject" label="订单标题" min-width="145"></el-table-column>
+        <el-table-column prop="effectiveDuration" label="有效期" min-width="80"></el-table-column>
+        <el-table-column prop="orderPaymentType" label="支付方式" min-width="90"></el-table-column>
+        <el-table-column prop="orderTotalAmount" label="总金额" min-width="90"></el-table-column>
+        <el-table-column prop="success" label="状态" min-width="90">
           <template slot-scope="scope">
             <el-tag
               :type="scope.row.success === '已支付' ? 'success' : 'info'"
@@ -129,8 +129,8 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="orderSuccessTime" label="支付时间" width="185"></el-table-column>
-        <el-table-column prop="createTime" label="下单时间" width="185"></el-table-column>
+        <el-table-column prop="orderSuccessTime" label="支付时间" min-width="185"></el-table-column>
+        <el-table-column prop="createTime" label="下单时间" min-width="185"></el-table-column>
       </el-table>
       <el-pagination
         class="pagination-pc" background
