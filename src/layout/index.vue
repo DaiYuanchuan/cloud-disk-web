@@ -68,11 +68,11 @@
               <span>问题反馈</span>
             </el-button>
           </div>
-          <el-button aria-label="设置" title="设置" class="action" @click="setting">
+          <el-button aria-label="个人中心" title="个人中心" class="action" @click="setting">
             <i class="material-icons">
               <svg-icon icon-class="setting"></svg-icon>
             </i>
-            <span>设置</span>
+            <span>个人中心</span>
           </el-button>
           <el-button aria-label="退出登录" title="退出登录" class="action" @click="logout">
             <i class="material-icons">
@@ -116,7 +116,7 @@
           <router-view :breadcrumbs="breadcrumbs" :file-list="fileList"
                        @nextPage="nextPage" @doubleClick="doubleClick"
                        @ctrlC="setPreprocessing('copy')" @ctrlX="setPreprocessing('move')"
-                       @previous="previous" @delete="fileDeletion"></router-view>
+                       @previous="previous" @delete="fileDeletion" @userAvatar="setUserAvatar"></router-view>
         </el-main>
       </el-container>
     </el-container>
@@ -256,7 +256,7 @@
           <el-form ref="form" :model="payment.form" label-width="80px">
             <el-form-item label="开通时长">
               <el-input-number v-model="payment.form.defaultValue" @change="paymentOpeningTimeChange" :min="1"
-                               :max="1000"
+                               :max="9999"
                                :step="payment.form.defaultSelfIncrement" step-strictly></el-input-number>
               <span class="pay-opening-time-text">月</span>
             </el-form-item>
@@ -568,11 +568,6 @@ export default {
       },
       // 深度监听
       deep: true
-    },
-    'payment.token': {
-      handler: function () {
-        console.log('token属性发生变更: ', this.payment.token)
-      }
     }
   },
   // 钩子函数：页面加载完成后执行
@@ -641,6 +636,7 @@ export default {
           '\n有效期：' + response['periodOfValidity'] + (response['shareCode'] === '' ? '' : '\n提取码：' + response['shareCode']))
         // 复制成功的提示框
         this.$message({
+          showClose: true,
           type: 'success',
           message: '复制到剪切板了，粘贴给您的朋友吧~'
         })
@@ -707,6 +703,7 @@ export default {
             selectData[0].userDynamicPreviewUrl = response['data'].userDynamicPreviewUrl
             // 成功的提示框
             this.$message({
+              showClose: true,
               type: 'success',
               message: '修改成功!'
             })
@@ -767,6 +764,7 @@ export default {
           this.setUserInfoCookies(response.data)
           // 删除成功的提示框
           this.$message({
+            showClose: true,
             type: 'success',
             message: '删除成功!'
           })
@@ -871,7 +869,11 @@ export default {
       if (cardTitle === '复制') {
         // 判断上传空间容量
         if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - fileSize < 0) {
-          this.$message.error('存储空间不足')
+          this.$message({
+            showClose: true,
+            message: '存储空间不足',
+            type: 'error'
+          })
           return
         }
         copyFile({
@@ -881,6 +883,7 @@ export default {
           console.log(response)
           // 复制成功的提示框
           this.$message({
+            showClose: true,
             type: 'success',
             message: '复制完成!'
           })
@@ -905,6 +908,7 @@ export default {
           console.log(response)
           // 删除成功的提示框
           this.$message({
+            showClose: true,
             type: 'success',
             message: '剪切完成!'
           })
@@ -1046,7 +1050,11 @@ export default {
         })
         // 判断上传空间容量
         if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - fileSize < 0) {
-          this.$message.error('存储空间不足')
+          this.$message({
+            showClose: true,
+            message: '存储空间不足',
+            type: 'error'
+          })
           return
         }
         // 复制文件
@@ -1057,6 +1065,7 @@ export default {
           console.log(response)
           // 复制成功的提示框
           this.$message({
+            showClose: true,
             type: 'success',
             message: '复制完成!'
           })
@@ -1091,6 +1100,7 @@ export default {
           console.log(response)
           // 删除成功的提示框
           this.$message({
+            showClose: true,
             type: 'success',
             message: '剪切完成!'
           })
@@ -1172,6 +1182,7 @@ export default {
           response.data['select'] = false
           this.fileList.unshift(response.data)
           this.$message({
+            showClose: true,
             type: 'success',
             message: response.message
           })
@@ -1218,6 +1229,7 @@ export default {
             this.feedback.show = false
             this.feedback.form.feedbackContent = ''
             this.$message({
+              showClose: true,
               type: 'success',
               message: '提交成功，我们会尽快给您答复'
             })
@@ -1232,11 +1244,9 @@ export default {
      */
     setting: function () {
       this.toggleSidebarClick = false
-      console.log('用户设置')
-      this.$message({
-        showClose: true,
-        message: '功能升级中，敬请期待！'
-      })
+      if (this.$route.path !== '/setting') {
+        this.$router.push({name: 'setting'})
+      }
     },
     /**
      * 页面左侧菜单栏-退出登录
@@ -1313,6 +1323,22 @@ export default {
           maxWidth: '100%'
         }
       }
+    },
+    /**
+     * 重置用户头像信息
+     */
+    setUserAvatar: function () {
+      // 获取cookie缓存中的用户信息
+      let token = cookies.get('userInfo')
+      if (token === undefined) {
+        // 如果在未登录的情况下使用，则跳转登录页面
+        this.$router.push({name: 'login'})
+        return
+      }
+      let userInfo = JSON.parse(token)
+      userInfo.userAvatar = userInfo.userAvatar + '?' + new Date().getTime()
+      this.userInfo.userAvatar = userInfo.userAvatar
+      this.setUserInfoCookies(userInfo)
     },
     // ============================== 文件上传部分方法
     /**
@@ -1445,12 +1471,20 @@ export default {
         // 规定文件上传大小 最大为 20 GB
         let maxFileSize = 20 * 1024 * 1024 * 1024
         if (file.size > maxFileSize) {
-          this.$message.error('单文件最大上传20GB')
+          this.$message({
+            showClose: true,
+            message: '单文件最大上传20GB',
+            type: 'error'
+          })
           return
         }
         // 判断上传空间容量
         if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - file.size < 0) {
-          this.$message.error('存储空间不足')
+          this.$message({
+            showClose: true,
+            message: '存储空间不足',
+            type: 'error'
+          })
           return
         }
         let regular = /^((?![\\/:*?？^`~&<>|'%]).){1,50}$/
@@ -1644,7 +1678,11 @@ export default {
     beforeUpload: function (file) {
       let regular = /^((?![\\/:*?？^`~&<>|'%]).){1,50}$/
       if (!regular.test(file.name)) {
-        this.$message.error('文件名50个字符以内，不能包含特殊字符')
+        this.$message({
+          showClose: true,
+          message: '文件名50个字符以内，不能包含特殊字符',
+          type: 'error'
+        })
         return false
       }
       // 规定文件上传大小 最大为 20 GB
@@ -1712,19 +1750,23 @@ export default {
      * @param e
      */
     dragover: function (e) {
-      // 阻止拖拽的默认行为
-      e.stopPropagation()
-      e.preventDefault()
+      if (this.$route.path === '/home') {
+        // 阻止拖拽的默认行为
+        e.stopPropagation()
+        e.preventDefault()
+      }
     },
     /**
      * 在一个拖动过程中，释放鼠标键时触发此事件
      * @param e
      */
     drop: function (e) {
-      // 阻止拖拽的默认行为
-      e.stopPropagation()
-      e.preventDefault()
-      this.fileDrag(e)
+      if (this.$route.path === '/home') {
+        // 阻止拖拽的默认行为
+        e.stopPropagation()
+        e.preventDefault()
+        this.fileDrag(e)
+      }
     },
     /**
      * 文件拖拽上传处理实现
@@ -1802,6 +1844,9 @@ export default {
         this.$emit('update:visible', false)
         this.$emit('close')
         this.payment.show = false
+        if (this.payment.timeout !== null) {
+          clearTimeout(this.payment.timeout)
+        }
       }
     },
     /**
@@ -2717,7 +2762,7 @@ header > div:first-child > .action, header img {
   }
 
   .pay-modal-content .pay-modal-content-icon {
-    padding-top: 0px;
+    padding-top: 0;
   }
 
   .pay-product-list .pay-product-item-month {

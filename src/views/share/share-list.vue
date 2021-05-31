@@ -265,7 +265,11 @@ export default {
 
       // 判断上传空间容量
       if (userInfo.userRemainingCapacity <= 0 || userInfo.userRemainingCapacity - fileSize < 0) {
-        this.$message.error('存储空间不足')
+        this.$message({
+          showClose: true,
+          message: '存储空间不足',
+          type: 'error'
+        })
         return
       }
 
@@ -279,6 +283,7 @@ export default {
         console.log(response)
         // 复制成功的提示框
         this.$message({
+          showClose: true,
           type: 'success',
           message: '保存成功!'
         })
