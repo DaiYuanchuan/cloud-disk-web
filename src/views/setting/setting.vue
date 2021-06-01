@@ -28,7 +28,7 @@
                    :src="avatarUploader.previewImage"
                    alt="username">
               <div class="image-uploader__overlay">
-                <span class="image-uploader__dnd">拖拽 &amp; 粘贴</span>
+                <span class="image-uploader__dnd">拖拽</span>
                 <span class="image-uploader__or">或</span>
                 <span class="browse image-uploader-button img-item">
                   <div>浏览</div>
@@ -116,12 +116,12 @@
         </el-form-item>
       </el-form>
       <el-table :data="paymentOrderInfo" style="width: 100%">
-        <el-table-column prop="orderNumber" label="订单编号" width="250"></el-table-column>
-        <el-table-column prop="orderSubject" label="订单标题" width="180"></el-table-column>
-        <el-table-column prop="effectiveDuration" label="有效期" width="100"></el-table-column>
-        <el-table-column prop="orderPaymentType" label="支付方式" width="90"></el-table-column>
-        <el-table-column prop="orderTotalAmount" label="总金额" width="90"></el-table-column>
-        <el-table-column prop="success" label="状态" width="90">
+        <el-table-column prop="orderNumber" label="订单编号" min-width="240"></el-table-column>
+        <el-table-column prop="orderSubject" label="订单标题" min-width="145"></el-table-column>
+        <el-table-column prop="effectiveDuration" label="有效期" min-width="80"></el-table-column>
+        <el-table-column prop="orderPaymentType" label="支付方式" min-width="90"></el-table-column>
+        <el-table-column prop="orderTotalAmount" label="总金额" min-width="90"></el-table-column>
+        <el-table-column prop="success" label="状态" min-width="90">
           <template slot-scope="scope">
             <el-tag
               :type="scope.row.success === '已支付' ? 'success' : 'info'"
@@ -129,8 +129,8 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="orderSuccessTime" label="支付时间" width="185"></el-table-column>
-        <el-table-column prop="createTime" label="下单时间" width="185"></el-table-column>
+        <el-table-column prop="orderSuccessTime" label="支付时间" min-width="185"></el-table-column>
+        <el-table-column prop="createTime" label="下单时间" min-width="185"></el-table-column>
       </el-table>
       <el-pagination
         class="pagination-pc" background
@@ -542,17 +542,17 @@ export default {
         // 创建时间转成的Date对象
         let endTime = new Date(res['createTime'].replace(new RegExp('-', 'gm'), '/'))
         // 月份 + (资源包的月份 * 数量)
-        endTime.setMonth(endTime.getMonth() + (res['packMonth'] * res['orderQuantity']))
+        endTime.setMonth((endTime.getMonth() + (res['packMonth'] * res['orderQuantity'])) - 1)
         let createTime = new Date(res['createTime'].replace(new RegExp('-', 'gm'), '/'))
         if (endTime.getFullYear() - createTime.getFullYear() > 0) {
           effectiveDuration = `${endTime.getFullYear() - createTime.getFullYear()}`
           if (endTime.getMonth() - createTime.getMonth() > 0) {
-            effectiveDuration = `${effectiveDuration}.${endTime.getMonth() - createTime.getMonth()}年`
+            effectiveDuration = `${effectiveDuration}.${(endTime.getMonth() - createTime.getMonth()) + 1}年`
           } else {
             effectiveDuration = effectiveDuration + '年'
           }
         } else {
-          effectiveDuration = `${endTime.getMonth() - createTime.getMonth()}个月`
+          effectiveDuration = `${(endTime.getMonth() - createTime.getMonth()) + 1}个月`
         }
 
         res['orderSubject'] = res['packName'] + '资源扩容包'

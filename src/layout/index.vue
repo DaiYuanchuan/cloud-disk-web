@@ -59,7 +59,7 @@
               <i class="material-icons">
                 <svg-icon icon-class="file-share"></svg-icon>
               </i>
-              <span>我的分享</span>
+              <el-badge is-dot><span>我的分享</span></el-badge>
             </el-button>
             <el-button aria-label="问题反馈" title="问题反馈" class="action" @click="feedbackBtn">
               <i class="material-icons">
@@ -72,7 +72,7 @@
             <i class="material-icons">
               <svg-icon icon-class="setting"></svg-icon>
             </i>
-            <span>个人中心</span>
+            <el-badge is-dot><span>个人中心</span></el-badge>
           </el-button>
           <el-button aria-label="退出登录" title="退出登录" class="action" @click="logout">
             <i class="material-icons">
@@ -317,7 +317,8 @@
                @card-folder-previous="cardFolderPrevious" @card-folder-next="cardFolderNext"></file-card>
 
     <!-- 手机模式下 切换左边菜单栏按钮点击时的model -->
-    <div v-if="toggleSidebarClick" class="el-image-viewer__mask" style="z-index: 1000" @click="toggleSidebar"></div>
+    <div v-if="toggleSidebarClick" class="el-image-viewer__mask" style="z-index: 1000;position: fixed;"
+         @click="toggleSidebar"></div>
 
   </div>
 </template>
@@ -1197,11 +1198,9 @@ export default {
      */
     fileShareList: function () {
       this.toggleSidebarClick = false
-      console.log('我的分享列表')
-      this.$message({
-        showClose: true,
-        message: '功能升级中，敬请期待！'
-      })
+      if (this.$route.path !== '/share-record') {
+        this.$router.push({name: 'share-record'})
+      }
     },
     /**
      * 页面左侧菜单栏-意见与反馈
@@ -2163,6 +2162,10 @@ a {
 
 .el-aside div {
   border-bottom: 1px solid rgba(0, 0, 0, .05);
+}
+
+.el-badge {
+  border-bottom: 0 !important;
 }
 
 main {
