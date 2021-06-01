@@ -2694,15 +2694,19 @@ header > div:first-child > .action, header img {
     -webkit-box-shadow: 0 0 5px rgba(0, 0, 0, .1);
     box-shadow: 0 0 5px rgba(0, 0, 0, .1);
     -webkit-transition: left .1s ease;
-    transition: left .1s ease;
+    transition: left .3s ease;
     left: -17em;
   }
 
   .content-bottom {
+    -webkit-transition: left .1s ease;
+    transition: left .3s ease;
     left: -17em;
   }
 
   .sider-bottom {
+    -webkit-transition: left .1s ease;
+    transition: left .3s ease;
     left: -17em;
   }
 
