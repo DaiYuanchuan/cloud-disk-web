@@ -357,6 +357,10 @@ p {
   margin: 0 auto;
 }
 
+/deep/ .el-table--fit {
+  margin-bottom: 15px;
+}
+
 @media (min-width: 736px) {
   .list-file {
     cursor: pointer
