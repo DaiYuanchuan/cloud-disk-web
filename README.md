@@ -52,9 +52,6 @@
 #### 个人中心页面
 ![个人中心页面](https://images.gitee.com/uploads/images/2021/0531/182653_73280269_1882312.png "个人中心页面")
 
-#### 我的分享列表页面
-![分享列表页](https://images.gitee.com/uploads/images/2021/0601/122256_610a8d82_1882312.png "分享列表页")
-
 ## Build Setup
 
 ```bash
