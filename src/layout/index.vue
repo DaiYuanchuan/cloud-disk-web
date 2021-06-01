@@ -227,6 +227,13 @@
           </strong>
           <span class="fileInfoPopupBlockValue">{{ fileInfoDialog.update }}</span>
         </p>
+        <p class="fileInfoPopupBlock">
+          <el-button type="primary" class="file-download-btn" @click="fileDownloadBtn">
+            <svg-icon icon-class="file-info-download" width="2em" height="2em"
+                      className="fileInfoPopupBlockSvg"></svg-icon>
+            下 载
+          </el-button>
+        </p>
       </div>
     </el-dialog>
 
@@ -338,7 +345,7 @@ import VueQr from 'vue-qr'
 import cookies from 'js-cookie'
 import uploader from '@/components/upload/uploader'
 import fileCard from '@/components/fileCard/fileCard'
-import {storageUnitConversion, formatDate, fileCategory, mimeTypes, clipboard} from '@/utils/utils'
+import {storageUnitConversion, formatDate, fileCategory, mimeTypes, clipboard, downloadByUrl} from '@/utils/utils'
 
 export default {
   name: 'layout',
@@ -474,8 +481,10 @@ export default {
         fileType: '',
         // 文件mime类型
         mimeTypes: '',
-        // 动态url
-        userDynamicPreviewUrl: ''
+        // 动态预览url
+        userDynamicPreviewUrl: '',
+        // 动态下载Url
+        userDynamicDownloadUrl: ''
       },
       // 意见与反馈的对象
       feedback: {
@@ -807,9 +816,18 @@ export default {
         fileType: fileCategory(selectData[0]['ossFileMimeType']),
         // 文件mime类型
         mimeTypes: mimeTypes(selectData[0]['ossFileMimeType']),
-        // 动态url
-        userDynamicPreviewUrl: selectData[0]['userDynamicPreviewUrl']
+        // 动态预览url
+        userDynamicPreviewUrl: selectData[0]['userDynamicPreviewUrl'],
+        // 动态下载Url
+        userDynamicDownloadUrl: selectData[0]['userDynamicDownloadUrl']
       }
+    },
+    /**
+     * 文件下载按钮事件
+     */
+    fileDownloadBtn: function () {
+      // 文件下载
+      downloadByUrl(this.fileInfoDialog.userDynamicDownloadUrl, this.fileInfoDialog.fileName)
     },
     /**
      * 文件详情弹窗关闭前回调事件
@@ -833,8 +851,10 @@ export default {
           fileType: '',
           // 文件mime类型
           mimeTypes: '',
-          // 动态url
-          userDynamicPreviewUrl: ''
+          // 动态预览url
+          userDynamicPreviewUrl: '',
+          // 动态下载Url
+          userDynamicDownloadUrl: ''
         }
       }
     },
@@ -2583,6 +2603,7 @@ main {
 
 .fileInfoPopupBlockSvg {
   margin-right: 2px;
+  vertical-align: middle !important;
   position: relative;
   top: 0;
 }
@@ -2614,6 +2635,10 @@ main {
   display: inline-block;
   width: 85%;
   margin-left: 2%;
+}
+
+.file-download-btn {
+  width: 100%;
 }
 
 header > div:first-child > .action {
