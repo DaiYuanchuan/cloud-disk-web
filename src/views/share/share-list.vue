@@ -371,6 +371,7 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 20em;
+  white-space: nowrap;
 }
 
 .leftTit p {
