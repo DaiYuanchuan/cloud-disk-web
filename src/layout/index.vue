@@ -59,7 +59,7 @@
               <i class="material-icons">
                 <svg-icon icon-class="file-share"></svg-icon>
               </i>
-              <el-badge is-dot><span>我的分享</span></el-badge>
+              <span>我的分享</span>
             </el-button>
             <el-button aria-label="问题反馈" title="问题反馈" class="action" @click="feedbackBtn">
               <i class="material-icons">
@@ -72,7 +72,7 @@
             <i class="material-icons">
               <svg-icon icon-class="setting"></svg-icon>
             </i>
-            <el-badge is-dot><span>个人中心</span></el-badge>
+            <span>个人中心</span>
           </el-button>
           <el-button aria-label="退出登录" title="退出登录" class="action" @click="logout">
             <i class="material-icons">
