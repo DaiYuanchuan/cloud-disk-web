@@ -537,17 +537,26 @@ export default {
      */
     formattedList: function (diskPaymentOrder) {
       diskPaymentOrder.forEach(res => {
+        // 总的持续时间
+        let totalDuration = res['packMonth'] * res['orderQuantity']
         // 有效时间
         let effectiveDuration
         // 创建时间转成的Date对象
         let endTime = new Date(res['createTime'].replace(new RegExp('-', 'gm'), '/'))
-        // 月份 + (资源包的月份 * 数量)
-        endTime.setMonth((endTime.getMonth() + (res['packMonth'] * res['orderQuantity'])) - 1)
+        // 重置月份为第一个月
+        endTime.setMonth(0)
+        // 设置新的月份 + (资源包的月份 * 数量)
+        endTime.setMonth((endTime.getMonth() + totalDuration) - 1)
         let createTime = new Date(res['createTime'].replace(new RegExp('-', 'gm'), '/'))
+        // 重置月份为第一个月
+        createTime.setMonth(0)
         if (endTime.getFullYear() - createTime.getFullYear() > 0) {
           effectiveDuration = `${endTime.getFullYear() - createTime.getFullYear()}`
-          if (endTime.getMonth() - createTime.getMonth() > 0) {
-            effectiveDuration = `${effectiveDuration}.${(endTime.getMonth() - createTime.getMonth()) + 1}年`
+          let month = endTime.getMonth() - createTime.getMonth()
+          if (month !== 11) {
+            effectiveDuration = `${(totalDuration / 12).toFixed(2)}年`
+          } else if (month === 11) {
+            effectiveDuration = (parseInt(effectiveDuration) + 1) + '年'
           } else {
             effectiveDuration = effectiveDuration + '年'
           }
@@ -555,7 +564,11 @@ export default {
           effectiveDuration = `${(endTime.getMonth() - createTime.getMonth()) + 1}个月`
         }
 
-        res['orderSubject'] = res['packName'] + '资源扩容包'
+        if (totalDuration > 12) {
+          res['orderSubject'] = res['packName'] + '-' + totalDuration + '个月'
+        } else {
+          res['orderSubject'] = res['packName'] + '资源扩容包'
+        }
         res['effectiveDuration'] = effectiveDuration
         res['orderTotalAmount'] = `￥${res['orderTotalAmount'] / 100}`
         // 支付方式: 1:微信 2:支付宝

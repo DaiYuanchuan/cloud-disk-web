@@ -35,6 +35,7 @@
 ![文件列表页面](https://images.gitee.com/uploads/images/2021/0324/182730_dca68773_1882312.png "文件列表页面")
 
 #### 多文件上传页面:
+<font size="3">dev环境上传请修改qiniu.js中文件上传区域配置</font>
 ![多文件上传页面](https://images.gitee.com/uploads/images/2021/0324/141357_78203cfd_1882312.png "多文件上传页面")
 
 #### 文件复制、移动时的弹窗:
@@ -48,6 +49,9 @@
 
 #### 资源包支付页面(动态获取支付二维码)
 ![支付页](https://images.gitee.com/uploads/images/2021/0531/183322_2f0bade4_1882312.png "支付页")
+
+#### dev环境的支付功能请使用支付宝沙箱环境体验(需要同步修改payment.js)
+![支付宝沙箱](https://images.gitee.com/uploads/images/2021/0616/155948_d68d09ab_1882312.png "支付宝沙箱")
 
 #### 个人中心页面
 ![个人中心页面](https://images.gitee.com/uploads/images/2021/0531/182653_73280269_1882312.png "个人中心页面")
@@ -66,18 +70,6 @@ npm run dev
 
 # build for production with minification
 npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
-
-# run unit tests
-npm run unit
-
-# run e2e tests
-npm run e2e
-
-# run all tests
-npm test
 ```
 
 For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
