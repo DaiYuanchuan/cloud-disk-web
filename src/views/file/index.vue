@@ -55,7 +55,10 @@
               </i>
             </div>
             <div>
-              <p class="name">{{ item.userFileName }}</p>
+              <p class="name">
+                <!-- 新特性: 单击文件名，可以实现打开文件的效果 -->
+                <span @click="doubleClick(item)">{{ item.userFileName }}</span>
+              </p>
               <p :data-order="item.ossFileSize === 0 ? -1 : storageUnitFormatting(item.ossFileSize)" class="size">
                 {{ storageUnitFormatting(item.ossFileSize) }}</p>
               <p class="modified">
@@ -481,6 +484,7 @@ a {
 .breadcrumb-item {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
   max-width: 20em;
   display: inline-block !important;
   padding: .2em;
