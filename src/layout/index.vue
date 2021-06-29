@@ -201,7 +201,7 @@
                customClass="fileInfoPopup" width="18em" :before-close="documentDetailsClose">
       <div class="fileInfoPopup">
         <div class="fileInfoPopupPreview">
-          <img v-if="fileInfoDialog.fileType === 'image'" class="fileInfoPopupPreviewImg"
+          <img v-if="fileInfoDialog.fileType === 'image' && !fileInfoDialog.forbidden" class="fileInfoPopupPreviewImg"
                :src="fileInfoDialog.userDynamicPreviewUrl" :alt="fileInfoDialog.fileName">
           <svg-icon v-else :icon-class="fileInfoDialog.mimeTypes" width="6em" height="6em" color="#8ea1ff"
                     class="fileInfoPopupPreviewSvg"></svg-icon>
@@ -227,7 +227,7 @@
           </strong>
           <span class="fileInfoPopupBlockValue">{{ fileInfoDialog.update }}</span>
         </p>
-        <p class="fileInfoPopupBlock">
+        <p class="fileInfoPopupBlock" v-if="fileInfoDialog.userDynamicPreviewUrl !== '' && !fileInfoDialog.forbidden">
           <el-button type="primary" class="file-download-btn" @click="fileDownloadBtn">
             <svg-icon icon-class="file-info-download" width="2em" height="2em"
                       className="fileInfoPopupBlockSvg"></svg-icon>
@@ -477,6 +477,8 @@ export default {
         update: '',
         // 是否为文件夹
         fileFolder: '',
+        // 文件是否被禁用
+        forbidden: '',
         // 文件类型
         fileType: '',
         // 文件mime类型
@@ -812,10 +814,12 @@ export default {
         update: selectData[0]['updateTime'],
         // 是否为文件夹
         fileFolder: selectData[0]['fileFolder'],
+        // 文件是否被禁用
+        forbidden: selectData[0]['forbidden'],
         // 文件类型
         fileType: fileCategory(selectData[0]['ossFileMimeType']),
         // 文件mime类型
-        mimeTypes: mimeTypes(selectData[0]['ossFileMimeType']),
+        mimeTypes: selectData[0]['forbidden'] ? 'file-forbidden' : mimeTypes(selectData[0]['ossFileMimeType']),
         // 动态预览url
         userDynamicPreviewUrl: selectData[0]['userDynamicPreviewUrl'],
         // 动态下载Url
@@ -847,6 +851,8 @@ export default {
           update: '',
           // 是否为文件夹
           fileFolder: '',
+          // 文件是否被禁用
+          forbidden: '',
           // 文件类型
           fileType: '',
           // 文件mime类型

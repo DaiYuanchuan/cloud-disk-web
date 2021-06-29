@@ -203,6 +203,16 @@ export default {
      * 文件列表 - 双击事件
      */
     doubleClick: function (item) {
+      // 如果当前点击的文件被禁止，则给出警告信息
+      if (item['forbidden']) {
+        this.$message({
+          showClose: true,
+          message: '文件违反互联网法律法规，已屏蔽',
+          type: 'warning'
+        })
+        return
+      }
+
       // 判断当前点击的是否为文件夹
       if (item['fileFolder']) {
         this.$emit('doubleClick', item)
@@ -216,9 +226,10 @@ export default {
           document.body.setAttribute('style', 'margin: 0; background: #fafafa; overflow: hidden;')
           // 实时筛选出当前文件中的所有图片类型的文件
           this.elImageViewer.imagesList = this.fileList.filter(res => fileCategory(res['ossFileMimeType']) === 'image')
-            .map(res => res['userDynamicPreviewUrl'])
+            .filter(res => !res['forbidden'])
+            .map(res => res['userDynamicDownloadUrl'])
           // 设置初始索引值
-          this.elImageViewer.initialIndex = this.elImageViewer.imagesList.findIndex(res => res === item['userDynamicPreviewUrl'])
+          this.elImageViewer.initialIndex = this.elImageViewer.imagesList.findIndex(res => res === item['userDynamicDownloadUrl'])
           // 显示 大图预览组件
           this.elImageViewer.show = true
           break
@@ -377,8 +388,13 @@ export default {
      * @param item 文件对象
      */
     iconClass: function (item) {
+      // 文件夹
       if (item['fileFolder']) {
         return 'file-folder'
+      }
+      // 文件被禁止
+      if (item['forbidden']) {
+        return 'file-forbidden'
       }
       // 获取文件类型
       return mimeTypes(item['ossFileMimeType'])
