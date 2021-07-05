@@ -619,6 +619,15 @@ export default {
      * 右上角-文件分享 按钮
      */
     fileSharingBtn: function () {
+      // 判断上传空间容量，用户当前可用总容量 - 用户当前已经使用的容量 < 0
+      if (this.userInfo['userTotalCapacity'] - this.userInfo['userUsedCapacity'] < 0) {
+        this.$message({
+          showClose: true,
+          message: '存储空间不足，无法分享',
+          type: 'error'
+        })
+        return;
+      }
       this.fileSharingForm.fileSharingBtnText = '确 定'
       this.showFileSharingDialog = true
     },
@@ -638,6 +647,15 @@ export default {
      * 创建文件分享链接
      */
     createFileShare: function () {
+      // 判断上传空间容量，用户当前可用总容量 - 用户当前已经使用的容量 < 0
+      if (this.userInfo['userTotalCapacity'] - this.userInfo['userUsedCapacity'] < 0) {
+        this.$message({
+          showClose: true,
+          message: '存储空间不足，无法分享',
+          type: 'error'
+        })
+        return;
+      }
       if (this.showFileSharingRequestResults) {
         this.showFileSharingDialog = false
         this.showFileSharingRequestResults = false

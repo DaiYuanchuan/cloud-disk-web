@@ -131,6 +131,14 @@ export default {
       return
     }
     this.userInfo = JSON.parse(userInfo)
+    // 判断上传空间容量，用户当前可用总容量 - 用户当前已经使用的容量 < 0
+    if (userInfo['userTotalCapacity'] - userInfo['userUsedCapacity'] < 0) {
+      this.$message({
+        showClose: true,
+        message: '存储空间不足，已限制分享功能',
+        type: 'error'
+      })
+    }
     // 获取当前用户的分享列表
     this.getMyShareList(false)
   },
