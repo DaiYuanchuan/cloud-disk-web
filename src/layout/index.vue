@@ -238,7 +238,7 @@
     </el-dialog>
 
     <!-- 支付的表单对象 -->
-    <el-dialog title="资源包购买" customClass="pay-dialog" :visible.sync="payment.show"
+    <el-dialog title="容量包购买" customClass="pay-dialog" :visible.sync="payment.show"
                :before-close="resourcePacksDialogClose">
       <div v-if="payment.state === 0" class="pay-scene-card">
         <!-- 卡片内容 -->
@@ -626,7 +626,7 @@ export default {
           message: '存储空间不足，无法分享',
           type: 'error'
         })
-        return;
+        return
       }
       this.fileSharingForm.fileSharingBtnText = '确 定'
       this.showFileSharingDialog = true
@@ -654,7 +654,7 @@ export default {
           message: '存储空间不足，无法分享',
           type: 'error'
         })
-        return;
+        return
       }
       if (this.showFileSharingRequestResults) {
         this.showFileSharingDialog = false
@@ -1836,10 +1836,11 @@ export default {
      */
     getResourcePacksInfo: function () {
       this.toggleSidebarClick = false
-      // 获取后台配置的资源包信息
+      // 获取后台配置的容量包信息
       resourcePackSearch({
         page: 1,
-        pageSize: 100
+        pageSize: 100,
+        packType: '0'
       }).then(response => {
         let resourcePack = []
         response.data['diskResourcePack'].forEach((res, index) => {
