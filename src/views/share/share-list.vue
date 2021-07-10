@@ -264,7 +264,7 @@ export default {
       let userInfo = JSON.parse(token)
 
       // 判断上传空间容量
-      if (userInfo.userRemainingCapacity <= 0 || userInfo.userRemainingCapacity - fileSize < 0) {
+      if (userInfo.userRemainingDiskCapacity <= 0 || userInfo.userRemainingDiskCapacity - fileSize < 0) {
         this.$message({
           showClose: true,
           message: '存储空间不足',

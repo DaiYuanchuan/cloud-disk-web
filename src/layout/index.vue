@@ -86,16 +86,16 @@
           <div class="storage-wrapper">
             <div class="usage-progress">
               <div class="text">
-                <!-- 以用容量 -->
-                {{ storageUnitFormatting(userInfo.usedCapacity) }}
+                <!-- 已用磁盘容量 -->
+                {{ storageUnitFormatting(userInfo.usedDiskCapacity) }}
                 /
-                <!-- 总容量 -->
-                {{ storageUnitFormatting(userInfo.totalCapacity) }}
+                <!-- 总磁盘容量 -->
+                {{ storageUnitFormatting(userInfo.totalDiskCapacity) }}
                 <span class="expansion">
                   <a @click="getResourcePacksInfo">扩容</a>
                 </span>
               </div>
-              <!-- 已用容量的百分比 -->
+              <!-- 已用磁盘容量的百分比 -->
               <span class="progress" :style="userInfo.percentageCapacity"></span>
             </div>
           </div>
@@ -511,12 +511,12 @@ export default {
         username: '',
         // 用户头像
         userAvatar: '',
-        // 总容量
-        totalCapacity: '',
-        // 已用容量
-        usedCapacity: '',
-        // 剩余容量
-        remainingCapacity: '',
+        // 总磁盘容量
+        totalDiskCapacity: '',
+        // 已用磁盘容量
+        usedDiskCapacity: '',
+        // 剩余磁盘容量
+        remainingDiskCapacity: '',
         // 已用容量的百分比
         percentageCapacity: {}
       },
@@ -620,7 +620,7 @@ export default {
      */
     fileSharingBtn: function () {
       // 判断上传空间容量，用户当前可用总容量 - 用户当前已经使用的容量 < 0
-      if (this.userInfo['userTotalCapacity'] - this.userInfo['userUsedCapacity'] < 0) {
+      if (this.userInfo['userTotalDiskCapacity'] - this.userInfo['userUsedDiskCapacity'] < 0) {
         this.$message({
           showClose: true,
           message: '存储空间不足，无法分享',
@@ -648,7 +648,7 @@ export default {
      */
     createFileShare: function () {
       // 判断上传空间容量，用户当前可用总容量 - 用户当前已经使用的容量 < 0
-      if (this.userInfo['userTotalCapacity'] - this.userInfo['userUsedCapacity'] < 0) {
+      if (this.userInfo['userTotalDiskCapacity'] - this.userInfo['userUsedDiskCapacity'] < 0) {
         this.$message({
           showClose: true,
           message: '存储空间不足，无法分享',
@@ -913,7 +913,7 @@ export default {
       })
       if (cardTitle === '复制') {
         // 判断上传空间容量
-        if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - fileSize < 0) {
+        if (this.userInfo.remainingDiskCapacity <= 0 || this.userInfo.remainingDiskCapacity - fileSize < 0) {
           this.$message({
             showClose: true,
             message: '存储空间不足',
@@ -1094,7 +1094,7 @@ export default {
           })
         })
         // 判断上传空间容量
-        if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - fileSize < 0) {
+        if (this.userInfo.remainingDiskCapacity <= 0 || this.userInfo.remainingDiskCapacity - fileSize < 0) {
           this.$message({
             showClose: true,
             message: '存储空间不足',
@@ -1338,8 +1338,8 @@ export default {
         return
       }
       let userInfo = JSON.parse(token)
-      userInfo['userUsedCapacity'] = userInfo['userUsedCapacity'] + fileSize
-      userInfo['userRemainingCapacity'] = userInfo['userRemainingCapacity'] - fileSize
+      userInfo['userUsedDiskCapacity'] = userInfo['userUsedDiskCapacity'] + fileSize
+      userInfo['userRemainingDiskCapacity'] = userInfo['userRemainingDiskCapacity'] - fileSize
       this.setUserInfoCookies(userInfo)
     },
     /**
@@ -1355,14 +1355,14 @@ export default {
         // 用户头像
         userAvatar: userInfo.userAvatar,
         // 总容量
-        totalCapacity: userInfo['userTotalCapacity'],
+        totalDiskCapacity: userInfo['userTotalDiskCapacity'],
         // 已用容量
-        usedCapacity: userInfo['userUsedCapacity'],
+        usedDiskCapacity: userInfo['userUsedDiskCapacity'],
         // 剩余容量
-        remainingCapacity: userInfo['userRemainingCapacity'],
+        remainingDiskCapacity: userInfo['userRemainingDiskCapacity'],
         // 已用容量的百分比
         percentageCapacity: {
-          width: ((userInfo['userUsedCapacity'] / userInfo['userTotalCapacity']) * 100) + '%',
+          width: ((userInfo['userUsedDiskCapacity'] / userInfo['userTotalDiskCapacity']) * 100) + '%',
           maxWidth: '100%'
         }
       }
@@ -1522,7 +1522,7 @@ export default {
           return
         }
         // 判断上传空间容量
-        if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - file.size < 0) {
+        if (this.userInfo.remainingDiskCapacity <= 0 || this.userInfo.remainingDiskCapacity - file.size < 0) {
           this.$message({
             showClose: true,
             message: '存储空间不足',
@@ -1734,7 +1734,7 @@ export default {
         return false
       }
       // 判断上传空间容量
-      return !(this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - file.size < 0)
+      return !(this.userInfo.remainingDiskCapacity <= 0 || this.userInfo.remainingDiskCapacity - file.size < 0)
     },
     /**
      * 文件上传队列过滤
