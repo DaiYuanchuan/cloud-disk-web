@@ -13,7 +13,7 @@ module.exports = {
     proxyTable: {
       '/api': {
         // 这里真实的后台接口
-        target: 'https://cloudtest.novelweb.cn/',
+        target: 'https://cloudtest.api.novelweb.cn/',
         // 允许跨域
         changeOrigin: true,
         secure: false,

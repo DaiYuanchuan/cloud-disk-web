@@ -219,6 +219,14 @@ export default {
         return
       }
 
+      // 获取cookie缓存中的用户信息
+      let userInfo = cookies.get('userInfo')
+      if (userInfo === undefined) {
+        // 如果在未登录的情况下使用，则跳转登录页面
+        this.$router.push({name: 'login'})
+        return
+      }
+
       switch (fileCategory(item['ossFileMimeType'])) {
         // 执行图片预览操作
         case 'image':
