@@ -94,13 +94,19 @@
           <el-option v-for="(item, index) in paymentOrderSearchForm.field"
                      :key="index" :label="item.label" :value="item.value"></el-option>
         </el-select>
-        <el-input v-show="paymentOrderSearchForm.fieldSelectValue !== 'orderTradeState'"
+        <el-input v-show="paymentOrderSearchForm.fieldSelectValue !== 'orderTradeState' && paymentOrderSearchForm.fieldSelectValue !== 'packType'"
                   type="text" placeholder="请输入需要查询的值"
                   v-model="paymentOrderSearchForm.fieldSelectInputValue"></el-input>
         <el-select v-show="paymentOrderSearchForm.fieldSelectValue === 'orderTradeState'"
                    class="setting-select-order-trade-state"
                    v-model="paymentOrderSearchForm.orderTradeStateSelectValue" placeholder="请选择对应的状态">
           <el-option v-for="(item, index) in paymentOrderSearchForm.orderTradeStateSelect"
+                     :key="index" :label="item.label" :value="item.value"></el-option>
+        </el-select>
+        <el-select v-show="paymentOrderSearchForm.fieldSelectValue === 'packType'"
+                   class="setting-select-order-trade-state"
+                   v-model="paymentOrderSearchForm.orderPackTypeSelectValue" placeholder="请选择对应的状态">
+          <el-option v-for="(item, index) in paymentOrderSearchForm.orderPackTypeSelect"
                      :key="index" :label="item.label" :value="item.value"></el-option>
         </el-select>
         <el-date-picker
@@ -119,7 +125,11 @@
         <el-table-column prop="orderNumber" label="订单编号" min-width="240"></el-table-column>
         <el-table-column prop="orderSubject" label="订单标题" min-width="145"></el-table-column>
         <el-table-column prop="effectiveDuration" label="有效期" min-width="80"></el-table-column>
-        <el-table-column prop="orderPaymentType" label="支付方式" min-width="90"></el-table-column>
+        <el-table-column prop="packType" label="资源包类型" min-width="90">
+          <template slot-scope="scope">
+            {{ scope.row.packType === 0 ? '扩容包' : '流量包' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="orderTotalAmount" label="总金额" min-width="90"></el-table-column>
         <el-table-column prop="success" label="状态" min-width="90">
           <template slot-scope="scope">
@@ -268,9 +278,22 @@ export default {
         }, {
           label: '交易状态',
           value: 'orderTradeState'
+        }, {
+          label: '资源包类型',
+          value: 'packType'
         }],
         // 当前被选中状态的对应值
         fieldSelectInputValue: '',
+        // 订单资源包类型被选中状态的对应值
+        orderPackTypeSelectValue: 0,
+        // 订单资源包类型选择器
+        orderPackTypeSelect: [{
+          label: '扩容包',
+          value: 0
+        }, {
+          label: '流量包',
+          value: 1
+        }],
         // 订单状态选择器被选中状态的对应值
         orderTradeStateSelectValue: 'TRADE_SUCCESS',
         // 订单状态选择器
@@ -499,14 +522,15 @@ export default {
     getPaymentOrderSearch: function (loading) {
       // 需要搜索的key值
       let key = this.paymentOrderSearchForm.fieldSelectValue
-      // 需要搜索的value
-      let value
+      // 需要搜索的value(默认为 input 的值)
+      let value = this.paymentOrderSearchForm.fieldSelectInputValue
       if (this.paymentOrderSearchForm.fieldSelectValue === 'orderTradeState') {
-        // 选项的值
+        // 订单状态选中值
         value = this.paymentOrderSearchForm.orderTradeStateSelectValue
-      } else {
-        // input 的值
-        value = this.paymentOrderSearchForm.fieldSelectInputValue
+      }
+      if (this.paymentOrderSearchForm.fieldSelectValue === 'packType') {
+        // 资源包类型选中值
+        value = this.paymentOrderSearchForm.orderPackTypeSelectValue
       }
       // 需要执行搜索的参数
       let params = {
@@ -567,7 +591,7 @@ export default {
         if (totalDuration > 12) {
           res['orderSubject'] = res['packName'] + '-' + totalDuration + '个月'
         } else {
-          res['orderSubject'] = res['packName'] + '资源扩容包'
+          res['orderSubject'] = res['packName'] + (res['packType'] === 0 ? '资源扩容包' : '流量包')
         }
         res['effectiveDuration'] = effectiveDuration
         res['orderTotalAmount'] = `￥${res['orderTotalAmount'] / 100}`

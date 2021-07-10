@@ -310,10 +310,10 @@
         <h3 class="pay-modal-content-title">支付成功</h3>
         <div class="pay-modal-content-box">
           <p class="pay-modal-content-desc">付款金额：{{
-              (payment.form.defaultValue * payment.form.itemPack['packPrice']) / 100
+              ((payment.form.defaultValue / payment.form.itemPack['packMonth']) * payment.form.itemPack['packPrice']) / 100
             }}元</p>
           <p class="pay-modal-content-desc">商品信息：{{
-              `${payment.form.itemPack['packName']} · ${payment.form.defaultValue}个月`
+              `${payment.form.itemPack['packName']}${payment.form.itemPack['packType'] === 0 ? '资源扩容包' : '流量包'} · ${payment.form.defaultValue}个月`
             }}</p>
           <p class="pay-modal-content-desc">到期时间：{{ estimatedExpirationTime() }}</p>
         </div>
@@ -1894,7 +1894,7 @@ export default {
       resourcePackSearch({
         page: 1,
         pageSize: 100,
-        packType: '0'
+        packType: '1'
       }).then(response => {
         let resourcePack = []
         response.data['diskResourcePack'].forEach((res, index) => {
@@ -2031,7 +2031,7 @@ export default {
         if (this.payment.state === 0 || this.payment.state === 1) {
           resourcePackTokenState(this.payment.token).then(response => {
             this.payment.state = response.data.state
-            // token不存咋
+            // token不存在
             if (response.data.state === 3) {
               this.paymentTokenRequest()
               return
