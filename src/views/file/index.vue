@@ -56,7 +56,7 @@
             </div>
             <div>
               <p class="name">
-                <!-- 新特性: 单击文件名，可以实现打开文件的效果 -->
+                <!-- 单击文件名，可以实现打开文件的效果 -->
                 <span @click="doubleClick(item)">{{ item.userFileName }}</span>
               </p>
               <p :data-order="item.ossFileSize === 0 ? -1 : storageUnitFormatting(item.ossFileSize)" class="size">
@@ -220,12 +220,28 @@ export default {
       }
 
       // 获取cookie缓存中的用户信息
-      let userInfo = cookies.get('userInfo')
-      if (userInfo === undefined) {
+      let token = cookies.get('userInfo')
+      if (token === undefined) {
         // 如果在未登录的情况下使用，则跳转登录页面
         this.$router.push({name: 'login'})
         return
       }
+      let userInfo = JSON.parse(token)
+
+      // 如果当前剩余流量不足以抵扣本次下载，则提示异常信息
+      if ((userInfo['userRemainingTraffic'] - item.ossFileSize) < 0) {
+        this.$message({
+          showClose: true,
+          message: '当前可用流量不足，无法下载',
+          type: 'error'
+        })
+        return
+      }
+
+      // 重置用户当前剩余流量信息
+      userInfo['userRemainingTraffic'] = userInfo['userRemainingTraffic'] - item.ossFileSize
+      // 重新对cookie中的用户信息赋值
+      cookies.set('userInfo', userInfo)
 
       switch (fileCategory(item['ossFileMimeType'])) {
         // 执行图片预览操作
