@@ -283,7 +283,9 @@
                 </div>
                 <div class="pay-method-detail-body">
                   <span class="pay-method-detail-origin-price">
-                    {{ (payment.form.defaultValue * payment.form.itemPack['packPrice']) / 100 }}
+                    {{
+                      ((payment.form.defaultValue / payment.form.itemPack['packMonth']) * payment.form.itemPack['packPrice']) / 100
+                    }}
                   </span>元
                 </div>
               </div>
