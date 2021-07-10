@@ -486,7 +486,11 @@ export default {
         // 动态预览url
         userDynamicPreviewUrl: '',
         // 动态下载Url
-        userDynamicDownloadUrl: ''
+        userDynamicDownloadUrl: '',
+        // 用户剩余流量
+        userRemainingTraffic: '',
+        // 文件数据
+        fileData: ''
       },
       // 意见与反馈的对象
       feedback: {
@@ -819,6 +823,15 @@ export default {
         return
       }
 
+      // 获取cookie缓存中的用户信息
+      let token = cookies.get('userInfo')
+      if (token === undefined) {
+        // 如果在未登录的情况下使用，则跳转登录页面
+        this.$router.push({name: 'login'})
+        return
+      }
+      let userInfo = JSON.parse(token)
+
       this.fileInfoDialog = {
         // 是否显示弹窗
         show: true,
@@ -841,13 +854,48 @@ export default {
         // 动态预览url
         userDynamicPreviewUrl: selectData[0]['userDynamicPreviewUrl'],
         // 动态下载Url
-        userDynamicDownloadUrl: selectData[0]['userDynamicDownloadUrl']
+        userDynamicDownloadUrl: selectData[0]['userDynamicDownloadUrl'],
+        // 用户剩余流量
+        userRemainingTraffic: userInfo['userRemainingTraffic'],
+        // 文件数据
+        fileData: selectData[0]
+      }
+
+      // 如果当前剩余流量不足以抵扣本次下载，则提示异常信息
+      if ((userInfo['userRemainingTraffic'] - selectData[0]['ossFileSize']) < 0) {
+        this.fileInfoDialog.fileType = 'unknown'
+        this.fileInfoDialog.forbidden = true
+        this.fileInfoDialog.userDynamicPreviewUrl = ''
       }
     },
     /**
      * 文件下载按钮事件
      */
     fileDownloadBtn: function () {
+      // 获取cookie缓存中的用户信息
+      let token = cookies.get('userInfo')
+      if (token === undefined) {
+        // 如果在未登录的情况下使用，则跳转登录页面
+        this.$router.push({name: 'login'})
+        return
+      }
+      let userInfo = JSON.parse(token)
+
+      // 如果当前剩余流量不足以抵扣本次下载，则提示异常信息
+      if ((userInfo['userRemainingTraffic'] - this.fileInfoDialog.fileData.ossFileSize) < 0) {
+        this.$message({
+          showClose: true,
+          message: '当前可用流量不足，无法下载',
+          type: 'error'
+        })
+        return
+      }
+
+      // 重置用户当前流量信息
+      userInfo['userUsedTraffic'] = userInfo['userUsedTraffic'] + this.fileInfoDialog.fileData.ossFileSize
+      userInfo['userRemainingTraffic'] = userInfo['userRemainingTraffic'] - this.fileInfoDialog.fileData.ossFileSize
+      // 重新对cookie中的用户信息赋值
+      cookies.set('userInfo', userInfo)
       // 文件下载
       downloadByUrl(this.fileInfoDialog.userDynamicDownloadUrl, this.fileInfoDialog.fileName)
     },
@@ -878,7 +926,11 @@ export default {
           // 动态预览url
           userDynamicPreviewUrl: '',
           // 动态下载Url
-          userDynamicDownloadUrl: ''
+          userDynamicDownloadUrl: '',
+          // 用户剩余流量
+          userRemainingTraffic: '',
+          // 文件数据
+          fileData: ''
         }
       }
     },

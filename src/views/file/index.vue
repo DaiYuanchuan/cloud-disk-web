@@ -252,6 +252,7 @@ export default {
           // 实时筛选出当前文件中的所有图片类型的文件
           this.elImageViewer.imagesList = this.fileList.filter(res => fileCategory(res['ossFileMimeType']) === 'image')
             .filter(res => !res['forbidden'])
+            .filter(res => (userInfo['userRemainingTraffic'] - res['ossFileSize']) > 0)
             .map(res => res['userDynamicDownloadUrl'])
           // 设置初始索引值
           this.elImageViewer.initialIndex = this.elImageViewer.imagesList.findIndex(res => res === item['userDynamicDownloadUrl'])
