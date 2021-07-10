@@ -238,7 +238,8 @@ export default {
         return
       }
 
-      // 重置用户当前剩余流量信息
+      // 重置用户当前流量信息
+      userInfo['userUsedTraffic'] = userInfo['userUsedTraffic'] + item.ossFileSize
       userInfo['userRemainingTraffic'] = userInfo['userRemainingTraffic'] - item.ossFileSize
       // 重新对cookie中的用户信息赋值
       cookies.set('userInfo', userInfo)
