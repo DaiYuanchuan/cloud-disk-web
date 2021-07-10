@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import { constantRoutes } from '../router/routers'
+import { constantRoutes } from './routers'
 
 Vue.use(Router)
 
