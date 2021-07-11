@@ -1894,7 +1894,7 @@ export default {
       resourcePackSearch({
         page: 1,
         pageSize: 100,
-        packType: '1'
+        packType: '0'
       }).then(response => {
         let resourcePack = []
         response.data['diskResourcePack'].forEach((res, index) => {
