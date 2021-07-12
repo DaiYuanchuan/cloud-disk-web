@@ -67,6 +67,9 @@
       <el-form :model="userForm" status-icon :rules="rules" ref="changeEmail" label-width="100px">
         <el-form-item label="新的邮箱" prop="userEmail">
           <el-input type="text" placeholder="请输入新的邮箱地址" v-model="userForm.userEmail" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="验证码" prop="securityCode">
+          <el-input type="text" placeholder="请输入邮箱验证码" v-model="userForm.securityCode" autocomplete="off"/>
           <el-button
             @click="sendSecurityCode()"
             :disabled="!disabled"
@@ -74,15 +77,58 @@
           > {{ codeText }}
           </el-button>
         </el-form-item>
-        <el-form-item label="验证码" prop="securityCode">
-          <el-input type="text" placeholder="请输入邮箱验证码" v-model="userForm.securityCode" autocomplete="off"/>
-        </el-form-item>
         <el-form-item class="setting-email-submit-form">
           <el-button class="setting-email-submit-btn" type="primary"
                      @click="submitUpdateEmailForm('changeEmail')">提交
           </el-button>
         </el-form-item>
       </el-form>
+    </el-card>
+    <!-- 用户容量、流量显示 -->
+    <el-card class="setting-panel-capacity box-card" shadow="always">
+      <div slot="header" class="clearfix">
+        <span>磁盘容量、流量扩容</span>
+      </div>
+      <!-- 磁盘容量 -->
+      <div class="content-bottom disk-capacity">
+        <div class="storage-wrapper">
+          <div class="usage-progress">
+            <div class="text">
+              <!-- 已用磁盘容量 -->
+              {{ storageUnitFormatting(userInfo['userUsedDiskCapacity']) }}
+              /
+              <!-- 总磁盘容量 -->
+              {{ storageUnitFormatting(userInfo['userTotalDiskCapacity']) }}
+              <span class="expansion">
+                  <a @click="$emit('openPayDialog', 0)">网盘扩容</a>
+                </span>
+            </div>
+            <!-- 已用磁盘容量的百分比 -->
+            <el-progress :percentage="(this.userInfo['userUsedDiskCapacity'] / this.userInfo['userTotalDiskCapacity']) * 100"></el-progress>
+            <span class="progress" :style="userCapacity.percentageCapacity"></span>
+          </div>
+        </div>
+      </div>
+      <!-- 流量 -->
+      <div class="content-bottom traffic">
+        <div class="storage-wrapper">
+          <div class="usage-progress">
+            <div class="text">
+              <!-- 已用流量 -->
+              {{ storageUnitFormatting(userInfo['userUsedTraffic']) }}
+              /
+              <!-- 总流量 -->
+              {{ storageUnitFormatting(userInfo['userTotalTraffic']) }}
+              <span class="expansion">
+                  <a @click="$emit('openPayDialog', 1)">流量扩容</a>
+                </span>
+            </div>
+            <!-- 已用流量的百分比 -->
+            <el-progress :percentage="(this.userInfo['userUsedTraffic'] / this.userInfo['userTotalTraffic']) * 100"></el-progress>
+            <span class="progress" :style="userCapacity.percentageTraffic"></span>
+          </div>
+        </div>
+      </div>
     </el-card>
     <el-card class="setting-panel-order box-card" shadow="always">
       <div slot="header" class="clearfix">
@@ -94,9 +140,10 @@
           <el-option v-for="(item, index) in paymentOrderSearchForm.field"
                      :key="index" :label="item.label" :value="item.value"></el-option>
         </el-select>
-        <el-input v-show="paymentOrderSearchForm.fieldSelectValue !== 'orderTradeState' && paymentOrderSearchForm.fieldSelectValue !== 'packType'"
-                  type="text" placeholder="请输入需要查询的值"
-                  v-model="paymentOrderSearchForm.fieldSelectInputValue"></el-input>
+        <el-input
+          v-show="paymentOrderSearchForm.fieldSelectValue !== 'orderTradeState' && paymentOrderSearchForm.fieldSelectValue !== 'packType'"
+          type="text" placeholder="请输入需要查询的值"
+          v-model="paymentOrderSearchForm.fieldSelectInputValue"></el-input>
         <el-select v-show="paymentOrderSearchForm.fieldSelectValue === 'orderTradeState'"
                    class="setting-select-order-trade-state"
                    v-model="paymentOrderSearchForm.orderTradeStateSelectValue" placeholder="请选择对应的状态">
@@ -170,6 +217,7 @@ import {updateUserInfo} from '@/api/user'
 import {sendSecurityCode} from '@/api/login'
 import {paymentOrderSearch} from '@/api/order'
 import {validEmail, validUsername} from '@/utils/validate'
+import {storageUnitConversion} from '@/utils/utils'
 
 export default {
   name: 'setting',
@@ -324,7 +372,14 @@ export default {
         time: ''
       },
       // 当前用户的支付订单信息
-      paymentOrderInfo: []
+      paymentOrderInfo: [],
+      // 用户磁盘容量、流量信息的展示
+      userCapacity: {
+        // 已用容量的百分比
+        percentageCapacity: {},
+        // 已用流量的百分比
+        percentageTraffic: {}
+      }
     }
   },
   // 钩子函数：页面加载完成后执行
@@ -339,6 +394,17 @@ export default {
     // 重置头像预览图片
     this.avatarUploader.previewImage = JSON.parse(userInfo).userAvatar
     this.userInfo = JSON.parse(userInfo)
+    this.userCapacity = {
+      // 已用容量的百分比
+      percentageCapacity: {
+        width: ((this.userInfo['userUsedDiskCapacity'] / this.userInfo['userTotalDiskCapacity']) * 100) + '%',
+        maxWidth: '100%'
+      },
+      percentageTraffic: {
+        width: ((this.userInfo['userUsedTraffic'] / this.userInfo['userTotalTraffic']) * 100) + '%',
+        maxWidth: '100%'
+      }
+    }
     // 获取当前用户的订单列表
     this.getPaymentOrderSearch(false)
   },
@@ -585,7 +651,8 @@ export default {
             effectiveDuration = effectiveDuration + '年'
           }
         } else {
-          effectiveDuration = `${(endTime.getMonth() - createTime.getMonth()) + 1}个月`
+          let month = (endTime.getMonth() - createTime.getMonth()) + 1
+          effectiveDuration = month === 12 ? '1年' : `${month}个月`
         }
 
         if (totalDuration > 12) {
@@ -670,6 +737,16 @@ export default {
     paymentOrderSearchBtn: function () {
       this.paymentOrderPagingInfo.currentChange = 1
       this.getPaymentOrderSearch(true)
+    },
+    /**
+     * 存储单位格式化
+     * @param size 字节数
+     */
+    storageUnitFormatting: function (size) {
+      if (size > 0) {
+        return storageUnitConversion(size)
+      }
+      return '0'
     }
   }
 }

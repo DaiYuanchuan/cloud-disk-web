@@ -92,7 +92,7 @@
                 <!-- 总磁盘容量 -->
                 {{ storageUnitFormatting(userInfo.totalDiskCapacity) }}
                 <span class="expansion">
-                  <a @click="getResourcePacksInfo">扩容</a>
+                  <a @click="getResourcePacksInfo(0)">扩容</a>
                 </span>
               </div>
               <!-- 已用磁盘容量的百分比 -->
@@ -114,7 +114,7 @@
         <!-- main -->
         <el-main>
           <router-view :breadcrumbs="breadcrumbs" :file-list="fileList"
-                       @nextPage="nextPage" @doubleClick="doubleClick"
+                       @nextPage="nextPage" @doubleClick="doubleClick" @openPayDialog="getResourcePacksInfo"
                        @ctrlC="setPreprocessing('copy')" @ctrlX="setPreprocessing('move')"
                        @previous="previous" @delete="fileDeletion" @userAvatar="setUserAvatar"></router-view>
         </el-main>
@@ -238,7 +238,7 @@
     </el-dialog>
 
     <!-- 支付的表单对象 -->
-    <el-dialog title="容量包购买" customClass="pay-dialog" :visible.sync="payment.show"
+    <el-dialog :title="payment.title" customClass="pay-dialog" :visible.sync="payment.show"
                :before-close="resourcePacksDialogClose">
       <div v-if="payment.state === 0" class="pay-scene-card">
         <!-- 卡片内容 -->
@@ -313,7 +313,7 @@
               ((payment.form.defaultValue / payment.form.itemPack['packMonth']) * payment.form.itemPack['packPrice']) / 100
             }}元</p>
           <p class="pay-modal-content-desc">商品信息：{{
-              `${payment.form.itemPack['packName']}${payment.form.itemPack['packType'] === 0 ? '资源扩容包' : '流量包'} · ${payment.form.defaultValue}个月`
+              `${payment.form.itemPack['packName']}${payment.form.itemPack['packType'] === 0 ? '扩容包' : '流量包'} · ${payment.form.defaultValue}个月`
             }}</p>
           <p class="pay-modal-content-desc">到期时间：{{ estimatedExpirationTime() }}</p>
         </div>
@@ -530,6 +530,8 @@ export default {
       payment: {
         // 是否显示当前dialog弹窗对象
         show: false,
+        // 当前dialog标题
+        title: '',
         // 当前发起请求的对象是否为手机
         mobile: false,
         // 当前选中的资源包所对应的token信息(5分钟有效期)
@@ -1887,14 +1889,15 @@ export default {
     // ============================== 支付块 ==============================
     /**
      * 获取资源包信息
+     * @param packType {Number} 资源包类型(0:容量包，1:流量包)
      */
-    getResourcePacksInfo: function () {
+    getResourcePacksInfo: function (packType) {
       this.toggleSidebarClick = false
       // 获取后台配置的容量包信息
       resourcePackSearch({
         page: 1,
         pageSize: 100,
-        packType: '0'
+        packType: packType
       }).then(response => {
         let resourcePack = []
         response.data['diskResourcePack'].forEach((res, index) => {
@@ -1905,6 +1908,8 @@ export default {
         this.payment = {
           // 是否显示当前dialog弹窗对象
           show: true,
+          // 当前dialog抬头
+          title: packType === 0 ? '购买网盘扩容包' : '购买流量包',
           // 当前发起请求的对象是否为手机
           mobile: response.data.mobile,
           // 当前选中的资源包所对应的token信息(5分钟有效期)
@@ -1942,6 +1947,7 @@ export default {
         this.$emit('update:visible', false)
         this.$emit('close')
         this.payment.show = false
+        this.payment.title = ''
         if (this.payment.timeout !== null) {
           clearTimeout(this.payment.timeout)
         }
