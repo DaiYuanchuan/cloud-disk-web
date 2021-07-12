@@ -815,6 +815,18 @@ export default {
   border-radius: 100px;
 }
 
+.usage-progress::after {
+  content: "";
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(222, 223, 235, .5);
+  width: 100%;
+  height: 6px;
+  border-radius: 100px;
+}
+
 .form-setting {
   margin-top: 0;
 }
@@ -891,7 +903,7 @@ img {
 }
 
 .setting-panel-order-top-form .el-input {
-  width: 49%;
+  width: 30%;
   margin-right: 1%;
   margin-left: 1%;
 }
