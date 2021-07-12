@@ -976,7 +976,6 @@ img {
 
   .setting-panel-avatar {
     width: 100%;
-    margin-bottom: 1.5%;
     margin-top: 1%;
   }
 
