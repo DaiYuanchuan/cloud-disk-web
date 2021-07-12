@@ -233,8 +233,11 @@ export default {
         this.$message({
           showClose: true,
           message: '当前可用流量不足，无法下载',
-          type: 'error'
+          type: 'error',
+          customClass: 'openPayDialog',
+          duration: 3 * 1000
         })
+        this.$emit('openPayDialog', 1)
         return
       }
 

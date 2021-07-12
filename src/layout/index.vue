@@ -2909,6 +2909,11 @@ header > div:first-child > .action, header img {
 
 </style>
 <style>
+
+.openPayDialog {
+  z-index: 5000 !important;
+}
+
 @media (max-width: 730px) {
   .el-message-box {
     width: 300px;
