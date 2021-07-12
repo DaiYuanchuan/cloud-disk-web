@@ -87,7 +87,7 @@
     <!-- 用户容量、流量显示 -->
     <el-card class="setting-panel-capacity box-card" shadow="always">
       <div slot="header" class="clearfix">
-        <span>磁盘容量、流量扩容</span>
+        <span>我的容量</span>
       </div>
       <!-- 磁盘容量 -->
       <div class="content-bottom disk-capacity">
@@ -95,7 +95,7 @@
           <div class="usage-progress">
             <div class="text">
               <!-- 已用磁盘容量 -->
-              {{ storageUnitFormatting(userInfo['userUsedDiskCapacity']) }}
+              网盘：{{ storageUnitFormatting(userInfo['userUsedDiskCapacity']) }}
               /
               <!-- 总磁盘容量 -->
               {{ storageUnitFormatting(userInfo['userTotalDiskCapacity']) }}
@@ -104,8 +104,7 @@
                 </span>
             </div>
             <!-- 已用磁盘容量的百分比 -->
-            <el-progress :percentage="(this.userInfo['userUsedDiskCapacity'] / this.userInfo['userTotalDiskCapacity']) * 100"></el-progress>
-            <span class="progress" :style="userCapacity.percentageCapacity"></span>
+            <span class="progress disk-capacity-progress" :style="userCapacity.percentageCapacity"></span>
           </div>
         </div>
       </div>
@@ -115,7 +114,7 @@
           <div class="usage-progress">
             <div class="text">
               <!-- 已用流量 -->
-              {{ storageUnitFormatting(userInfo['userUsedTraffic']) }}
+              流量：{{ storageUnitFormatting(userInfo['userUsedTraffic']) }}
               /
               <!-- 总流量 -->
               {{ storageUnitFormatting(userInfo['userTotalTraffic']) }}
@@ -124,8 +123,7 @@
                 </span>
             </div>
             <!-- 已用流量的百分比 -->
-            <el-progress :percentage="(this.userInfo['userUsedTraffic'] / this.userInfo['userTotalTraffic']) * 100"></el-progress>
-            <span class="progress" :style="userCapacity.percentageTraffic"></span>
+            <span class="progress disk-traffic-progress" :style="userCapacity.percentageTraffic"></span>
           </div>
         </div>
       </div>
@@ -803,6 +801,20 @@ export default {
   font-size: .933em
 }
 
+.disk-traffic-progress {
+  color: #ff1d12;
+}
+
+.progress {
+  height: 6px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  transition-duration: 0.274778s;
+  background-color: rgba(28, 175, 253, 1);
+  border-radius: 100px;
+}
+
 .form-setting {
   margin-top: 0;
 }
@@ -864,7 +876,7 @@ img {
 }
 
 .setting-panel-avatar {
-  width: 30%;
+  width: 49%;
   margin-top: 1%;
 }
 
@@ -879,33 +891,62 @@ img {
 }
 
 .setting-panel-order-top-form .el-input {
-  width: 30%;
+  width: 49%;
   margin-right: 1%;
   margin-left: 1%;
 }
 
 .setting-panel-password {
-  width: 30%;
+  width: 49%;
   margin-left: 1.2%;
   margin-top: 1%;
 }
 
 .setting-panel-email {
-  width: 37%;
+  width: 49%;
+  margin-top: 1%;
+  position: relative;
+}
+
+.setting-panel-capacity {
+  width: 49%;
   margin-left: 1.2%;
   margin-top: 1%;
   position: relative;
+}
 
+.usage-progress {
+  height: 36px;
+  position: relative;
+  margin-bottom: 32px;
+}
+
+.expansion {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  color: #09AAFF;
+  text-align: right;
+  float: right;
+}
+
+.expansion a, .expansion a:hover {
+  color: inherit;
+  cursor: pointer;
+  text-align: right;
+  border: 0;
+}
+
+.text {
+  font-size: 11px;
+  line-height: 160%;
+  color: var(--context_primary);
+  margin-bottom: 12px;
 }
 
 .setting-panel-order {
   width: 100%;
-}
-
-.setting-email-submit-form {
-  position: absolute;
-  bottom: 5%;
-  right: 5%;
 }
 
 /deep/ .el-form-item__content {
@@ -917,10 +958,6 @@ img {
   display: none;
   font-weight: bold;
   margin-bottom: 1.2rem
-}
-
-.text {
-  font-size: 14px;
 }
 
 .item {
@@ -965,6 +1002,11 @@ img {
   }
 
   .setting-panel-password {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .setting-panel-capacity {
     width: 100%;
     margin-left: 0;
   }
