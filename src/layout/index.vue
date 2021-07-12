@@ -86,16 +86,16 @@
           <div class="storage-wrapper">
             <div class="usage-progress">
               <div class="text">
-                <!-- 以用容量 -->
-                {{ storageUnitFormatting(userInfo.usedCapacity) }}
+                <!-- 已用磁盘容量 -->
+                {{ storageUnitFormatting(userInfo.usedDiskCapacity) }}
                 /
-                <!-- 总容量 -->
-                {{ storageUnitFormatting(userInfo.totalCapacity) }}
+                <!-- 总磁盘容量 -->
+                {{ storageUnitFormatting(userInfo.totalDiskCapacity) }}
                 <span class="expansion">
-                  <a @click="getResourcePacksInfo">扩容</a>
+                  <a @click="getResourcePacksInfo(0)">扩容</a>
                 </span>
               </div>
-              <!-- 已用容量的百分比 -->
+              <!-- 已用磁盘容量的百分比 -->
               <span class="progress" :style="userInfo.percentageCapacity"></span>
             </div>
           </div>
@@ -114,7 +114,7 @@
         <!-- main -->
         <el-main>
           <router-view :breadcrumbs="breadcrumbs" :file-list="fileList"
-                       @nextPage="nextPage" @doubleClick="doubleClick"
+                       @nextPage="nextPage" @doubleClick="doubleClick" @openPayDialog="getResourcePacksInfo"
                        @ctrlC="setPreprocessing('copy')" @ctrlX="setPreprocessing('move')"
                        @previous="previous" @delete="fileDeletion" @userAvatar="setUserAvatar"></router-view>
         </el-main>
@@ -238,7 +238,7 @@
     </el-dialog>
 
     <!-- 支付的表单对象 -->
-    <el-dialog title="容量包购买" customClass="pay-dialog" :visible.sync="payment.show"
+    <el-dialog :title="payment.title" customClass="pay-dialog" :visible.sync="payment.show"
                :before-close="resourcePacksDialogClose">
       <div v-if="payment.state === 0" class="pay-scene-card">
         <!-- 卡片内容 -->
@@ -283,7 +283,9 @@
                 </div>
                 <div class="pay-method-detail-body">
                   <span class="pay-method-detail-origin-price">
-                    {{ (payment.form.defaultValue * payment.form.itemPack['packPrice']) / 100 }}
+                    {{
+                      ((payment.form.defaultValue / payment.form.itemPack['packMonth']) * payment.form.itemPack['packPrice']) / 100
+                    }}
                   </span>元
                 </div>
               </div>
@@ -308,10 +310,10 @@
         <h3 class="pay-modal-content-title">支付成功</h3>
         <div class="pay-modal-content-box">
           <p class="pay-modal-content-desc">付款金额：{{
-              (payment.form.defaultValue * payment.form.itemPack['packPrice']) / 100
+              ((payment.form.defaultValue / payment.form.itemPack['packMonth']) * payment.form.itemPack['packPrice']) / 100
             }}元</p>
           <p class="pay-modal-content-desc">商品信息：{{
-              `${payment.form.itemPack['packName']} · ${payment.form.defaultValue}个月`
+              `${payment.form.itemPack['packName']}${payment.form.itemPack['packType'] === 0 ? '扩容包' : '流量包'} · ${payment.form.defaultValue}个月`
             }}</p>
           <p class="pay-modal-content-desc">到期时间：{{ estimatedExpirationTime() }}</p>
         </div>
@@ -486,7 +488,11 @@ export default {
         // 动态预览url
         userDynamicPreviewUrl: '',
         // 动态下载Url
-        userDynamicDownloadUrl: ''
+        userDynamicDownloadUrl: '',
+        // 用户剩余流量
+        userRemainingTraffic: '',
+        // 文件数据
+        fileData: ''
       },
       // 意见与反馈的对象
       feedback: {
@@ -511,12 +517,12 @@ export default {
         username: '',
         // 用户头像
         userAvatar: '',
-        // 总容量
-        totalCapacity: '',
-        // 已用容量
-        usedCapacity: '',
-        // 剩余容量
-        remainingCapacity: '',
+        // 总磁盘容量
+        totalDiskCapacity: '',
+        // 已用磁盘容量
+        usedDiskCapacity: '',
+        // 剩余磁盘容量
+        remainingDiskCapacity: '',
         // 已用容量的百分比
         percentageCapacity: {}
       },
@@ -524,6 +530,8 @@ export default {
       payment: {
         // 是否显示当前dialog弹窗对象
         show: false,
+        // 当前dialog标题
+        title: '',
         // 当前发起请求的对象是否为手机
         mobile: false,
         // 当前选中的资源包所对应的token信息(5分钟有效期)
@@ -620,7 +628,7 @@ export default {
      */
     fileSharingBtn: function () {
       // 判断上传空间容量，用户当前可用总容量 - 用户当前已经使用的容量 < 0
-      if (this.userInfo['userTotalCapacity'] - this.userInfo['userUsedCapacity'] < 0) {
+      if (this.userInfo['userTotalDiskCapacity'] - this.userInfo['userUsedDiskCapacity'] < 0) {
         this.$message({
           showClose: true,
           message: '存储空间不足，无法分享',
@@ -648,7 +656,7 @@ export default {
      */
     createFileShare: function () {
       // 判断上传空间容量，用户当前可用总容量 - 用户当前已经使用的容量 < 0
-      if (this.userInfo['userTotalCapacity'] - this.userInfo['userUsedCapacity'] < 0) {
+      if (this.userInfo['userTotalDiskCapacity'] - this.userInfo['userUsedDiskCapacity'] < 0) {
         this.$message({
           showClose: true,
           message: '存储空间不足，无法分享',
@@ -819,6 +827,15 @@ export default {
         return
       }
 
+      // 获取cookie缓存中的用户信息
+      let token = cookies.get('userInfo')
+      if (token === undefined) {
+        // 如果在未登录的情况下使用，则跳转登录页面
+        this.$router.push({name: 'login'})
+        return
+      }
+      let userInfo = JSON.parse(token)
+
       this.fileInfoDialog = {
         // 是否显示弹窗
         show: true,
@@ -841,13 +858,48 @@ export default {
         // 动态预览url
         userDynamicPreviewUrl: selectData[0]['userDynamicPreviewUrl'],
         // 动态下载Url
-        userDynamicDownloadUrl: selectData[0]['userDynamicDownloadUrl']
+        userDynamicDownloadUrl: selectData[0]['userDynamicDownloadUrl'],
+        // 用户剩余流量
+        userRemainingTraffic: userInfo['userRemainingTraffic'],
+        // 文件数据
+        fileData: selectData[0]
+      }
+
+      // 如果当前剩余流量不足以抵扣本次下载，则提示异常信息
+      if ((userInfo['userRemainingTraffic'] - selectData[0]['ossFileSize']) < 0) {
+        this.fileInfoDialog.fileType = 'unknown'
+        this.fileInfoDialog.forbidden = true
+        this.fileInfoDialog.userDynamicPreviewUrl = ''
       }
     },
     /**
      * 文件下载按钮事件
      */
     fileDownloadBtn: function () {
+      // 获取cookie缓存中的用户信息
+      let token = cookies.get('userInfo')
+      if (token === undefined) {
+        // 如果在未登录的情况下使用，则跳转登录页面
+        this.$router.push({name: 'login'})
+        return
+      }
+      let userInfo = JSON.parse(token)
+
+      // 如果当前剩余流量不足以抵扣本次下载，则提示异常信息
+      if ((userInfo['userRemainingTraffic'] - this.fileInfoDialog.fileData.ossFileSize) < 0) {
+        this.$message({
+          showClose: true,
+          message: '当前可用流量不足，无法下载',
+          type: 'error'
+        })
+        return
+      }
+
+      // 重置用户当前流量信息
+      userInfo['userUsedTraffic'] = userInfo['userUsedTraffic'] + this.fileInfoDialog.fileData.ossFileSize
+      userInfo['userRemainingTraffic'] = userInfo['userRemainingTraffic'] - this.fileInfoDialog.fileData.ossFileSize
+      // 重新对cookie中的用户信息赋值
+      cookies.set('userInfo', userInfo)
       // 文件下载
       downloadByUrl(this.fileInfoDialog.userDynamicDownloadUrl, this.fileInfoDialog.fileName)
     },
@@ -878,7 +930,11 @@ export default {
           // 动态预览url
           userDynamicPreviewUrl: '',
           // 动态下载Url
-          userDynamicDownloadUrl: ''
+          userDynamicDownloadUrl: '',
+          // 用户剩余流量
+          userRemainingTraffic: '',
+          // 文件数据
+          fileData: ''
         }
       }
     },
@@ -913,7 +969,7 @@ export default {
       })
       if (cardTitle === '复制') {
         // 判断上传空间容量
-        if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - fileSize < 0) {
+        if (this.userInfo.remainingDiskCapacity <= 0 || this.userInfo.remainingDiskCapacity - fileSize < 0) {
           this.$message({
             showClose: true,
             message: '存储空间不足',
@@ -1094,7 +1150,7 @@ export default {
           })
         })
         // 判断上传空间容量
-        if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - fileSize < 0) {
+        if (this.userInfo.remainingDiskCapacity <= 0 || this.userInfo.remainingDiskCapacity - fileSize < 0) {
           this.$message({
             showClose: true,
             message: '存储空间不足',
@@ -1338,8 +1394,8 @@ export default {
         return
       }
       let userInfo = JSON.parse(token)
-      userInfo['userUsedCapacity'] = userInfo['userUsedCapacity'] + fileSize
-      userInfo['userRemainingCapacity'] = userInfo['userRemainingCapacity'] - fileSize
+      userInfo['userUsedDiskCapacity'] = userInfo['userUsedDiskCapacity'] + fileSize
+      userInfo['userRemainingDiskCapacity'] = userInfo['userRemainingDiskCapacity'] - fileSize
       this.setUserInfoCookies(userInfo)
     },
     /**
@@ -1355,14 +1411,14 @@ export default {
         // 用户头像
         userAvatar: userInfo.userAvatar,
         // 总容量
-        totalCapacity: userInfo['userTotalCapacity'],
+        totalDiskCapacity: userInfo['userTotalDiskCapacity'],
         // 已用容量
-        usedCapacity: userInfo['userUsedCapacity'],
+        usedDiskCapacity: userInfo['userUsedDiskCapacity'],
         // 剩余容量
-        remainingCapacity: userInfo['userRemainingCapacity'],
+        remainingDiskCapacity: userInfo['userRemainingDiskCapacity'],
         // 已用容量的百分比
         percentageCapacity: {
-          width: ((userInfo['userUsedCapacity'] / userInfo['userTotalCapacity']) * 100) + '%',
+          width: ((userInfo['userUsedDiskCapacity'] / userInfo['userTotalDiskCapacity']) * 100) + '%',
           maxWidth: '100%'
         }
       }
@@ -1522,7 +1578,7 @@ export default {
           return
         }
         // 判断上传空间容量
-        if (this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - file.size < 0) {
+        if (this.userInfo.remainingDiskCapacity <= 0 || this.userInfo.remainingDiskCapacity - file.size < 0) {
           this.$message({
             showClose: true,
             message: '存储空间不足',
@@ -1734,7 +1790,7 @@ export default {
         return false
       }
       // 判断上传空间容量
-      return !(this.userInfo.remainingCapacity <= 0 || this.userInfo.remainingCapacity - file.size < 0)
+      return !(this.userInfo.remainingDiskCapacity <= 0 || this.userInfo.remainingDiskCapacity - file.size < 0)
     },
     /**
      * 文件上传队列过滤
@@ -1833,14 +1889,15 @@ export default {
     // ============================== 支付块 ==============================
     /**
      * 获取资源包信息
+     * @param packType {Number} 资源包类型(0:容量包，1:流量包)
      */
-    getResourcePacksInfo: function () {
+    getResourcePacksInfo: function (packType) {
       this.toggleSidebarClick = false
       // 获取后台配置的容量包信息
       resourcePackSearch({
         page: 1,
         pageSize: 100,
-        packType: '0'
+        packType: packType
       }).then(response => {
         let resourcePack = []
         response.data['diskResourcePack'].forEach((res, index) => {
@@ -1851,6 +1908,8 @@ export default {
         this.payment = {
           // 是否显示当前dialog弹窗对象
           show: true,
+          // 当前dialog抬头
+          title: packType === 0 ? '购买网盘扩容包' : '购买流量包',
           // 当前发起请求的对象是否为手机
           mobile: response.data.mobile,
           // 当前选中的资源包所对应的token信息(5分钟有效期)
@@ -1888,6 +1947,7 @@ export default {
         this.$emit('update:visible', false)
         this.$emit('close')
         this.payment.show = false
+        this.payment.title = ''
         if (this.payment.timeout !== null) {
           clearTimeout(this.payment.timeout)
         }
@@ -1977,7 +2037,7 @@ export default {
         if (this.payment.state === 0 || this.payment.state === 1) {
           resourcePackTokenState(this.payment.token).then(response => {
             this.payment.state = response.data.state
-            // token不存咋
+            // token不存在
             if (response.data.state === 3) {
               this.paymentTokenRequest()
               return
@@ -2849,6 +2909,11 @@ header > div:first-child > .action, header img {
 
 </style>
 <style>
+
+.openPayDialog {
+  z-index: 5000 !important;
+}
+
 @media (max-width: 730px) {
   .el-message-box {
     width: 300px;

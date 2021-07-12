@@ -8,7 +8,7 @@ import request from '@/utils/request'
  */
 export function paymentAddress (token) {
   // 由于配置了跨越，处在dev环境中时会被直接替换为 /api
-  // dev环境中需要将其修改为具体的服务地址 https://cloudtest.novelweb.cn
+  // dev环境中需要将其修改为具体的服务地址 https://cloudtest.api.novelweb.cn
   return process.env.BASE_API + '/pay/redirection-payment/' + token
 }
 

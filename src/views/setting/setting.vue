@@ -67,6 +67,9 @@
       <el-form :model="userForm" status-icon :rules="rules" ref="changeEmail" label-width="100px">
         <el-form-item label="新的邮箱" prop="userEmail">
           <el-input type="text" placeholder="请输入新的邮箱地址" v-model="userForm.userEmail" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="验证码" prop="securityCode">
+          <el-input type="text" placeholder="请输入邮箱验证码" v-model="userForm.securityCode" autocomplete="off"/>
           <el-button
             @click="sendSecurityCode()"
             :disabled="!disabled"
@@ -74,15 +77,56 @@
           > {{ codeText }}
           </el-button>
         </el-form-item>
-        <el-form-item label="验证码" prop="securityCode">
-          <el-input type="text" placeholder="请输入邮箱验证码" v-model="userForm.securityCode" autocomplete="off"/>
-        </el-form-item>
         <el-form-item class="setting-email-submit-form">
           <el-button class="setting-email-submit-btn" type="primary"
                      @click="submitUpdateEmailForm('changeEmail')">提交
           </el-button>
         </el-form-item>
       </el-form>
+    </el-card>
+    <!-- 用户容量、流量显示 -->
+    <el-card class="setting-panel-capacity box-card" shadow="always">
+      <div slot="header" class="clearfix">
+        <span>我的容量</span>
+      </div>
+      <!-- 磁盘容量 -->
+      <div class="content-bottom disk-capacity">
+        <div class="storage-wrapper">
+          <div class="usage-progress">
+            <div class="text">
+              <!-- 已用磁盘容量 -->
+              网盘：{{ storageUnitFormatting(userInfo['userUsedDiskCapacity']) }}
+              /
+              <!-- 总磁盘容量 -->
+              {{ storageUnitFormatting(userInfo['userTotalDiskCapacity']) }}
+              <span class="expansion">
+                  <a @click="$emit('openPayDialog', 0)">网盘扩容</a>
+                </span>
+            </div>
+            <!-- 已用磁盘容量的百分比 -->
+            <span class="progress disk-capacity-progress" :style="userCapacity.percentageCapacity"></span>
+          </div>
+        </div>
+      </div>
+      <!-- 流量 -->
+      <div class="content-bottom traffic">
+        <div class="storage-wrapper">
+          <div class="usage-progress">
+            <div class="text">
+              <!-- 已用流量 -->
+              流量：{{ storageUnitFormatting(userInfo['userUsedTraffic']) }}
+              /
+              <!-- 总流量 -->
+              {{ storageUnitFormatting(userInfo['userTotalTraffic']) }}
+              <span class="expansion">
+                  <a @click="$emit('openPayDialog', 1)">流量扩容</a>
+                </span>
+            </div>
+            <!-- 已用流量的百分比 -->
+            <span class="progress disk-traffic-progress" :style="userCapacity.percentageTraffic"></span>
+          </div>
+        </div>
+      </div>
     </el-card>
     <el-card class="setting-panel-order box-card" shadow="always">
       <div slot="header" class="clearfix">
@@ -94,13 +138,20 @@
           <el-option v-for="(item, index) in paymentOrderSearchForm.field"
                      :key="index" :label="item.label" :value="item.value"></el-option>
         </el-select>
-        <el-input v-show="paymentOrderSearchForm.fieldSelectValue !== 'orderTradeState'"
-                  type="text" placeholder="请输入需要查询的值"
-                  v-model="paymentOrderSearchForm.fieldSelectInputValue"></el-input>
+        <el-input
+          v-show="paymentOrderSearchForm.fieldSelectValue !== 'orderTradeState' && paymentOrderSearchForm.fieldSelectValue !== 'packType'"
+          type="text" placeholder="请输入需要查询的值"
+          v-model="paymentOrderSearchForm.fieldSelectInputValue"></el-input>
         <el-select v-show="paymentOrderSearchForm.fieldSelectValue === 'orderTradeState'"
                    class="setting-select-order-trade-state"
                    v-model="paymentOrderSearchForm.orderTradeStateSelectValue" placeholder="请选择对应的状态">
           <el-option v-for="(item, index) in paymentOrderSearchForm.orderTradeStateSelect"
+                     :key="index" :label="item.label" :value="item.value"></el-option>
+        </el-select>
+        <el-select v-show="paymentOrderSearchForm.fieldSelectValue === 'packType'"
+                   class="setting-select-order-trade-state"
+                   v-model="paymentOrderSearchForm.orderPackTypeSelectValue" placeholder="请选择对应的状态">
+          <el-option v-for="(item, index) in paymentOrderSearchForm.orderPackTypeSelect"
                      :key="index" :label="item.label" :value="item.value"></el-option>
         </el-select>
         <el-date-picker
@@ -119,7 +170,11 @@
         <el-table-column prop="orderNumber" label="订单编号" min-width="240"></el-table-column>
         <el-table-column prop="orderSubject" label="订单标题" min-width="145"></el-table-column>
         <el-table-column prop="effectiveDuration" label="有效期" min-width="80"></el-table-column>
-        <el-table-column prop="orderPaymentType" label="支付方式" min-width="90"></el-table-column>
+        <el-table-column prop="packType" label="资源包类型" min-width="90">
+          <template slot-scope="scope">
+            {{ scope.row.packType === 0 ? '扩容包' : '流量包' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="orderTotalAmount" label="总金额" min-width="90"></el-table-column>
         <el-table-column prop="success" label="状态" min-width="90">
           <template slot-scope="scope">
@@ -160,6 +215,7 @@ import {updateUserInfo} from '@/api/user'
 import {sendSecurityCode} from '@/api/login'
 import {paymentOrderSearch} from '@/api/order'
 import {validEmail, validUsername} from '@/utils/validate'
+import {storageUnitConversion} from '@/utils/utils'
 
 export default {
   name: 'setting',
@@ -268,9 +324,22 @@ export default {
         }, {
           label: '交易状态',
           value: 'orderTradeState'
+        }, {
+          label: '资源包类型',
+          value: 'packType'
         }],
         // 当前被选中状态的对应值
         fieldSelectInputValue: '',
+        // 订单资源包类型被选中状态的对应值
+        orderPackTypeSelectValue: 0,
+        // 订单资源包类型选择器
+        orderPackTypeSelect: [{
+          label: '扩容包',
+          value: 0
+        }, {
+          label: '流量包',
+          value: 1
+        }],
         // 订单状态选择器被选中状态的对应值
         orderTradeStateSelectValue: 'TRADE_SUCCESS',
         // 订单状态选择器
@@ -301,7 +370,14 @@ export default {
         time: ''
       },
       // 当前用户的支付订单信息
-      paymentOrderInfo: []
+      paymentOrderInfo: [],
+      // 用户磁盘容量、流量信息的展示
+      userCapacity: {
+        // 已用容量的百分比
+        percentageCapacity: {},
+        // 已用流量的百分比
+        percentageTraffic: {}
+      }
     }
   },
   // 钩子函数：页面加载完成后执行
@@ -316,6 +392,17 @@ export default {
     // 重置头像预览图片
     this.avatarUploader.previewImage = JSON.parse(userInfo).userAvatar
     this.userInfo = JSON.parse(userInfo)
+    this.userCapacity = {
+      // 已用容量的百分比
+      percentageCapacity: {
+        width: ((this.userInfo['userUsedDiskCapacity'] / this.userInfo['userTotalDiskCapacity']) * 100) + '%',
+        maxWidth: '100%'
+      },
+      percentageTraffic: {
+        width: ((this.userInfo['userUsedTraffic'] / this.userInfo['userTotalTraffic']) * 100) + '%',
+        maxWidth: '100%'
+      }
+    }
     // 获取当前用户的订单列表
     this.getPaymentOrderSearch(false)
   },
@@ -499,14 +586,15 @@ export default {
     getPaymentOrderSearch: function (loading) {
       // 需要搜索的key值
       let key = this.paymentOrderSearchForm.fieldSelectValue
-      // 需要搜索的value
-      let value
+      // 需要搜索的value(默认为 input 的值)
+      let value = this.paymentOrderSearchForm.fieldSelectInputValue
       if (this.paymentOrderSearchForm.fieldSelectValue === 'orderTradeState') {
-        // 选项的值
+        // 订单状态选中值
         value = this.paymentOrderSearchForm.orderTradeStateSelectValue
-      } else {
-        // input 的值
-        value = this.paymentOrderSearchForm.fieldSelectInputValue
+      }
+      if (this.paymentOrderSearchForm.fieldSelectValue === 'packType') {
+        // 资源包类型选中值
+        value = this.paymentOrderSearchForm.orderPackTypeSelectValue
       }
       // 需要执行搜索的参数
       let params = {
@@ -561,13 +649,14 @@ export default {
             effectiveDuration = effectiveDuration + '年'
           }
         } else {
-          effectiveDuration = `${(endTime.getMonth() - createTime.getMonth()) + 1}个月`
+          let month = (endTime.getMonth() - createTime.getMonth()) + 1
+          effectiveDuration = month === 12 ? '1年' : `${month}个月`
         }
 
         if (totalDuration > 12) {
           res['orderSubject'] = res['packName'] + '-' + totalDuration + '个月'
         } else {
-          res['orderSubject'] = res['packName'] + '资源扩容包'
+          res['orderSubject'] = res['packName'] + (res['packType'] === 0 ? '资源扩容包' : '流量包')
         }
         res['effectiveDuration'] = effectiveDuration
         res['orderTotalAmount'] = `￥${res['orderTotalAmount'] / 100}`
@@ -646,6 +735,16 @@ export default {
     paymentOrderSearchBtn: function () {
       this.paymentOrderPagingInfo.currentChange = 1
       this.getPaymentOrderSearch(true)
+    },
+    /**
+     * 存储单位格式化
+     * @param size 字节数
+     */
+    storageUnitFormatting: function (size) {
+      if (size > 0) {
+        return storageUnitConversion(size)
+      }
+      return '0'
     }
   }
 }
@@ -700,6 +799,20 @@ export default {
   padding: 4px 6px;
   margin: 5px 0 0;
   font-size: .933em
+}
+
+.disk-traffic-progress {
+  color: #ff1d12;
+}
+
+.progress {
+  height: 6px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  transition-duration: 0.274778s;
+  background-color: rgba(28, 175, 253, 1);
+  border-radius: 100px;
 }
 
 .form-setting {
@@ -763,7 +876,7 @@ img {
 }
 
 .setting-panel-avatar {
-  width: 30%;
+  width: 49%;
   margin-top: 1%;
 }
 
@@ -778,33 +891,62 @@ img {
 }
 
 .setting-panel-order-top-form .el-input {
-  width: 30%;
+  width: 49%;
   margin-right: 1%;
   margin-left: 1%;
 }
 
 .setting-panel-password {
-  width: 30%;
+  width: 49%;
   margin-left: 1.2%;
   margin-top: 1%;
 }
 
 .setting-panel-email {
-  width: 37%;
+  width: 49%;
+  margin-top: 1%;
+  position: relative;
+}
+
+.setting-panel-capacity {
+  width: 49%;
   margin-left: 1.2%;
   margin-top: 1%;
   position: relative;
+}
 
+.usage-progress {
+  height: 36px;
+  position: relative;
+  margin-bottom: 32px;
+}
+
+.expansion {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  color: #09AAFF;
+  text-align: right;
+  float: right;
+}
+
+.expansion a, .expansion a:hover {
+  color: inherit;
+  cursor: pointer;
+  text-align: right;
+  border: 0;
+}
+
+.text {
+  font-size: 11px;
+  line-height: 160%;
+  color: var(--context_primary);
+  margin-bottom: 12px;
 }
 
 .setting-panel-order {
   width: 100%;
-}
-
-.setting-email-submit-form {
-  position: absolute;
-  bottom: 5%;
-  right: 5%;
 }
 
 /deep/ .el-form-item__content {
@@ -816,10 +958,6 @@ img {
   display: none;
   font-weight: bold;
   margin-bottom: 1.2rem
-}
-
-.text {
-  font-size: 14px;
 }
 
 .item {
@@ -838,7 +976,6 @@ img {
 
   .setting-panel-avatar {
     width: 100%;
-    margin-bottom: 1.5%;
     margin-top: 1%;
   }
 
@@ -864,6 +1001,11 @@ img {
   }
 
   .setting-panel-password {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .setting-panel-capacity {
     width: 100%;
     margin-left: 0;
   }
