@@ -811,6 +811,7 @@ export default {
   bottom: 0;
   left: 0;
   transition-duration: 0.274778s;
+  z-index: 1;
   background-color: rgba(28, 175, 253, 1);
   border-radius: 100px;
 }
