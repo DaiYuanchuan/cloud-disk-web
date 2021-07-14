@@ -28,14 +28,16 @@
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column prop="shareCode" label="提取码" min-width="80"></el-table-column>
+          <el-table-column prop="shareCode" label="提取码" min-width="70"></el-table-column>
           <el-table-column prop="shareExpirationTimeFormat" label="有效期" min-width="80">
             <template slot-scope="scope">
               {{ scope.row.expiration ? '已过期' : scope.row.shareExpirationTimeFormat }}
             </template>
           </el-table-column>
           <el-table-column prop="shareViewCount" label="浏览量" min-width="80"></el-table-column>
-          <el-table-column prop="createTime" label="分享时间" min-width="180"></el-table-column>
+          <el-table-column prop="shareDownloadCount" label="下载" min-width="80"></el-table-column>
+          <el-table-column prop="shareSaveCount" label="转存" min-width="80"></el-table-column>
+          <el-table-column prop="createTime" label="分享时间" min-width="160"></el-table-column>
           <el-table-column label="操作" min-width="230">
             <template slot-scope="scope">
               <el-button
