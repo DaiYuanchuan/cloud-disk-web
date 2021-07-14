@@ -1,24 +1,31 @@
-# 兜兜网盘
+# 兜兜网盘简介
 
-> 兜兜网盘 ，一个 vue 网盘项目
+> 兜兜网盘是一款速度快、不限速、浏览器下载、易于分享的个人网盘,兜兜网盘为您提供文件的网络存储和分享服务。速度快、不限速,支持手机端是我们的特点
 
-基于 [vue](https://github.com/vuejs/vue) 和 [element-ui](https://github.com/ElemeFE/element) 实现的个人文件存储项目，文件存储的底层基于七牛云实现。
+兜兜网盘的前端是基于 [vue](https://github.com/vuejs/vue) 和 [element-ui](https://github.com/ElemeFE/element) 实现的，前端页面是开源的。
 
-##
+兜兜网盘支持图片、视频的在线预览(视频支持记住播放进度)，后期可加入更多文件格式的在线预览。
 
-网盘支持图片、视频的在线预览(视频支持记住播放进度)
+我们还支持文件夹分享、浏览器无限速下载、拖拽上传、分片上传、秒传、断点续传等等
 
-支持文件分享、浏览器无限速下载等特性
+我们的单文件最大支持20GB的上传
 
-可以针对不同的文件类型展示不同的文件图标
+## 开发环境说明
+由于采用的是单点登录系统，故开发环境中暂未设置预览的用户名密码，需要注册后才能实现登录。
 
-文件上传部分采用 el-upload 结合 七牛云 的方式实现.
+开发环境中注册的新用户 ，初始容量为10TB，初始流量为1TB。
 
-支持多文件、拖拽、图片的剪贴板 上传
+开发环境中的支付需要将文件src/api/payment.js#paymentAddress中的
+process.env.BASE_API替换为具体的服务地址
+https://cloudtest.api.novelweb.cn
 
-单文件最大支持20GB的上传
+开发环境中的支付支付使用的是支付宝的沙箱环境
+![支付宝沙箱](https://qcloud-1256166828.cos.ap-shanghai.myqcloud.com/cloud/alipaydev.png "支付宝沙箱")
+<br/>买家账号dbdiqn3780@sandbox.com
+<br/>登录密码111111
+<br/>支付密码111111
 
-支持 大文件分片、秒传、断点续传
+开发环境中需要修改上传的存储区域，由cnEast2更改为z0，
 
 ##
 
@@ -28,36 +35,38 @@
   * [SvgIcon]() 一个可以灵活的使用svg的组件。
   * [upload]() 一个文件支持批量上传的面板组件。
 
+## 页面预览
+
 #### 登录:
-![login](https://images.gitee.com/uploads/images/2021/0310/105344_a5d31fc9_1882312.png "login")
+![login](https://qcloud-1256166828.cos.ap-shanghai.myqcloud.com/cloud/login.png "login")
+
+#### 注册:
+![注册](https://qcloud-1256166828.cos.ap-shanghai.myqcloud.com/cloud/register.png "注册页")
 
 #### 文件列表页面:
-![文件列表页面](https://images.gitee.com/uploads/images/2021/0324/182730_dca68773_1882312.png "文件列表页面")
+![文件列表页面](https://qcloud-1256166828.cos.ap-shanghai.myqcloud.com/cloud/filelist.png "文件列表页面")
 
 #### 多文件上传页面:
-<font size="3">dev环境上传请修改qiniu.js中文件上传区域配置</font>
-![多文件上传页面](https://images.gitee.com/uploads/images/2021/0324/141357_78203cfd_1882312.png "多文件上传页面")
+<font size="3">dev环境上传请修改文件上传区域配置</font>
+![多文件上传页面](https://qcloud-1256166828.cos.ap-shanghai.myqcloud.com/cloud/fileupload.png "多文件上传页面")
 
 #### 文件复制、移动时的弹窗:
-![文件复制、移动时弹窗](https://images.gitee.com/uploads/images/2021/0428/165548_5cbe695a_1882312.png "文件复制、移动时弹窗")
+![文件复制、移动时弹窗](https://qcloud-1256166828.cos.ap-shanghai.myqcloud.com/cloud/filecopy.png "文件复制、移动时弹窗")
 
 #### 文件分享弹窗
-![文件分享弹窗](https://images.gitee.com/uploads/images/2021/0324/141503_7d5fa86d_1882312.png "文件分享弹窗")
+![文件分享弹窗](https://qcloud-1256166828.cos.ap-shanghai.myqcloud.com/cloud/filesharing.png "文件分享弹窗")
 
 #### 文件分享页面
-![文件分享页面](https://images.gitee.com/uploads/images/2021/0531/191134_5a7452d5_1882312.png "文件分享页面")
+![文件分享页面](https://qcloud-1256166828.cos.ap-shanghai.myqcloud.com/cloud/filesharepage.png "文件分享页面")
 
 #### 资源包支付页面(动态获取支付二维码)
-![支付页](https://images.gitee.com/uploads/images/2021/0531/183322_2f0bade4_1882312.png "支付页")
-
-#### dev环境的支付功能请使用支付宝沙箱环境体验(需要同步修改payment.js)
-![支付宝沙箱](https://images.gitee.com/uploads/images/2021/0616/155948_d68d09ab_1882312.png "支付宝沙箱")
+![支付页](https://qcloud-1256166828.cos.ap-shanghai.myqcloud.com/cloud/pay.png "支付页")
 
 #### 个人中心页面
-![个人中心页面](https://images.gitee.com/uploads/images/2021/0531/182653_73280269_1882312.png "个人中心页面")
+![个人中心页面](https://qcloud-1256166828.cos.ap-shanghai.myqcloud.com/cloud/setting.png "个人中心页面")
 
 #### 我的分享列表页面
-![分享列表页](https://images.gitee.com/uploads/images/2021/0601/122256_610a8d82_1882312.png "分享列表页")
+![分享列表页](https://qcloud-1256166828.cos.ap-shanghai.myqcloud.com/cloud/filesharelist.png "分享列表页")
 
 ## Build Setup
 
