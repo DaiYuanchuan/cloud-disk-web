@@ -165,6 +165,8 @@ const typeToSvg = {
   'application/rdf+xml': 'file',
   'video/x-ms-wvx': 'file',
   'audio/mpeg': 'file-list-audio',
+  'audio/mp3': 'file-list-audio',
+  'audio/x-m4a': 'file-list-audio',
   'video/x-ms-wmv': 'file-list-video',
   'application/vnd.oasis.opendocument.text': 'file',
   'application/x-bcpio': 'file',
