@@ -61,6 +61,7 @@ const typeToSvg = {
   'audio/amr': 'file-list-audio',
   'application/mathml+xml': 'file',
   'text/html': 'file-list-html',
+  'text/x-sh': 'file-list-html',
   'message/rfc822': 'file-list-html',
   'multipart/related': 'file-list-html',
   'application/x-iso9660-image': 'file-list-cd',
