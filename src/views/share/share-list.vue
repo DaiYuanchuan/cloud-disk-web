@@ -41,11 +41,18 @@
                @card-close="cardClose" @card-confirm="cardConfirm"
                @card-folder-previous="cardFolderPrevious" @card-folder-next="cardFolderNext"></file-card>
 
+    <!-- 登录页的Dialog弹窗 -->
+    <el-dialog :visible.sync="login.show"
+               customClass="loginDialog" :before-close="closeLoginModel">
+      <loginPanel :hopRouting="false" @loginSuccessfully="loginSuccessfully"></loginPanel>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
 import filePanel from '@/views/file/index'
+import loginPanel from '@/views/login/index'
 import {copyFile} from '@/api/file'
 import {search} from '@/api/share'
 import fileCard from '@/components/fileCard/fileCard'
@@ -87,7 +94,7 @@ export default {
     }
   },
   components: {
-    filePanel, fileCard
+    filePanel, fileCard, loginPanel
   },
   data () {
     return {
@@ -113,6 +120,15 @@ export default {
           userFileName: '/',
           userFileId: 0
         }]
+      },
+      // 当前登录页弹窗model
+      login: {
+        // 是否显示(文件下载、转存时校验当前登录状态)
+        show: false,
+        // 弹窗model关闭后执行的方法名称
+        method: '',
+        // 弹窗model关闭后执行的方法所对应的参数
+        parameter: ''
       }
     }
   },
@@ -246,8 +262,15 @@ export default {
       // 获取cookie中缓存的用户信息
       let token = cookies.get('userInfo')
       if (token === undefined) {
-        // 如果在未登录的情况下使用，则跳转登录页面
-        this.$router.push({name: 'login'})
+        // 如果在未登录的情况下使用，则打开登录页面弹窗
+        this.login = {
+          // 是否显示(文件下载、转存时校验当前登录状态)
+          show: true,
+          // 弹窗model关闭后执行的方法名称
+          method: 'cardConfirm',
+          // 弹窗model关闭后执行的方法所对应的参数
+          parameter: currentlySelectedValue
+        }
         return
       }
 
@@ -318,8 +341,15 @@ export default {
       // 获取cookie中缓存的用户信息
       let token = cookies.get('userInfo')
       if (token === undefined) {
-        // 如果在未登录的情况下使用，则跳转登录页面
-        this.$router.push({name: 'login'})
+        // 如果在未登录的情况下使用，则打开登录页面弹窗
+        this.login = {
+          // 是否显示(文件下载、转存时校验当前登录状态)
+          show: true,
+          // 弹窗model关闭后执行的方法名称
+          method: 'saveToMine',
+          // 弹窗model关闭后执行的方法所对应的参数
+          parameter: ''
+        }
         return
       }
 
@@ -332,6 +362,34 @@ export default {
         userFileName: '/',
         userFileId: 0
       }]
+    },
+    /**
+     * 关闭登录页面model
+     * @param done 是否完成
+     */
+    closeLoginModel: function (done) {
+      if (done !== false) {
+        this.login = {
+          // 是否显示(文件下载、转存时校验当前登录状态)
+          show: false,
+          // 弹窗model关闭后执行的方法名称
+          method: '',
+          // 弹窗model关闭后执行的方法所对应的参数
+          parameter: ''
+        }
+      }
+    },
+    /**
+     * 登录model登录成功后的跳转
+     */
+    loginSuccessfully: function () {
+      this.login.show = false
+      this[this.login.method](this.login.parameter)
+      this.login = {
+        show: false,
+        method: '',
+        parameter: ''
+      }
     }
   }
 }

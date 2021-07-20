@@ -91,12 +91,19 @@
       </div>
     </div>
 
+    <!-- 登录页的Dialog弹窗 -->
+    <el-dialog :visible.sync="login.show"
+               customClass="loginDialog" :before-close="closeLoginModel">
+      <loginPanel :hopRouting="false" @loginSuccessfully="loginSuccessfully"></loginPanel>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
 import {storageUnitConversion, timeDifference, mimeTypes, fileCategory, downloadByUrl} from '@/utils/utils'
 import ElImageViewer from 'element-ui/packages/image/src/image-viewer'
+import loginPanel from '@/views/login/index'
 import previewVideo from 'vue-dplayer'
 import 'vue-dplayer/dist/vue-dplayer.css'
 import cookies from 'js-cookie'
@@ -120,7 +127,7 @@ export default {
     }
   },
   components: {
-    ElImageViewer, previewVideo
+    ElImageViewer, previewVideo, loginPanel
   },
   data () {
     return {
@@ -174,6 +181,15 @@ export default {
             downloadUrl: ''
           }
         }
+      },
+      // 当前登录页弹窗model
+      login: {
+        // 是否显示(文件下载、转存时校验当前登录状态)
+        show: false,
+        // 弹窗model关闭后执行的方法名称
+        method: '',
+        // 弹窗model关闭后执行的方法所对应的参数
+        parameter: ''
       }
     }
   },
@@ -222,8 +238,15 @@ export default {
       // 获取cookie缓存中的用户信息
       let token = cookies.get('userInfo')
       if (token === undefined) {
-        // 如果在未登录的情况下使用，则跳转登录页面
-        this.$router.push({name: 'login'})
+        // 如果在未登录的情况下使用，则打开登录页面弹窗
+        this.login = {
+          // 是否显示(文件下载、转存时校验当前登录状态)
+          show: true,
+          // 弹窗model关闭后执行的方法名称
+          method: 'doubleClick',
+          // 弹窗model关闭后执行的方法所对应的参数
+          parameter: item
+        }
         return
       }
       let userInfo = JSON.parse(token)
@@ -478,6 +501,34 @@ export default {
       this.$refs.previewVideo.dp.pause()
       // 跳转到视频指定的时间
       this.$refs.previewVideo.dp.seek(0)
+    },
+    /**
+     * 关闭登录页面model
+     * @param done 是否完成
+     */
+    closeLoginModel: function (done) {
+      if (done !== false) {
+        this.login = {
+          // 是否显示(文件下载、转存时校验当前登录状态)
+          show: false,
+          // 弹窗model关闭后执行的方法名称
+          method: '',
+          // 弹窗model关闭后执行的方法所对应的参数
+          parameter: ''
+        }
+      }
+    },
+    /**
+     * 登录model登录成功后的跳转
+     */
+    loginSuccessfully: function () {
+      this.login.show = false
+      this[this.login.method](this.login.parameter)
+      this.login = {
+        show: false,
+        method: '',
+        parameter: ''
+      }
     }
   }
 }

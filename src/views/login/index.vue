@@ -54,10 +54,20 @@
 import {validWeChatId, validEmail, validUsername} from '@/utils/validate'
 import {login} from '@/api/login'
 import {asyncRoutes} from '@/router/routers'
+import {resetRouter} from '@/router/index'
 import cookies from 'js-cookie'
 
 export default {
   name: 'login',
+  props: {
+    // 登录成功后是否进行路由跳转(默认跳转home路由)
+    hopRouting: {
+      type: Boolean,
+      default () {
+        return true
+      }
+    }
+  },
   data () {
     // 用户名校验
     const validateUsername = (rule, value, callback) => {
@@ -136,9 +146,14 @@ export default {
               localStorage.setItem('username', this.form.username)
               localStorage.setItem('password', this.form.password)
               localStorage.setItem('userEmail', response.data.userInfo.userEmail)
+              // 先重置路由
+              resetRouter()
               // 动态添加路由数据
               this.$router.addRoutes(asyncRoutes)
-              this.$router.push({name: 'home'})
+              this.$emit('loginSuccessfully')
+              if (this.hopRouting) {
+                this.$router.push({name: 'home'})
+              }
             }
           }).catch((err) => {
             console.log(err)
