@@ -1471,7 +1471,10 @@ export default {
       // 删除之前先暂停当前上传
       this.pause(file)
       // 删除 element 上传组件维护的上传列队
-      this.$refs.elementUpload.handleRemove(file)
+      let uploadFiles = this.$refs.elementUpload.uploadFiles
+      let index = uploadFiles.findIndex(item => item.uid === file.uid)
+      uploadFiles.splice(index, 1)
+
       // 删除当前上传列队中的文件数据
       this.uploadedFilesList.splice(this.uploadedFilesList.findIndex(item => item.uid === file.uid), 1)
     },
@@ -1479,17 +1482,6 @@ export default {
      * 上传重试事件
      */
     retry (file) {
-      // 先删除 element 上传组件维护的上传列队
-      this.$refs.elementUpload.handleRemove(file)
-      // 再 push 一条记录
-      this.$refs.elementUpload.uploadFiles.push({
-        status: 'ready',
-        name: file.name,
-        size: file.request.file.size,
-        percentage: 0,
-        uid: file.uid,
-        raw: file.request.file
-      })
       this.resume(file)
     },
     /**
