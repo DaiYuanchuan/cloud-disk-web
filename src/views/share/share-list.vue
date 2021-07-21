@@ -41,11 +41,18 @@
                @card-close="cardClose" @card-confirm="cardConfirm"
                @card-folder-previous="cardFolderPrevious" @card-folder-next="cardFolderNext"></file-card>
 
+    <!-- 登录页的Dialog弹窗 -->
+    <el-dialog :visible.sync="login.show"
+               customClass="loginDialog" :before-close="closeLoginModel">
+      <loginPanel :hopRouting="false" @loginSuccessfully="loginSuccessfully"></loginPanel>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
 import filePanel from '@/views/file/index'
+import loginPanel from '@/views/login/index'
 import {copyFile} from '@/api/file'
 import {search} from '@/api/share'
 import fileCard from '@/components/fileCard/fileCard'
@@ -87,7 +94,7 @@ export default {
     }
   },
   components: {
-    filePanel, fileCard
+    filePanel, fileCard, loginPanel
   },
   data () {
     return {
@@ -113,6 +120,15 @@ export default {
           userFileName: '/',
           userFileId: 0
         }]
+      },
+      // 当前登录页弹窗model
+      login: {
+        // 是否显示(文件下载、转存时校验当前登录状态)
+        show: false,
+        // 弹窗model关闭后执行的方法名称
+        method: '',
+        // 弹窗model关闭后执行的方法所对应的参数
+        parameter: ''
       }
     }
   },
@@ -246,8 +262,15 @@ export default {
       // 获取cookie中缓存的用户信息
       let token = cookies.get('userInfo')
       if (token === undefined) {
-        // 如果在未登录的情况下使用，则跳转登录页面
-        this.$router.push({name: 'login'})
+        // 如果在未登录的情况下使用，则打开登录页面弹窗
+        this.login = {
+          // 是否显示(文件下载、转存时校验当前登录状态)
+          show: true,
+          // 弹窗model关闭后执行的方法名称
+          method: 'cardConfirm',
+          // 弹窗model关闭后执行的方法所对应的参数
+          parameter: currentlySelectedValue
+        }
         return
       }
 
@@ -318,8 +341,15 @@ export default {
       // 获取cookie中缓存的用户信息
       let token = cookies.get('userInfo')
       if (token === undefined) {
-        // 如果在未登录的情况下使用，则跳转登录页面
-        this.$router.push({name: 'login'})
+        // 如果在未登录的情况下使用，则打开登录页面弹窗
+        this.login = {
+          // 是否显示(文件下载、转存时校验当前登录状态)
+          show: true,
+          // 弹窗model关闭后执行的方法名称
+          method: 'saveToMine',
+          // 弹窗model关闭后执行的方法所对应的参数
+          parameter: ''
+        }
         return
       }
 
@@ -332,6 +362,34 @@ export default {
         userFileName: '/',
         userFileId: 0
       }]
+    },
+    /**
+     * 关闭登录页面model
+     * @param done 是否完成
+     */
+    closeLoginModel: function (done) {
+      if (done !== false) {
+        this.login = {
+          // 是否显示(文件下载、转存时校验当前登录状态)
+          show: false,
+          // 弹窗model关闭后执行的方法名称
+          method: '',
+          // 弹窗model关闭后执行的方法所对应的参数
+          parameter: ''
+        }
+      }
+    },
+    /**
+     * 登录model登录成功后的跳转
+     */
+    loginSuccessfully: function () {
+      this.login.show = false
+      this[this.login.method](this.login.parameter)
+      this.login = {
+        show: false,
+        method: '',
+        parameter: ''
+      }
     }
   }
 }
@@ -422,6 +480,32 @@ main {
   display: none;
 }
 
+/deep/ .loginDialog {
+  max-width: 600px;
+  margin-top: 10%;
+}
+
+/deep/ .loginDialog > .el-dialog__header {
+  padding: 0;
+}
+
+/deep/ .loginDialog > .el-dialog__body {
+  padding: 1px;
+}
+
+/deep/ .loginDialog > .el-dialog__body > div > .login-box {
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+  width: 86%;
+}
+
+@media (max-width: 780px) {
+  /deep/ .loginDialog > .el-dialog__body > #login {
+    top: 5%;
+  }
+}
+
 @media screen and (max-width: 480px) {
   #code-button {
     display: none;
@@ -438,4 +522,180 @@ main {
     width: 12em;
   }
 }
+
+@media (max-width: 450px) {
+  /deep/ .loginDialog > .el-dialog__body > #login {
+    width: 80%;
+    height: 60%;
+    left: 10%;
+    top: 10%;
+  }
+  /deep/ .loginDialog > .el-dialog__body > #login form {
+    top: 42%;
+    max-width: 16em;
+  }
+  /deep/ .el-dialog__headerbtn{
+    z-index: 999;
+    top: -32px;
+    right: -55px;
+  }
+}
+
+@media (max-width: 450px) and (min-height: 631px) {
+  /deep/ .loginDialog > .el-dialog__body > #login form {
+    top: 49%;
+    max-width: 22em;
+  }
+
+  /deep/ .loginDialog > .el-dialog__body > #login {
+    height: 66%;
+    top: 9%;
+  }
+}
+
+@media (max-width: 415px) {
+  /deep/ .loginDialog > .el-dialog__body > #login {
+    width: 80%;
+    height: 60%;
+    left: 10%;
+    top: 10%;
+  }
+
+  /deep/ .loginDialog > .el-dialog__body > #login form {
+    top: 45%;
+    max-width: 21em;
+  }
+
+  /deep/ .el-dialog__headerbtn{
+    z-index: 999;
+    top: -32px;
+    right: -55px;
+  }
+}
+
+@media (max-width: 412px) {
+  @media (min-height: 800px) {
+    /deep/ .loginDialog > .el-dialog__body > #login form {
+      top: 42%;
+      max-width: 21em;
+    }
+
+    /deep/ .loginDialog > .el-dialog__body > #login {
+      height: 54%;
+    }
+  }
+}
+
+@media (max-width: 380px) {
+  /deep/ .loginDialog > .el-dialog__body > #login {
+    width: 86%;
+    height: 62%;
+    left: 7%;
+    top: 8%;
+  }
+
+  /deep/ .loginDialog > .el-dialog__body > #login form {
+    top: 46%;
+    max-width: 16em;
+  }
+}
+
+@media (max-width: 376px) {
+  /deep/ .loginDialog > .el-dialog__body > #login {
+    width: 86%;
+    height: 55%;
+    left: 7%;
+    top: 8%;
+  }
+
+  /deep/ .loginDialog > .el-dialog__body > #login form {
+    top: 41%;
+    max-width: 16em;
+  }
+}
+
+@media (max-width: 376px) and (min-height: 631px) {
+  /deep/ .loginDialog > .el-dialog__body > #login form {
+    top: 46%;
+    max-width: 19em;
+  }
+
+  /deep/ .loginDialog > .el-dialog__body > #login {
+    height: 66%;
+  }
+}
+
+@media (max-width: 376px) and (min-height: 811px) {
+  /deep/ .loginDialog > .el-dialog__body > #login form {
+    top: 40%;
+    max-width: 19em;
+  }
+
+  /deep/ .loginDialog > .el-dialog__body > #login {
+    height: 55%;
+  }
+}
+
+@media (max-width: 361px) {
+  /deep/ .loginDialog > .el-dialog__body > #login {
+    width: 86%;
+    height: 66%;
+    left: 7%;
+    top: 8%;
+  }
+
+  /deep/ .loginDialog > .el-dialog__body > #login form {
+    top: 46%;
+    max-width: 18em;
+  }
+}
+
+@media (max-width: 330px) {
+  /deep/ .loginDialog > .el-dialog__body > #login {
+    width: 90%;
+    height: 50%;
+    left: 5%;
+    top: 10%;
+  }
+  /deep/ .loginDialog > .el-dialog__body > #login form {
+    top: 38%;
+    max-width: 16em;
+  }
+  /deep/ .loginDialog > .el-dialog__body > #login img {
+    margin-top: 3vh;
+  }
+}
+
+@media (max-width: 320px) {
+  /deep/ .loginDialog > .el-dialog__body > #login {
+    width: 90%;
+    height: 70%;
+    left: 5%;
+    top: 8%;
+  }
+  /deep/ .loginDialog > .el-dialog__body > #login form {
+    top: 47%;
+    max-width: 16em;
+  }
+  /deep/ .loginDialog > .el-dialog__body > #login img {
+    margin-top: 3vh;
+  }
+}
+
+@media (max-width: 320px) and (min-height: 650px) {
+  /deep/ .loginDialog > .el-dialog__body > #login {
+    width: 90%;
+    height: 58%;
+    left: 5%;
+    top: 8%;
+  }
+  /deep/ .loginDialog > .el-dialog__body > #login form {
+    top: 42%;
+    max-width: 16em;
+  }
+  /deep/ .loginDialog > .el-dialog__body > #login img {
+    margin-top: 3vh;
+  }
+}
+
 </style>
