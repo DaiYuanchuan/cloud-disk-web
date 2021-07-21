@@ -666,7 +666,7 @@ main {
   }
 }
 
-@media (max-width: 321px) {
+@media (max-width: 320px) {
   /deep/ .loginDialog > .el-dialog__body > #login {
     width: 90%;
     height: 70%;
@@ -682,7 +682,7 @@ main {
   }
 }
 
-@media (max-width: 321px) and (min-height: 650px) {
+@media (max-width: 320px) and (min-height: 650px) {
   /deep/ .loginDialog > .el-dialog__body > #login {
     width: 90%;
     height: 58%;
