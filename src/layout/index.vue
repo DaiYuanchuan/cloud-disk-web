@@ -24,7 +24,7 @@
             ref="elementUpload"
             :multiple="true"
             :show-file-list="false"
-            :auto-upload="true"
+            :auto-upload="false"
             :before-upload="beforeUpload"
             :http-request="uploadRequest"
             :on-progress="progressChange"
@@ -418,6 +418,8 @@ export default {
       filePreprocessing: [],
       // 上传面板中的文件上传的列队信息(包含着所有状态的文件数据)
       uploadedFilesList: [],
+      // 文件最大同时上传数量控制(作为常量控制，从0开始)
+      maxUpload: 2,
       // 是否显示当前文件上传面板
       displayUploadPanel: false,
       // 是否显示文件分享的对话框
@@ -1446,22 +1448,31 @@ export default {
     pause (file) {
       file.status = 'paused'
       file.state = this.fileStatusText('paused')
-      file.subscription.unsubscribe()
+      if (file.subscription != null) {
+        file.subscription.unsubscribe()
+      }
+      this.eleUpload()
     },
     /**
      * 上传开始事件
      */
     resume (file) {
-      if (file.observable == null) {
-        this.uploadRequest(file.request)
-      } else {
-        file.status = 'uploading'
-        file.state = this.fileStatusText('uploading')
-        // 构建七牛云上传
-        file.subscription = file.observable.subscribe(
-          next => this.nextUpload(next, file.uid),
-          error => this.errorUpload(error, file.uid),
-          complete => this.completeUpload(complete, file.uid, file.size))
+      file.status = 'waiting'
+      file.state = this.fileStatusText('waiting')
+      // 获取当前正在上传的文件数量
+      let uploading = this.uploadedFilesList.filter(item => item.status === 'etag' || item.status === 'uploading')
+      if (uploading.length <= this.maxUpload) {
+        if (file.observable == null) {
+          this.$refs.elementUpload.$refs['upload-inner'].upload(file.raw)
+        } else {
+          file.status = 'uploading'
+          file.state = this.fileStatusText('uploading')
+          // 构建七牛云上传
+          file.subscription = file.observable.subscribe(
+            next => this.nextUpload(next, file.uid),
+            error => this.errorUpload(error, file.uid),
+            complete => this.completeUpload(complete, file.uid, file.size))
+        }
       }
     },
     /**
@@ -1531,11 +1542,13 @@ export default {
         // 调用el-upload的上传失败事件
         res.request.onError(error.message)
       })
+      this.eleUpload()
     },
     /**
      * 上传成功时返回
      */
     completeUpload (complete, uid, size) {
+      this.eleUpload()
       // 请求成功时返回统一状态码
       if (complete.code !== '200') {
         this.$message({
@@ -1551,7 +1564,8 @@ export default {
         })
       } else {
         this.setUserCapacityInfo(size)
-        let uploadComplete = this.uploadedFilesList.filter(item => item.status === 'uploading')
+        let uploadComplete = this.uploadedFilesList
+          .filter(item => item.status === 'waiting' || item.status === 'etag' || item.status === 'uploading')
         if (uploadComplete.length <= 0) {
           // 重新获取当前页面的数据
           this.getFileListInfo(null, null, true)
@@ -1604,6 +1618,7 @@ export default {
           this.uploadedFilesList.push({
             name: file.name,
             uid: file.uid,
+            raw: file.raw,
             size: storageUnitConversion(file.size),
             status: 'waiting',
             state: this.fileStatusText('waiting'),
@@ -1611,6 +1626,11 @@ export default {
             etagProgress: this.progressStyle(0),
             icon: this.fileCategory(file.name.split('.').pop().toLowerCase(), file.raw.type.split('/')[0])
           })
+          // 获取当前正在上传的文件数量
+          let uploading = this.uploadedFilesList.filter(item => item.status === 'etag' || item.status === 'uploading')
+          if (uploading.length <= this.maxUpload) {
+            this.$refs.elementUpload.$refs['upload-inner'].upload(file.raw)
+          }
         }
       }
     },
@@ -1733,6 +1753,7 @@ export default {
           response.data['diskUserFile']['select'] = false
           this.fileList.unshift(response.data['diskUserFile'])
           this.setUserCapacityInfo(response.data['diskUserFile']['ossFileSize'])
+          this.eleUpload()
         } else {
           // 执行普通上传程序
           const key = response.data.key
@@ -1762,7 +1783,32 @@ export default {
           // 调用el-upload的上传失败事件
           request.onError(err.message)
         })
+        this.eleUpload()
       })
+    },
+    /**
+     * element 手动调用上传组件
+     */
+    eleUpload () {
+      let uploading = this.uploadedFilesList.filter(item => item.status === 'etag' || item.status === 'uploading')
+      if (!uploading.length || uploading.length <= this.maxUpload) {
+        // 过滤出其中待上传的文件数据
+        let waitingUpload = this.uploadedFilesList.filter(item => item.status === 'waiting')
+        if (!waitingUpload.length) {
+          return
+        }
+        if (waitingUpload[0].observable == null) {
+          this.$refs.elementUpload.$refs['upload-inner'].upload(waitingUpload[0].raw)
+        } else {
+          waitingUpload[0].status = 'uploading'
+          waitingUpload[0].state = this.fileStatusText('uploading')
+          // 构建七牛云上传
+          waitingUpload[0].subscription = waitingUpload[0].observable.subscribe(
+            next => this.nextUpload(next, waitingUpload[0].uid),
+            error => this.errorUpload(error, waitingUpload[0].uid),
+            complete => this.completeUpload(complete, waitingUpload[0].uid, waitingUpload[0].size))
+        }
+      }
     },
     /**
      * 上传面板中的进度条动态样式
@@ -1892,7 +1938,7 @@ export default {
           upload.handleStart(new File([e.dataTransfer.files[i]], e.dataTransfer.files[i].name))
         }
       }
-      upload.submit()
+      this.eleUpload()
     },
     // ============================== 支付块 ==============================
     /**
