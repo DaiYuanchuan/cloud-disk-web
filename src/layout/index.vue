@@ -262,9 +262,9 @@
         <section class="pay-section pay-form">
           <el-form ref="form" :model="payment.form" label-width="80px">
             <el-form-item label="开通时长">
-              <el-input-number v-model="payment.form.defaultValue" @change="paymentOpeningTimeChange" :min="1"
-                               :max="9999"
-                               :step="payment.form.defaultSelfIncrement" step-strictly></el-input-number>
+              <input-number v-model="payment.form.defaultValue" @change="paymentOpeningTimeChange" :min="1"
+                               :max="9999" ref="paymentFormInputNumber"
+                               :step="payment.form.defaultSelfIncrement" step-strictly></input-number>
               <span class="pay-opening-time-text">月</span>
             </el-form-item>
             <el-form-item v-if="payment.mobile" class="pay-method-form-item">
@@ -347,6 +347,7 @@ import VueQr from 'vue-qr'
 import cookies from 'js-cookie'
 import uploader from '@/components/upload/uploader'
 import fileCard from '@/components/fileCard/fileCard'
+import inputNumber from '@/components/inputNumer/index'
 import {storageUnitConversion, formatDate, fileCategory, mimeTypes, clipboard, downloadByUrl} from '@/utils/utils'
 
 export default {
@@ -559,7 +560,7 @@ export default {
     }
   },
   components: {
-    uploader, fileCard, VueQr
+    uploader, fileCard, inputNumber, VueQr
   },
   // 钩子函数: 数据监听
   watch: {
