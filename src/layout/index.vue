@@ -605,7 +605,7 @@ export default {
     this.setUserInfoCookies(JSON.parse(userInfo))
     // 从缓存中获取当前登录的用户信息
     getDiskUserToSession().then((response) => {
-      this.setUserInfoCookies(response.data.data.userInfo)
+      this.setUserInfoCookies(response.data.userInfo)
     }).catch((err) => {
       console.log(err)
     })
