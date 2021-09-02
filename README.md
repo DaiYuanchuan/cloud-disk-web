@@ -37,6 +37,10 @@ https://cloudtest.api.novelweb.cn
 
 开发环境中需要修改上传的存储区域，由cnEast2更改为z0
 
+## api文档
+如果您对现有的UI界面感到不满，也可以根据api文档自行实现UI界面<br/>
+附:[网盘api文档](兜兜网盘API文档.md)
+
 ## 页面预览
 
 #### 登录:
