@@ -277,12 +277,24 @@ export default {
       let fileSize = 0
       let copyFileInfo = []
       selectData.forEach(res => {
-        fileSize += res.ossFileSize
-        copyFileInfo.push({
-          fromFileId: res.userFileId,
-          shareKey: res.shareKey
-        })
+        // 过滤出文件夹
+        if (!res['fileFolder']) {
+          fileSize += res.ossFileSize
+          copyFileInfo.push({
+            fromFileId: res.userFileId,
+            shareKey: res.shareKey
+          })
+        }
       })
+
+      if (!copyFileInfo.length) {
+        this.$message({
+          showClose: true,
+          message: '请选择需要保存的文件',
+          type: 'error',
+          duration: 2 * 1000
+        })
+      }
 
       let userInfo = JSON.parse(token)
 
@@ -350,6 +362,19 @@ export default {
           // 弹窗model关闭后执行的方法所对应的参数
           parameter: ''
         }
+        return
+      }
+
+      // 获取所有当前选中的数据
+      let selectData = this.fileList.filter(res => res.select && !res['fileFolder'])
+      if (!selectData.length) {
+        // 没有数据被选中的 ，抛出一个异常提示
+        this.$message({
+          showClose: true,
+          message: '请选择需要保存的文件',
+          type: 'error',
+          duration: 2 * 1000
+        })
         return
       }
 
@@ -534,7 +559,7 @@ main {
     top: 42%;
     max-width: 16em;
   }
-  /deep/ .el-dialog__headerbtn{
+  /deep/ .el-dialog__headerbtn {
     z-index: 999;
     top: -32px;
     right: -55px;
@@ -566,7 +591,7 @@ main {
     max-width: 21em;
   }
 
-  /deep/ .el-dialog__headerbtn{
+  /deep/ .el-dialog__headerbtn {
     z-index: 999;
     top: -32px;
     right: -55px;
