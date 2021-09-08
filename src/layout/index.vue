@@ -1886,7 +1886,7 @@ export default {
                       <li><strong>SHIFT + Click</strong> - 连续选择多个文件或目录</li>
                       <li><strong>CTRL + A</strong> - 选择全部文件或目录</li>
                       <li><strong>CTRL + X</strong> - 剪切一个或多个文件/文件夹</li>
-                      <li><strong>CTRL + C</strong> - 复制一个或多个文件/文件夹</li>
+                      <li><strong>CTRL + C</strong> - 复制一个或多个文件</li>
                       <li><strong>CTRL + V</strong> - 粘贴一个或多个文件/文件夹</li>
                       <li><strong>Click</strong> - 选择或者打开文件/文件夹</li>
                       <li><strong>Double Click</strong> - 打开文件/文件夹</li>
