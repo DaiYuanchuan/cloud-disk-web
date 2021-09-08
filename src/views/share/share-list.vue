@@ -277,14 +277,11 @@ export default {
       let fileSize = 0
       let copyFileInfo = []
       selectData.forEach(res => {
-        // 过滤出文件夹
-        if (!res['fileFolder']) {
-          fileSize += res.ossFileSize
-          copyFileInfo.push({
-            fromFileId: res.userFileId,
-            shareKey: res.shareKey
-          })
-        }
+        fileSize += res.ossFileSize
+        copyFileInfo.push({
+          fromFileId: res.userFileId,
+          shareKey: res.shareKey
+        })
       })
 
       if (!copyFileInfo.length) {
@@ -366,7 +363,7 @@ export default {
       }
 
       // 获取所有当前选中的数据
-      let selectData = this.fileList.filter(res => res.select && !res['fileFolder'])
+      let selectData = this.fileList.filter(res => res.select)
       if (!selectData.length) {
         // 没有数据被选中的 ，抛出一个异常提示
         this.$message({
