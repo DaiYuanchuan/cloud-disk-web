@@ -16,6 +16,13 @@
 
 # 更新记录
 
+## 2021 年 9 月 20 日
+<p>新建文件夹请求参数变更</p>
+<p>文件分享响应数据中删除字段shareFileIds(分享的文件标识)</p>
+<p>优化了批量复制、删除文件夹的相关逻辑，支持子文件夹的复制与删除</p>
+<p>批量删除、移动、分享文件的操作最多支持120个文件、文件夹同时操作</p>
+<p>字段userFileParentId(父级文件标识)、userFileId(文件标识)类型由integer更改为string</p>
+
 ## 2021 年 9 月 2 日
 <p>增加了文件分享模块功能接口</p>
 <p>发送邮箱验证码接口的描述信息变更</p>
@@ -623,7 +630,7 @@ Content-Type: image/jpeg
 |&emsp;&emsp;ossFileEtag|资源的唯一标识，秒传的判断<br/>[七牛etag算法示例](https://github.com/qiniu/qetag)|M|string|
 |&emsp;&emsp;ossFileSize|文件大小(字节)|M|integer|
 |&emsp;&emsp;userFileName|文件名|M|string|
-|&emsp;&emsp;userFileParentId|文件父级标识|M|integer|
+|&emsp;&emsp;userFileParentId|文件父级标识|M|string|
 
 **响应参数**:
 
@@ -641,9 +648,9 @@ Content-Type: image/jpeg
 |&emsp;&emsp;&emsp;&emsp;updateTime|更新时间|string|M|
 |&emsp;&emsp;&emsp;&emsp;userDynamicDownloadUrl|文件的动态下载链接|string|C|
 |&emsp;&emsp;&emsp;&emsp;userDynamicPreviewUrl|文件的动态预览链接|string|C|
-|&emsp;&emsp;&emsp;&emsp;userFileId|文件标识|integer|M|
+|&emsp;&emsp;&emsp;&emsp;userFileId|文件标识|string|M|
 |&emsp;&emsp;&emsp;&emsp;userFileName|文件名|string|M|
-|&emsp;&emsp;&emsp;&emsp;userFileParentId|文件的父级标识|integer|M|
+|&emsp;&emsp;&emsp;&emsp;userFileParentId|文件的父级标识|string|M|
 |&emsp;&emsp;&emsp;&emsp;userId|文件关联的用户标识|integer|M|
 |&emsp;&emsp;key|云端预存储的key值|string|C|
 |&emsp;&emsp;token|文件上传的token|string|C|
@@ -665,9 +672,9 @@ Content-Type: image/jpeg
       "updateTime": "",
       "userDynamicDownloadUrl": "",
       "userDynamicPreviewUrl": "",
-      "userFileId": 0,
+      "userFileId": "",
       "userFileName": "",
-      "userFileParentId": 0,
+      "userFileParentId": "",
       "userId": 0
     },
     "key": "",
@@ -711,9 +718,8 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 
 | 参数名称 | 参数说明 | 约束 | 数据类型 |
 | -------- | -------- | ----- | ------ |
-|&emsp;&emsp;userFileId|文件夹标识(创建时写0)|M|integer|
-|&emsp;&emsp;userFileName|文件夹名称|M|string|
-|&emsp;&emsp;userFileParentId|文件夹父级标识(0为根目录)|M|integer|
+|userFileName|文件夹名称|M|string|
+|userFileParentId|文件夹父级标识(0为根目录)|M|string|
 
 **响应参数**:
 
@@ -730,9 +736,9 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 |&emsp;&emsp;updateTime|更新时间|string|M|
 |&emsp;&emsp;userDynamicDownloadUrl|文件的动态下载链接|string|O|
 |&emsp;&emsp;userDynamicPreviewUrl|文件的动态预览链接|string|O|
-|&emsp;&emsp;userFileId|文件标识|integer|M|
+|&emsp;&emsp;userFileId|文件标识|string|M|
 |&emsp;&emsp;userFileName|文件名称|string|M|
-|&emsp;&emsp;userFileParentId|文件的父级标识|integer|M|
+|&emsp;&emsp;userFileParentId|文件的父级标识|string|M|
 |&emsp;&emsp;userId|用户标识|integer|M|
 |message|描述|string|M|
 
@@ -751,9 +757,9 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
     "updateTime": "",
     "userDynamicDownloadUrl": "",
     "userDynamicPreviewUrl": "",
-    "userFileId": 0,
+    "userFileId": "",
     "userFileName": "",
-    "userFileParentId": 0,
+    "userFileParentId": "",
     "userId": 0
   },
   "message": ""
@@ -770,7 +776,6 @@ Content-Type: application/json
 Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 
 {
-    "userFileId": "",
     "userFileName": "",
     "userFileParentId": ""
 }
@@ -794,7 +799,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 | 参数名称 | 参数说明 | 约束 | 数据类型 |
 | -------- | -------- | ----- | ------ |
 |newUserFileName|新文件名|M|string|
-|userFileId|文件标识|M|integer|
+|userFileId|文件标识|M|string|
 
 **响应参数**:
 
@@ -811,9 +816,9 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 |&emsp;&emsp;updateTime|更新时间|string|M|
 |&emsp;&emsp;userDynamicDownloadUrl|文件的动态下载链接|string|C|
 |&emsp;&emsp;userDynamicPreviewUrl|文件的动态预览链接|string|C|
-|&emsp;&emsp;userFileId|文件标识|integer|M|
+|&emsp;&emsp;userFileId|文件标识|string|M|
 |&emsp;&emsp;userFileName|文件名称|string|M|
-|&emsp;&emsp;userFileParentId|文件的父级标识|integer|M|
+|&emsp;&emsp;userFileParentId|文件的父级标识|string|M|
 |&emsp;&emsp;userId|用户标识|integer|M|
 |message|描述|string|M|
 
@@ -832,9 +837,9 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
     "updateTime": "",
     "userDynamicDownloadUrl": "",
     "userDynamicPreviewUrl": "",
-    "userFileId": 0,
+    "userFileId": "",
     "userFileName": "",
-    "userFileParentId": 0,
+    "userFileParentId": "",
     "userId": 0
   },
   "message": ""
@@ -919,9 +924,9 @@ Cookie: bjg_sid=ab318bdb-4871-4fa8-a736-2e894ee3f507
 |ossFileSize|文件大小(字节)|O|integer|
 |userDynamicExpireIn|下载凭证过期时间(秒)|O|integer|
 |userDynamicToken|文件的动态下载凭证|O|string|
-|userFileId|文件标识|O|integer|
+|userFileId|文件标识|O|string|
 |userFileName|文件名|O|string|
-|userFileParentId|文件的父级标识|O|integer|
+|userFileParentId|文件的父级标识|O|string|
 |userId|用户标识|O|integer|
 
 **响应参数**:
@@ -940,9 +945,9 @@ Cookie: bjg_sid=ab318bdb-4871-4fa8-a736-2e894ee3f507
 |&emsp;&emsp;&emsp;&emsp;updateTime|更新时间|string|M|
 |&emsp;&emsp;&emsp;&emsp;userDynamicDownloadUrl|文件的动态下载链接|string|C|
 |&emsp;&emsp;&emsp;&emsp;userDynamicPreviewUrl|文件的动态预览链接|string|C|
-|&emsp;&emsp;&emsp;&emsp;userFileId|文件标识|integer|M|
+|&emsp;&emsp;&emsp;&emsp;userFileId|文件标识|string|M|
 |&emsp;&emsp;&emsp;&emsp;userFileName|文件名称|string|M|
-|&emsp;&emsp;&emsp;&emsp;userFileParentId|父级标识(0为根目录)|integer|M|
+|&emsp;&emsp;&emsp;&emsp;userFileParentId|父级标识(0为根目录)|string|M|
 |&emsp;&emsp;&emsp;&emsp;userId|用户标识|integer|M|
 |&emsp;&emsp;toTal|总数|integer|M|
 |message|描述|string|M|
@@ -964,9 +969,9 @@ Cookie: bjg_sid=ab318bdb-4871-4fa8-a736-2e894ee3f507
         "updateTime": "",
         "userDynamicDownloadUrl": "",
         "userDynamicPreviewUrl": "",
-        "userFileId": 0,
+        "userFileId": "",
         "userFileName": "",
-        "userFileParentId": 0,
+        "userFileParentId": "",
         "userId": 0
       }
     ],
@@ -996,9 +1001,9 @@ Cookie: bjg_sid=ab318bdb-4871-4fa8-a736-2e894ee3f507
 **响应数据类型**:`application/json;charset=UTF-8`
 
 **接口描述**:
-<p>进行文件的批量复制操作，最多支持50个文件的复制</p>
-<p>通过请求参数中shareShort、shareKey可以对其他用户分享的文件进行复制</p>
-<p>注:如果请求中包含文件夹，不会复制文件夹里面的内容</p>
+<p>进行文件、文件夹的批量复制操作，最多支持50个文件、文件夹的复制</p>
+<p>通过请求参数中shareShort、shareKey可以对其他用户分享的文件、文件夹进行复制</p>
+<p>注:批量复制为异步请求，响应参数中的用户缓存信息可能出现与实际信息不同步的问题</p>
 
 
 **请求参数**:
@@ -1010,7 +1015,7 @@ Cookie: bjg_sid=ab318bdb-4871-4fa8-a736-2e894ee3f507
 |targetFileId|目标文件夹标识(必须是文件夹)|M|integer|
 |copyFileInfo|批量复制的参数|M|array|
 |&emsp;&emsp;shareKey|文件的key值(短链存在时必填)|C|string|
-|&emsp;&emsp;fromFileId|源文件标识|M|integer|
+|&emsp;&emsp;fromFileId|源文件标识|M|string|
 
 **响应参数**:
 
@@ -1028,9 +1033,9 @@ Cookie: bjg_sid=ab318bdb-4871-4fa8-a736-2e894ee3f507
 |&emsp;&emsp;&emsp;&emsp;updateTime|更新时间|string|M|
 |&emsp;&emsp;&emsp;&emsp;userDynamicDownloadUrl|文件的动态下载链接|string|C|
 |&emsp;&emsp;&emsp;&emsp;userDynamicPreviewUrl|文件的动态预览链接|string|C|
-|&emsp;&emsp;&emsp;&emsp;userFileId|文件标识|integer|M|
+|&emsp;&emsp;&emsp;&emsp;userFileId|文件标识|string|M|
 |&emsp;&emsp;&emsp;&emsp;userFileName|文件名|string|M|
-|&emsp;&emsp;&emsp;&emsp;userFileParentId|文件的父级标识|integer|M|
+|&emsp;&emsp;&emsp;&emsp;userFileParentId|文件的父级标识|string|M|
 |&emsp;&emsp;&emsp;&emsp;userId|用户标识|integer|M|
 |&emsp;&emsp;userInfo|当前用户的缓存信息|object|C|
 |&emsp;&emsp;&emsp;&emsp;available|当前账号是否可用|boolean|M|
@@ -1069,9 +1074,9 @@ Cookie: bjg_sid=ab318bdb-4871-4fa8-a736-2e894ee3f507
         "updateTime": "",
         "userDynamicDownloadUrl": "",
         "userDynamicPreviewUrl": "",
-        "userFileId": 0,
+        "userFileId": "",
         "userFileName": "",
-        "userFileParentId": 0,
+        "userFileParentId": "",
         "userId": 0
       }
     ],
@@ -1127,7 +1132,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 **响应数据类型**:`application/json;charset=UTF-8`
 
 **接口描述**:
-<p>进行文件、文件夹的批量移动的操作，最多支持50个文件、文件夹的移动</p>
+<p>进行文件、文件夹的批量移动的操作，最多支持120个文件、文件夹的移动</p>
 
 
 **请求参数**:
@@ -1135,8 +1140,8 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 | 参数名称 | 参数说明 | 约束 | 数据类型 |
 | -------- | -------- | ----- | ------ |
 |&emsp;&emsp;moveFileInfo|文件移动参数|M|array|
-|&emsp;&emsp;&emsp;&emsp;fromFileId|源文件标识|M|integer|
-|&emsp;&emsp;targetFileId|目标文件夹标识(只能是文件夹)|M|integer|
+|&emsp;&emsp;&emsp;&emsp;fromFileId|源文件标识|M|string|
+|&emsp;&emsp;targetFileId|目标文件夹标识(只能是文件夹)|M|string|
 
 **响应参数**:
 
@@ -1153,9 +1158,9 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 |&emsp;&emsp;updateTime|更新时间|string|M|
 |&emsp;&emsp;userDynamicDownloadUrl|文件的动态下载链接|string|C|
 |&emsp;&emsp;userDynamicPreviewUrl|文件的动态预览链接|string|C|
-|&emsp;&emsp;userFileId|文件标识|integer|M|
+|&emsp;&emsp;userFileId|文件标识|string|M|
 |&emsp;&emsp;userFileName|文件名称|string|M|
-|&emsp;&emsp;userFileParentId|文件的父级标识|integer|M|
+|&emsp;&emsp;userFileParentId|文件的父级标识|string|M|
 |&emsp;&emsp;userId|用户标识|integer|M|
 |message|描述|string|M|
 
@@ -1175,9 +1180,9 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
       "updateTime": "",
       "userDynamicDownloadUrl": "",
       "userDynamicPreviewUrl": "",
-      "userFileId": 0,
+      "userFileId": "",
       "userFileName": "",
-      "userFileParentId": 0,
+      "userFileParentId": "",
       "userId": 0
     }
   ],
@@ -1215,7 +1220,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 **响应数据类型**:`application/json;charset=UTF-8`
 
 **接口描述**:
-<p>进行文件、文件夹的批量删除的操作，最多支持50个文件、文件夹的删除</p>
+<p>进行文件、文件夹的批量删除的操作，最多支持120个文件、文件夹的删除</p>
 
 
 **请求参数**:
@@ -1324,7 +1329,6 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 |&emsp;&emsp;shareCode|提取码|string|C|
 |&emsp;&emsp;shareExpirationTime|过期时间(秒)<br/>最大为604800(一周)，最小为-1(永不过期)|integer|M|
 |&emsp;&emsp;shareExpirationTimeFormat|过期时间内容格式化|string|M|
-|&emsp;&emsp;shareFileIds|进行分享的文件标识<br/>(多个文件标识逗号分割)|string|M|
 |&emsp;&emsp;shareFileName|进行分享的第一个文件名|string|M|
 |&emsp;&emsp;shareId|分享主键标识|integer|M|
 |&emsp;&emsp;shareShort|分享的唯一短链|string|M|
@@ -1343,7 +1347,6 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
     "shareCode": "",
     "shareExpirationTime": 0,
     "shareExpirationTimeFormat": "",
-    "shareFileIds": "",
     "shareFileName": "",
     "shareId": 0,
     "shareShort": "",
@@ -1411,7 +1414,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 **请求示例**:
 
 ```http request
-POST /disk-share/create-share
+POST /disk-share/cancel-share
 HTTP/1.1
 Host: cloud.api.novelweb.cn
 Content-Type: application/json
@@ -1455,7 +1458,6 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 |&emsp;&emsp;&emsp;&emsp;shareDownloadCount|下载次数|integer|M|
 |&emsp;&emsp;&emsp;&emsp;shareExpirationTime|过期时间(秒)<br/>最大为604800(一周)，最小为-1(永不过期)|integer|M|
 |&emsp;&emsp;&emsp;&emsp;shareExpirationTimeFormat|过期时间内容格式化|string|M|
-|&emsp;&emsp;&emsp;&emsp;shareFileIds|进行分享的文件标识<br/>(多个文件标识逗号分割)|string|M|
 |&emsp;&emsp;&emsp;&emsp;shareFileName|进行分享的第一个文件名|string|M|
 |&emsp;&emsp;&emsp;&emsp;shareId|分享主键标识|integer|M|
 |&emsp;&emsp;&emsp;&emsp;shareSaveCount|保存次数|integer|M|
@@ -1481,7 +1483,6 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
       "shareDownloadCount": 0,
       "shareExpirationTime": 0,
       "shareExpirationTimeFormat": "",
-      "shareFileIds": "",
       "shareFileName": "",
       "shareId": 0,
       "shareSaveCount": 0,
@@ -1554,9 +1555,9 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 |&emsp;&emsp;&emsp;&emsp;updateTime|更新时间|string|M|
 |&emsp;&emsp;&emsp;&emsp;userDynamicDownloadUrl|文件的动态下载链接|string|C|
 |&emsp;&emsp;&emsp;&emsp;userDynamicPreviewUrl|文件的动态预览链接|string|C|
-|&emsp;&emsp;&emsp;&emsp;userFileId|文件标识|integer|M|
+|&emsp;&emsp;&emsp;&emsp;userFileId|文件标识|string|M|
 |&emsp;&emsp;&emsp;&emsp;userFileName|文件名称|string|M|
-|&emsp;&emsp;&emsp;&emsp;userFileParentId|父级标识(0为根目录)|integer|M|
+|&emsp;&emsp;&emsp;&emsp;userFileParentId|父级标识(0为根目录)|string|M|
 |&emsp;&emsp;&emsp;&emsp;userId|用户标识|integer|M|
 |&emsp;&emsp;shareExpirationTime|过期时间(秒)<br/>最大为604800(一周)，最小为-1(永不过期)|integer|M|
 |&emsp;&emsp;shareExpirationTimeFormat|过期时间内容格式化|string|M|
@@ -1586,9 +1587,9 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
         "updateTime": "",
         "userDynamicDownloadUrl": "",
         "userDynamicPreviewUrl": "",
-        "userFileId": 0,
+        "userFileId": "",
         "userFileName": "",
-        "userFileParentId": 0,
+        "userFileParentId": "",
         "userId": 0
       }
     ],
@@ -1638,7 +1639,7 @@ Host: cloud.api.novelweb.cn
 |code|提取码|C|string|
 |shareKey|文件的key值|M|string|
 |shareShort|短链|M|string|
-|userFileParentId|父级标识(0为根目录)|M|integer|
+|userFileParentId|父级标识(0为根目录)|M|string|
 
 **响应参数**:
 
@@ -1657,9 +1658,9 @@ Host: cloud.api.novelweb.cn
 |&emsp;&emsp;&emsp;&emsp;updateTime|更新时间|string|M|
 |&emsp;&emsp;&emsp;&emsp;userDynamicDownloadUrl|文件的动态下载链接|string|C|
 |&emsp;&emsp;&emsp;&emsp;userDynamicPreviewUrl|文件的动态预览链接|string|C|
-|&emsp;&emsp;&emsp;&emsp;userFileId|文件标识|integer|M|
+|&emsp;&emsp;&emsp;&emsp;userFileId|文件标识|string|M|
 |&emsp;&emsp;&emsp;&emsp;userFileName|文件名称|string|M|
-|&emsp;&emsp;&emsp;&emsp;userFileParentId|父级标识(0为根目录)|integer|M|
+|&emsp;&emsp;&emsp;&emsp;userFileParentId|父级标识(0为根目录)|string|M|
 |&emsp;&emsp;&emsp;&emsp;userId|用户标识|integer|M|
 |&emsp;&emsp;toTal|总数|integer|M|
 |message|描述|string|M|
@@ -1682,9 +1683,9 @@ Host: cloud.api.novelweb.cn
         "updateTime": "",
         "userDynamicDownloadUrl": "",
         "userDynamicPreviewUrl": "",
-        "userFileId": 0,
+        "userFileId": "",
         "userFileName": "",
-        "userFileParentId": 0,
+        "userFileParentId": "",
         "userId": 0
       }
     ],
