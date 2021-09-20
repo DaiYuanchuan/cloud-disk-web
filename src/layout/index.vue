@@ -582,15 +582,11 @@ export default {
           })
           // 如果选中的这一条数据是文件夹 ，则不显示 文件详情 按钮
           this.operateBtn[5].show = !selectData[0]['fileFolder']
-          // 如果是文件夹的，则不显示复制按钮
-          this.operateBtn[2].show = !selectData[0]['fileFolder']
         }
         if (selectData.length > 1) {
           // 如果选中了不止一条数据，则 重命名、文件详情 按钮不显示
           this.operateBtn[1].show = false
           this.operateBtn[5].show = false
-          // 如果选中的数据中包含了文件夹，则不显示复制按钮
-          this.operateBtn[2].show = selectData.filter(res => res['fileFolder']).length < 1
         }
       },
       // 深度监听
@@ -1247,12 +1243,10 @@ export default {
       // 清空文件预处理信息队列后，重新添加数据
       this.filePreprocessing = []
       selectData.forEach(res => {
-        if (!res['fileFolder']) {
-          this.filePreprocessing.push({
-            file: res,
-            type: type
-          })
-        }
+        this.filePreprocessing.push({
+          file: res,
+          type: type
+        })
       })
     },
     // ============================== 页面左侧菜单栏调用的方法
@@ -1886,7 +1880,7 @@ export default {
                       <li><strong>SHIFT + Click</strong> - 连续选择多个文件或目录</li>
                       <li><strong>CTRL + A</strong> - 选择全部文件或目录</li>
                       <li><strong>CTRL + X</strong> - 剪切一个或多个文件/文件夹</li>
-                      <li><strong>CTRL + C</strong> - 复制一个或多个文件</li>
+                      <li><strong>CTRL + C</strong> - 复制一个或多个文件/文件夹</li>
                       <li><strong>CTRL + V</strong> - 粘贴一个或多个文件/文件夹</li>
                       <li><strong>Click</strong> - 选择或者打开文件/文件夹</li>
                       <li><strong>Double Click</strong> - 打开文件/文件夹</li>
