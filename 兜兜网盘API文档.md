@@ -302,9 +302,9 @@ Content-Type: application/json
 
 ```json
 {
-  "code": "",
+  "code": "200",
   "data": "",
-  "message": ""
+  "message": "请求成功"
 }
 ```
 
@@ -583,9 +583,9 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 
 ```json
 {
-  "code": "",
+  "code": "200",
   "data": "",
-  "message": ""
+  "message": "请求成功"
 }
 ```
 
@@ -660,7 +660,7 @@ Content-Type: image/jpeg
 
 ```json
 {
-  "code": "",
+  "code": "200",
   "data": {
     "diskUserFile": {
       "createTime": "",
@@ -680,7 +680,7 @@ Content-Type: image/jpeg
     "key": "",
     "token": ""
   },
-  "message": ""
+  "message": "请求成功"
 }
 ```
 
@@ -746,7 +746,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 
 ```json
 {
-  "code": "",
+  "code": "200",
   "data": {
     "createTime": "",
     "fileFolder": true,
@@ -762,7 +762,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
     "userFileParentId": "",
     "userId": 0
   },
-  "message": ""
+  "message": "请求成功"
 }
 ```
 
@@ -826,7 +826,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 
 ```json
 {
-  "code": "",
+  "code": "200",
   "data": {
     "createTime": "",
     "fileFolder": true,
@@ -842,7 +842,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
     "userFileParentId": "",
     "userId": 0
   },
-  "message": ""
+  "message": "请求成功"
 }
 ```
 
@@ -1168,7 +1168,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 
 ```json
 {
-  "code": "",
+  "code": "200",
   "data": [
     {
       "createTime": "",
@@ -1186,7 +1186,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
       "userId": 0
     }
   ],
-  "message": ""
+  "message": "请求成功"
 }
 ```
 
@@ -1258,7 +1258,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 
 ```json
 {
-  "code": "",
+  "code": "200",
   "data": {
     "available": true,
     "createTime": "",
@@ -1278,7 +1278,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
     "userRemainingTraffic": 0,
     "userUnlockTime": ""
   },
-  "message": ""
+  "message": "请求成功"
 }
 ```
 
@@ -1308,7 +1308,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 
 **接口描述**:
 <p>用于创建文件分享短链，通过短链可以访问被分享的文件</p>
-<p>最多只能同时分享50个文件、文件夹</p>
+<p>最多只能同时分享120个文件、文件夹</p>
 
 **请求参数**:
 
@@ -1340,7 +1340,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 
 ```json
 {
-  "code": "",
+  "code": "200",
   "data": {
     "expiration": false,
     "includeFolder": false,
@@ -1353,7 +1353,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
     "shareShortUrl": "",
     "shareUserId": 0
   },
-  "message": ""
+  "message": "请求成功"
 }
 ```
 
