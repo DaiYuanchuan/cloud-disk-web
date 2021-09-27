@@ -603,7 +603,8 @@ export default {
         userId: this.userInfo.userId
       }
       params[key] = value
-      if (this.paymentOrderSearchForm.time !== '' &&
+      if (this.paymentOrderSearchForm.time !== null &&
+        this.paymentOrderSearchForm.time !== '' &&
         this.paymentOrderSearchForm.time[0] !== undefined &&
         this.paymentOrderSearchForm.time[1] !== undefined) {
         params.startTime = this.paymentOrderSearchForm.time[0]
@@ -660,7 +661,7 @@ export default {
         }
         res['effectiveDuration'] = effectiveDuration
         res['orderTotalAmount'] = `￥${res['orderTotalAmount'] / 100}`
-        // 支付方式: 1:微信 2:支付宝
+        // 支付方式: 1:微信 2:支付宝 3:系统赠送
         res['orderPaymentType'] = this.formattingOrderPaymentType(res['orderPaymentType'])
         res['success'] = this.formattingOrderTradeState(res['orderTradeState'])
         if (res['orderSuccessTime'] === null || res['orderSuccessTime'] === undefined) {
@@ -699,16 +700,18 @@ export default {
     /**
      * 格式化订单支付类型
      * 当前已定义的支付类型为
-     * 1:微信 2:支付宝
+     * 1:微信 2:支付宝 3:系统赠送
      * @param paymentType 支付类型枚举
      */
     formattingOrderPaymentType: function (paymentType) {
-      // 支付方式: 1:微信 2:支付宝
+      // 支付方式: 1:微信 2:支付宝 3:系统赠送
       switch (paymentType) {
         case '1':
           return '微信'
         case '2':
           return '支付宝'
+        case '3':
+          return '赠送'
         default:
           return '未定义'
       }
