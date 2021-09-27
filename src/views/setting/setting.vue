@@ -603,7 +603,8 @@ export default {
         userId: this.userInfo.userId
       }
       params[key] = value
-      if (this.paymentOrderSearchForm.time !== '' &&
+      if (this.paymentOrderSearchForm.time !== null &&
+        this.paymentOrderSearchForm.time !== '' &&
         this.paymentOrderSearchForm.time[0] !== undefined &&
         this.paymentOrderSearchForm.time[1] !== undefined) {
         params.startTime = this.paymentOrderSearchForm.time[0]
