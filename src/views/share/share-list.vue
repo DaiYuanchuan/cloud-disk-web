@@ -30,7 +30,7 @@
 
             </div>
           </div>
-          <filePanel :breadcrumbs="breadcrumbs" :file-list="fileList"
+          <filePanel :breadcrumbs="breadcrumbs" :file-list="fileList" :dropdownMenuList="dropdownMenuList"
                      @nextPage="nextPage" @doubleClick="doubleClick" @previous="previous"></filePanel>
         </el-main>
       </el-container>
@@ -129,7 +129,24 @@ export default {
         method: '',
         // 弹窗model关闭后执行的方法所对应的参数
         parameter: ''
-      }
+      },
+      // 下拉菜单列表
+      dropdownMenuList: [{
+        menuName: '打开',
+        type: 'all',
+        class: 'dropdown-menu-item',
+        method: 'doubleClick'
+      }, {
+        menuName: '下载',
+        type: 'file',
+        class: 'dropdown-menu-item',
+        method: ''
+      }, {
+        menuName: '保存到我的',
+        type: 'all',
+        class: 'dropdown-menu-item',
+        method: ''
+      }]
     }
   },
   // 钩子函数：页面加载完成后执行

@@ -113,7 +113,7 @@
         </div>
         <!-- main -->
         <el-main>
-          <router-view :breadcrumbs="breadcrumbs" :file-list="fileList"
+          <router-view :breadcrumbs="breadcrumbs" :file-list="fileList" :dropdownMenuList="dropdownMenuList"
                        @nextPage="nextPage" @doubleClick="doubleClick" @openPayDialog="getResourcePacksInfo"
                        @ctrlC="setPreprocessing('copy')" @ctrlX="setPreprocessing('move')"
                        @previous="previous" @delete="fileDeletion" @userAvatar="setUserAvatar"></router-view>
@@ -263,8 +263,8 @@
           <el-form ref="form" :model="payment.form" label-width="80px">
             <el-form-item label="开通时长">
               <input-number v-model="payment.form.defaultValue" @change="paymentOpeningTimeChange" :min="1"
-                               :max="9999" ref="paymentFormInputNumber"
-                               :step="payment.form.defaultSelfIncrement" step-strictly></input-number>
+                            :max="9999" ref="paymentFormInputNumber"
+                            :step="payment.form.defaultSelfIncrement" step-strictly></input-number>
               <span class="pay-opening-time-text">月</span>
             </el-form-item>
             <el-form-item v-if="payment.mobile" class="pay-method-form-item">
@@ -556,7 +556,64 @@ export default {
         },
         // 资源包对象
         resourcePack: []
-      }
+      },
+      // 下拉菜单列表
+      dropdownMenuList: [{
+        menuName: '打开',
+        type: 'all',
+        class: 'dropdown-menu-item',
+        method: 'doubleClick'
+      }, {
+        menuName: '下载',
+        type: 'file',
+        class: 'dropdown-menu-item',
+        method: ''
+      }, {
+        menuName: '分享',
+        type: 'all',
+        class: 'dropdown-menu-item',
+        method: ''
+      }, {
+        menuName: '收藏',
+        type: 'all',
+        class: 'dropdown-menu-item',
+        method: ''
+      }, {
+        menuName: '',
+        type: 'divider',
+        class: 'dropdown-menu-item-divider',
+        method: ''
+      }, {
+        menuName: '重命名',
+        type: 'all',
+        class: 'dropdown-menu-item',
+        method: ''
+      }, {
+        menuName: '移动',
+        type: 'all',
+        class: 'dropdown-menu-item',
+        method: ''
+      }, {
+        menuName: '复制',
+        type: 'all',
+        class: 'dropdown-menu-item',
+        method: ''
+      }, {
+        menuName: '文件详情',
+        type: 'file',
+        class: 'dropdown-menu-item',
+        method: ''
+      }, {
+        menuName: '',
+        type: 'divider',
+        class: 'dropdown-menu-item-divider',
+        method: ''
+      }, {
+        menuName: '删除',
+        type: 'all',
+        class: 'dropdown-menu-item item-danger',
+        method: ''
+      }]
     }
   },
   components: {
