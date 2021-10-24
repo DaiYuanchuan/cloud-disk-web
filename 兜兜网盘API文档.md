@@ -15,6 +15,10 @@
 [TOC]
 
 # 更新记录
+## 2021 年 10 月 24 日
+<p>更新了用户鉴权方式，新增鉴权请求头Authorization，同时兼容原有Cookie请求头</p>
+<p>新增指定文件标识批量查找文件接口</p>
+<p>更新了资源下载链接默认有效时长</p>
 
 ## 2021 年 9 月 20 日
 <p>新建文件夹请求参数变更</p>
@@ -43,11 +47,12 @@
 |O|任意可选|包含任意可选与条件可选，可以不携带，或不反回|
 |C|条件可选||
 
-## 接口基本消息参数
+## 接口基本请求头参数
 
 | 参数名称 | 说明 | 例子 |
 | -------- | -------- | -------- |
-|Cookie|携带用户鉴权信息(登陆时获取)<br/>格式：bjg_sid={token}|Cookie:bjg_sid=c57bcd5a-8aa8-4725-a244-4ac1f81fc869|
+|Cookie|携带用户鉴权信息(登陆时获取)<br/>格式：bjg_sid={token}|Cookie: bjg_sid=c57bcd5a-8aa8-4725-a244-4ac1f81fc869|
+|Authorization|http头域，携带用户鉴权信息(新增)<br/>|Authorization: c57bcd5a-8aa8-4725-a244-4ac1f81fc869|
 
 ## 全局返回码说明
 
@@ -208,7 +213,7 @@ Host: cloud.api.novelweb.cn
 GET /disk-user/logout
 HTTP/1.1
 Host: cloud.api.novelweb.cn
-Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
+Authorization: 2d814ef-6d81-4560-ad07-6701c12c73
 ```
 
 ## 用户注册
@@ -466,7 +471,7 @@ Host: cloud.api.novelweb.cn
 POST /disk-user/update-user?userAvatar=&userEmail=&userId=&userName=
 HTTP/1.1
 Host: cloud.api.novelweb.cn
-Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
+Authorization: 2d814ef-6d81-4560-ad07-6701c12c73
 ```
 
 ## 获取当前登录的用户信息
@@ -550,7 +555,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 GET /disk-user/user-info
 HTTP/1.1
 Host: cloud.api.novelweb.cn
-Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
+Authorization: 2d814ef-6d81-4560-ad07-6701c12c73
 ```
 
 ## 修改用户头像
@@ -595,7 +600,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 GET /uploader/uploader-avatar
 HTTP/1.1
 Host: cloud.api.novelweb.cn
-Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
+Authorization: 2d814ef-6d81-4560-ad07-6701c12c73
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
 ----WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -622,6 +627,10 @@ Content-Type: image/jpeg
 <p>获取文件上传所需token，是前端请求七牛云上传必传项</p>
 <p>也是根据此接口进行文件的创建操作</p>
 <p>最大可上传20GB的文件</p>
+<p>需要注意的是此接口响应正常的情况下会返回200或者201两种状态码</p>
+<p>code: 200 (需要根据响应结果中指定的token、key进行七牛文件上传的操作)</p>
+<p>code: 201 (完成秒传操作，不会返回token、key，直接走上传成功后的操作即可)</p>
+
 
 **请求参数**:
 
@@ -684,6 +693,13 @@ Content-Type: image/jpeg
 }
 ```
 
+**响应状态**:
+
+| 状态码 | 说明 |
+| -------- | -------- |
+|200|请求成功，会返回指定上传token、key|
+|201|秒传|
+
 **请求示例**:
 
 ```http request
@@ -691,7 +707,7 @@ POST /uploader/token
 HTTP/1.1
 Host: cloud.api.novelweb.cn
 Content-Type: application/json
-Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
+Authorization: 2d814ef-6d81-4560-ad07-6701c12c73
 
 {
     "ossFileEtag": "",
@@ -773,7 +789,7 @@ POST /disk-file/insert-file-folder
 HTTP/1.1
 Host: cloud.api.novelweb.cn
 Content-Type: application/json
-Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
+Authorization: 2d814ef-6d81-4560-ad07-6701c12c73
 
 {
     "userFileName": "",
@@ -852,7 +868,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 POST /disk-file/rename-file?newUserFileName=&userFileId=
 HTTP/1.1
 Host: cloud.api.novelweb.cn
-Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
+Authorization: 2d814ef-6d81-4560-ad07-6701c12c73
 ```
 
 ## 资源文件下载
@@ -866,9 +882,9 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 **响应数据类型**:`application/json;charset=UTF-8`
 
 **接口描述**:
-<p>获取文件的临时访问Url，最多可以生成有效时长为12小时的动态链接</p>
+<p>获取文件的临时访问Url，最多可以生成有效时长为5小时的动态链接</p>
 <p>需要注意的是，此接口如果响应成功，会进行302跳转，跳转的地址为动态生成的资源访问地址</p>
-<p>资源访问地址有效时长默认为6小时</p>
+<p>资源访问地址有效时长默认为3小时</p>
 
 **请求参数**:
 
@@ -879,7 +895,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 |preview|是否获取用于预览的链接|O|boolean|
 |shareKey|文件的key值(分享下载时使用)|C|string|
 |shareShort|短链(分享下载时使用)|C|string|
-|time|过期时间，大于10，小于43200(秒)|O|integer|
+|time|过期时间，大于10，小于18000(秒)|O|integer|
 
 **响应状态**:
 
@@ -893,7 +909,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 GET /disk-file/resource/download?fileId=&preview=false
 HTTP/1.1
 Host: cloud.api.novelweb.cn
-Cookie: bjg_sid=ab318bdb-4871-4fa8-a736-2e894ee3f507
+Authorization: ab318bdb-4871-4fa8-a736-2e894ee3f507
 ```
 
 ## 查询文件列表
@@ -987,7 +1003,84 @@ Cookie: bjg_sid=ab318bdb-4871-4fa8-a736-2e894ee3f507
 GET /disk-file/search?page=1&pageSize=100&userFileParentId=0
 HTTP/1.1
 Host: cloud.api.novelweb.cn
-Cookie: bjg_sid=ab318bdb-4871-4fa8-a736-2e894ee3f507
+Authorization: ab318bdb-4871-4fa8-a736-2e894ee3f507
+```
+
+## 指定文件标识批量查找
+
+**接口地址**:`/disk-file/query/file`
+
+**请求方式**:`POST`
+
+**请求数据类型**:`application/json`
+
+**响应数据类型**:`application/json;charset=UTF-8`
+
+**接口描述**:
+<p>根据文件标识信息批量查询文件信息，单次最大请求100条数据</p>
+
+**请求参数**:
+
+| 参数名称 | 参数说明 | 约束 | 数据类型 |
+| -------- | -------- | ----- | ------ |
+|file|需要查询的文件标识列表|M|string|
+
+**响应参数**:
+
+| 参数名称 | 参数说明 | 类型 | 约束 |
+| -------- | -------- | ----- |----- |
+|code|状态码|string|M|
+|data|对象|array|C|
+|&emsp;&emsp;createTime|创建时间|string|M|
+|&emsp;&emsp;fileFolder|是否为文件夹|boolean|M|
+|&emsp;&emsp;forbidden|当前文件是否被禁止访问|boolean|M|
+|&emsp;&emsp;ossFileEtag|资源的唯一标识|string|M|
+|&emsp;&emsp;ossFileMimeType|文件的mime类型|string|M|
+|&emsp;&emsp;ossFileSize|文件大小(字节)|integer|M|
+|&emsp;&emsp;updateTime|更新时间|string|M|
+|&emsp;&emsp;userDynamicDownloadUrl|文件的动态下载链接|string|C|
+|&emsp;&emsp;userDynamicPreviewUrl|文件的动态预览链接|string|C|
+|&emsp;&emsp;userFileId|文件标识|string|M|
+|&emsp;&emsp;userFileName|文件名称|string|M|
+|&emsp;&emsp;userFileParentId|父级标识(0为根目录)|string|M|
+|&emsp;&emsp;userId|用户标识|integer|M|
+|message|描述|string|M|
+
+**响应示例**:
+
+```json
+{
+  "code": "200",
+  "data": [{
+      "createTime": "",
+      "fileFolder": true,
+      "forbidden": true,
+      "ossFileEtag": "",
+      "ossFileMimeType": "",
+      "ossFileSize": 0,
+      "updateTime": "",
+      "userDynamicDownloadUrl": "",
+      "userDynamicPreviewUrl": "",
+      "userFileId": "",
+      "userFileName": "",
+      "userFileParentId": "",
+      "userId": 0
+  }],
+  "message": "请求成功"
+}
+```
+
+**请求示例**:
+
+```http request
+POST /disk-file/query/file
+HTTP/1.1
+Host: cloud.api.novelweb.cn
+Authorization: ab318bdb-4871-4fa8-a736-2e894ee3f507
+
+{
+    "file": ["617417f41a74e2521eac4e660e73zu"]
+}
 ```
 
 ## 批量复制文件
@@ -1111,7 +1204,7 @@ POST /disk-file/copy-batch-file
 HTTP/1.1
 Host: cloud.api.novelweb.cn
 Content-Type: application/json
-Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
+Authorization: 2d814ef-6d81-4560-ad07-6701c12c73
 
 {
 	"targetFileId": 0,
@@ -1197,7 +1290,7 @@ POST /disk-file/move-batch-file
 HTTP/1.1
 Host: cloud.api.novelweb.cn
 Content-Type: application/json
-Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
+Authorization: 2d814ef-6d81-4560-ad07-6701c12c73
 
 {
 	"moveFileInfo": [
@@ -1289,7 +1382,7 @@ POST /disk-file/delete-batch-file
 HTTP/1.1
 Host: cloud.api.novelweb.cn
 Content-Type: application/json
-Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
+Authorization: 2d814ef-6d81-4560-ad07-6701c12c73
 
 [1,2,3,4]
 ```
@@ -1364,7 +1457,7 @@ POST /disk-share/create-share
 HTTP/1.1
 Host: cloud.api.novelweb.cn
 Content-Type: application/json
-Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
+Authorization: 2d814ef-6d81-4560-ad07-6701c12c73
 
 {
   "encrypt": false,
@@ -1418,7 +1511,7 @@ POST /disk-share/cancel-share
 HTTP/1.1
 Host: cloud.api.novelweb.cn
 Content-Type: application/json
-Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
+Authorization: 2d814ef-6d81-4560-ad07-6701c12c73
 
 {
   "shareId": [1,2,3,4]
@@ -1504,7 +1597,7 @@ Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
 GET /disk-share/search?page=1&pageSize=10
 HTTP/1.1
 Host: cloud.api.novelweb.cn
-Cookie: bjg_sid=2d814ef-6d81-4560-ad07-6701c12c73
+Authorization: 2d814ef-6d81-4560-ad07-6701c12c73
 ```
 
 ## 获取分享链接详情
